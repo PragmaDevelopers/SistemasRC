@@ -25,9 +25,9 @@ export default function Layout({ children }: any) {
     const IconStyles: string = "w-8 aspect-square mr-2";
 
     return (
-        <main className="w-full h-full overflow-x-hidden flex-col items-start justify-start">
-            <div className="relative w-56 h-full flex flex-col justify-start items-start">
-                <form>
+        <main className="w-full h-full flex flex-row items-start justify-start bg-red-400 overflow-hidden">
+            <div className="relative w-56 h-full flex flex-col justify-start items-start bg-purple-400">
+                <form className="hidden">
                     <input type="text" placeholder="Pesquisar Card" />
                 </form>
                 <details className="p-2">
@@ -77,7 +77,7 @@ export default function Layout({ children }: any) {
                     <h1>Configurações</h1>
                 </Link>
             </div>
-            <div className="grow">
+            <div className="w-full h-full">
                 {children}
             </div>
         </main>
