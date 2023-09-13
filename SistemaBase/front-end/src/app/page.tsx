@@ -1,4 +1,4 @@
-import { CogIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import { CalendarIcon, ChartPieIcon, CogIcon, ServerStackIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,6 +15,18 @@ export default function Page() {
                         <Link href="">
                             <UserGroupIcon />
                             <h1>Usuários</h1>
+                        </Link>
+                        <Link href="">
+                            <ServerStackIcon />
+                            <h1>Areas de Trabalho</h1>
+                        </Link>
+                        <Link href="">
+                            <ChartPieIcon />
+                            <h1>Relatorios</h1>
+                        </Link>
+                        <Link href="">
+                            <CalendarIcon />
+                            <h1>Caléndario</h1>
                         </Link>
                     </div>
                 </details>
