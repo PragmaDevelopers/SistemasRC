@@ -20,8 +20,8 @@ export default function RootLayout({
 }) {
     return (
         <html lang="pt-br">
-            <body className={`${interFont.variable} font-inter w-screen h-screen bg-neutral-50 flex flex-col justify-start items-start transition-all overflow-hidden`}>
-                <div className='w-full h-16 bg-blue-400 flex flex-row justify-between items-center p-2'>
+            <body className={`${interFont.variable} font-inter w-screen h-screen bg-neutral-50 flex flex-col justify-start items-start transition-all`}>
+                <div className='w-full h-16 flex flex-row justify-between items-center p-2'>
                     <h1>
                         Logo
                     </h1>
@@ -30,7 +30,7 @@ export default function RootLayout({
                         <Link href="/dashboard" className='text-neutral-950 hover:text-blue-400 mx-2'>Dashboard</Link>
                     </nav>
                 </div>
-                <div className='grow w-full h-full overflow-y-auto overflow-x-hidden'>
+                <div className='w-full h-full overflow-hidden'>
                     {children}
                 </div>
             </body>
