@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+
 
 function genRandInt(): number {
     const min = 10000000;
