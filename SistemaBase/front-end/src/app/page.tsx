@@ -50,25 +50,25 @@ export default function Page() {
                 <details className="p-2">
                     <summary>Areas de Trabalho</summary>
                     <div className="overflow-x-hidden overflow-y-auto">
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
-                        <BoardMenuEntry href="/" picture="https://cdn.ebaumsworld.com/mediaFiles/picture/1151541/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href="/" picture="/84693449.png" name="nome" />
                     </div>
                 </details>
-                <Link href="/" className="absolute bottom-2 flex flex-row justify-between items-center">
+                <Link href="/" className="absolute bottom-0 bg-neutral-50 p-2 flex flex-row justify-between items-center">
                     <CogIcon className={IconStyles} />
                     <h1>Configurações</h1>
                 </Link>
