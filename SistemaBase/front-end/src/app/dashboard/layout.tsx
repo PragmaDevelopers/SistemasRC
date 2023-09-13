@@ -54,22 +54,22 @@ export default function Layout({ children }: any) {
                 <details className="p-2">
                     <summary>Areas de Trabalho</summary>
                     <div className="overflow-x-hidden overflow-y-auto">
-                        <BoardMenuEntry href={`${pathName}/board/nome00`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome01`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome02`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome03`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome04`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome05`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome06`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome07`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome08`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome09`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome10`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome11`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome12`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome13`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome14`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`${pathName}/board/nome15`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome00`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome01`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome02`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome03`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome04`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome05`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome06`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome07`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome08`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome09`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome10`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome11`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome12`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome13`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome14`} picture="/84693449.png" name="nome" />
+                        <BoardMenuEntry href={`/dashboard/board/nome15`} picture="/84693449.png" name="nome" />
                     </div>
                 </details>
                 <Link href="/" className="absolute bottom-0 bg-neutral-50 p-2 flex flex-row justify-between items-center">
