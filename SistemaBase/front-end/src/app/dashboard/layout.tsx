@@ -25,14 +25,14 @@ export default function Layout({ children }: any) {
     const IconStyles: string = "w-8 aspect-square mr-2";
 
     return (
-        <main className="w-full h-full flex flex-row items-start justify-start bg-red-400 overflow-hidden">
-            <div className="relative w-56 h-full flex flex-col justify-start items-start bg-purple-400">
+        <main className="w-full h-full flex flex-row items-start justify-between overflow-hidden">
+            <div className="grow relative w-56 h-full flex flex-col justify-start items-start border-r-2 border-neutral-400">
                 <form className="hidden">
                     <input type="text" placeholder="Pesquisar Card" />
                 </form>
                 <details className="p-2">
                     <summary>Seções</summary>
-                    <div className="overflow-x-hidden overflow-y-auto">
+                    <div className="">
                         <Link href="/" className="my-1 flex flex-row items-center">
                             <UserGroupIcon className={IconStyles} />
                             <h1>Usuários</h1>
@@ -51,33 +51,35 @@ export default function Layout({ children }: any) {
                         </Link>
                     </div>
                 </details>
-                <details className="p-2">
-                    <summary>Areas de Trabalho</summary>
-                    <div className="overflow-x-hidden overflow-y-auto">
-                        <BoardMenuEntry href={`/dashboard/board/nome00`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome01`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome02`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome03`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome04`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome05`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome06`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome07`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome08`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome09`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome10`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome11`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome12`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome13`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome14`} picture="/84693449.png" name="nome" />
-                        <BoardMenuEntry href={`/dashboard/board/nome15`} picture="/84693449.png" name="nome" />
-                    </div>
-                </details>
-                <Link href="/" className="absolute bottom-0 bg-neutral-50 p-2 flex flex-row justify-between items-center">
-                    <CogIcon className={IconStyles} />
-                    <h1>Configurações</h1>
-                </Link>
+                <div className="h-full flex flex-col justify-between overflow-hidden">
+                    <details className="p-2 overflow-x-hidden overflow-y-auto">
+                        <summary>Areas de Trabalho</summary>
+                        <div className="">
+                            <BoardMenuEntry href={`/dashboard/board/nome00`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome01`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome02`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome03`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome04`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome05`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome06`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome07`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome08`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome09`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome10`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome11`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome12`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome13`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome14`} picture="/84693449.png" name="nome" />
+                            <BoardMenuEntry href={`/dashboard/board/nome15`} picture="/84693449.png" name="nome" />
+                        </div>
+                    </details>
+                    <Link href="/" className="bg-neutral-50 p-2 flex flex-row items-center">
+                        <CogIcon className={IconStyles} />
+                        <h1>Configurações</h1>
+                    </Link>
+                </div>
             </div>
-            <div className="w-full h-full">
+            <div className="grow w-full h-full overflow-y-hidden overflow-x-auto p-2 bg-neutral-200">
                 {children}
             </div>
         </main>
