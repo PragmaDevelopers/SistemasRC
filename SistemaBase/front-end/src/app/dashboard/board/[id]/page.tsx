@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 
 function genRandInt(): number {
@@ -813,6 +813,21 @@ const data: Column[] = [
         ]
     },
 ];
+
+function KanBanArea() {
+    return (
+        <DragDropContext onDragEnd={() => { }}>
+            <Droppable droppableId="droppable">
+                {(element, snapshot) => {
+                    data.map(() => { });
+                }
+                }
+
+
+            </Droppable>
+        </DragDropContext>
+    );
+}
 
 export default function Page({ params }: { params: { id: string } }) {
     return (

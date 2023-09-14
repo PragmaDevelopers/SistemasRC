@@ -28,6 +28,7 @@ export default function RootLayout({
                     <nav className='flex flex-row'>
                         <Link href="/" className='text-neutral-950 hover:text-blue-400 mx-2'>Início</Link>
                         <Link href="/dashboard" className='text-neutral-950 hover:text-blue-400 mx-2'>Dashboard</Link>
+                        <Link href="/login" className='text-neutral-950 hover:text-blue-400 mx-2'>Cadastrar</Link>
                     </nav>
                 </div>
                 <div className='w-full h-full overflow-hidden'>
