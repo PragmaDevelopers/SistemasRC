@@ -1,3 +1,4 @@
+import java.text.*;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,17 +28,21 @@ public class LoginPage implements ActionListener {
 	
 	LoginPage(HashMap<String, String> loginInfoOriginal){	
 		
-		loginInfo = loginInfoOriginal;
+		loginInfo = loginInfoOriginal; 	 
 		
 		userIdLabel.setBounds(50,100,75,25);
 		userPasswordLabel.setBounds(50,150,75,25);
 		
-		//frame.add(cadastroButton);
-		//frame.add(cancelButton);
+		messageScreen.setBounds(125,250,250,35);
+		messageScreen.setFont(new Font(null, Font.ITALIC,25));
+		
+		
+		frame.add(cadastroButton);
+		frame.add(cancelButton);
 		frame.add(userIdLabel);
-		//frame.add(userIdField);
+		frame.add(userIdField);
 		frame.add(userPasswordLabel);
-		//frame.add(userPasswordField);
+		frame.add(userPasswordField);
 		frame.setTitle("Login");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(300,250);
