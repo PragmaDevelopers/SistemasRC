@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useState, DetailedHTMLProps, HTMLAttributes } from 'react';
 
+declare module 'react' {
+    interface HTMLAttributes<T> {
+        innerRef?: React.Ref<T>;
+    }
+}
 
 function genRandInt(): number {
     const min = 10000000;
@@ -65,18 +70,29 @@ function CheckListElement(props: CheckList) {
     );
 }
 
-function CardElement(props: Card) {
+interface CardProps extends Card {
+    index: number,
+}
+
+function CardElement(props: CardProps) {
     return (
         <div className="w-full bg-neutral-50 rounded-md my-2 p-2">
             <h1>{props.title}</h1>
             <p>{props.description}</p>
-            <div>
-                {props.checklists.map((checklist: CheckList) => {
-                    return (
-                        <CheckListElement name={checklist.name} id={checklist.id} items={checklist.items} key={checklist.id} />
-                    );
-                })}
-            </div>
+            <Draggable draggableId={String(props.id)} index={props.index}>
+                {(provided) => (
+                    <div {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        innerRef={provided.innerRef}
+                    >
+                        {props.checklists.map((checklist: CheckList) => {
+                            return (
+                                <CheckListElement name={checklist.name} id={checklist.id} items={checklist.items} key={checklist.id} />
+                            );
+                        })}
+                    </div>
+                )}
+            </Draggable>
         </div>
     );
 }
@@ -86,13 +102,15 @@ function ColumnElement(props: Column) {
         <div className="w-full w-64">
             <h1>{props.title}</h1>
             <h2>{props.type}</h2>
-            <div>
-                {props.cardsList.map((cardEl: Card) => {
-                    return (
-                        <CardElement title={cardEl.title} id={cardEl.id} columnID={props.id} checklists={cardEl.checklists} description={cardEl.description} />
-                    );
-                })}
-            </div>
+            <Droppable droppableId={String(props.id)}>
+                {provided => (
+                    <div {...provided.droppableProps}
+                        innerRef={provided.innerRef}>
+                        {props.cardsList.map((cardEl: Card, index: number) => <CardElement index={index} title={cardEl.title} id={cardEl.id} columnID={props.id} checklists={cardEl.checklists} description={cardEl.description} />)}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
         </div>
     );
 }
@@ -814,33 +832,25 @@ const data: Column[] = [
     },
 ];
 
-function KanBanArea() {
-    return (
-        <DragDropContext onDragEnd={() => { }}>
-            <Droppable droppableId="droppable">
-                {(element, snapshot) => {
-                    data.map(() => { });
-                }
-                }
-
-
-            </Droppable>
-        </DragDropContext>
-    );
-}
+//{
+//    data.map((column: Column) => {
+//        return (
+//            <ColumnElement title={column.title} cardsList={column.cardsList} type={column.type} id={column.id} key={column.id} />
+//        );
+//    })
+//}
 
 export default function Page({ params }: { params: { id: string } }) {
+    const onDragEndFunc = (result: any) => { };
     return (
         <main className="w-full h-full">
             <div className="">
                 <h1>Test {params.id}</h1>
             </div>
             <div className="grid grid-flow-col auto-cols-auto grid-rows-1 gap-x-4">
-                {data.map((column: Column) => {
-                    return (
-                        <ColumnElement title={column.title} cardsList={column.cardsList} type={column.type} id={column.id} key={column.id} />
-                    );
-                })}
+                <DragDropContext onDragEnd={onDragEndFunc}>
+
+                </DragDropContext>
             </div>
         </main>
     );
