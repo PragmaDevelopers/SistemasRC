@@ -1,9 +1,10 @@
 "use client";
 
 //import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
-import { DndContext, useDroppable, useDraggable } from '@dnd-kit/core';
-import { useEffect, useState } from 'react';
+import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { useEffect, useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, useSortable } from '@dnd-kit/sortable';
 
 type CheckList = {
     name: string,
@@ -33,9 +34,7 @@ type Column = {
 }
 
 type KanbanData = {
-    columns: {
-        [key: string]: Column,
-    },
+    columns: Column[],
     columnOrder: String[],
     kanbanId: string,
 }
@@ -77,6 +76,7 @@ function CardElement(props: CardProps) {
     const style = {
         transform: CSS.Translate.toString(transform),
     }
+
     return (
         <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="w-full bg-neutral-50 rounded-md my-4 p-2">
             <h1>{props.title}</h1>
@@ -88,14 +88,39 @@ function CardElement(props: CardProps) {
     );
 }
 
-function ColumnElement(props: Column) {
-    const { isOver, setNodeRef } = useDroppable({
+interface ColumnProps extends Column {
+    removeFunc: any,
+}
+
+function ColumnElement(props: ColumnProps) {
+    const handleRemove = () => {
+        props.removeFunc(props.id)
+    }
+
+    const { setNodeRef, attributes, listeners, transform, transition } = useSortable({
         id: props.id,
+        data: {
+            dragType: "COLUMN",
+            ...props,
+        }
     });
+
+    const style = {
+        transition,
+        transform: CSS.Transform.toString(transform),
+    }
+
     return (
-        <div ref={setNodeRef} className="w-full w-64">
+        <div ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className="w-64">
             <h1>{props.title}</h1>
             <h2>{props.type}</h2>
+            <button onClick={handleRemove}>
+                Delete
+            </button>
             <div>
                 {props.cardsList.map((cardEl: Card, index: number) => <CardElement index={index} title={cardEl.title} id={cardEl.id} columnID={props.id} checklists={cardEl.checklists} description={cardEl.description} />)}
             </div>
@@ -106,8 +131,8 @@ function ColumnElement(props: Column) {
 const data: KanbanData = {
     columnOrder: ['column-0'],
     kanbanId: 'aaaaaaaaaa-bbbbbbbbbb-cccccccccc',
-    columns: {
-        'column-0': {
+    columns: [
+        {
             id: 'column-0',
             type: 0,
             title: "Column 00",
@@ -207,32 +232,62 @@ const data: KanbanData = {
                 },
             ],
         },
-    },
+    ],
 };
 
 export default function Page({ params }: { params: { id: string } }) {
     const [kanbanData, setKanbanData] = useState<KanbanData>(data);
-
-    const onDragEndFunc = (result: any) => {
-        const { destination, source, draggableId } = result;
-        let updatedKanbanData: KanbanData = JSON.parse(JSON.stringify({ ...kanbanData }));
-
-        if (!destination) return;
-        if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
-        const column: Column = updatedKanbanData.columns[source.droppableId as string];
-        const cardsArr: Card[] = column.cardsList;
-        const srcCardIdx = cardsArr.findIndex(card => card.id === column.cardsList[source.index].id);
-        const dstCardIdx = cardsArr.findIndex(card => card.id === column.cardsList[destination.index].id);
-
-        if (srcCardIdx !== -1 && dstCardIdx !== -1) {
-            const movedCard = cardsArr.splice(srcCardIdx, 1)[0];
-            cardsArr.splice(dstCardIdx, 0, movedCard);
-        }
-        console.log("updatedKanbanData:", updatedKanbanData);
-        setKanbanData(updatedKanbanData as unknown as KanbanData);
-        console.log("kanbanData:", kanbanData);
+    const columnsID: any = kanbanData.columnOrder;
+    const addColumn = () => {
+        setKanbanData((prevKanbanData) => {
+            const newColumnID = `column-${prevKanbanData.columnOrder.length}`;
+            const newColumn = {
+                type: 0,
+                id: newColumnID,
+                cardsList: [],
+                title: `Column ${prevKanbanData.columnOrder.length}`,
+            };
+            return {
+                ...prevKanbanData,
+                columnOrder: [...prevKanbanData.columnOrder, newColumnID],
+                columns: {
+                    ...prevKanbanData.columns,
+                    [newColumnID]: newColumn,
+                },
+            };
+        });
     };
+
+    const removeColumn = (columnIDToRemove: string) => {
+        setKanbanData((prevKanbanData) => {
+            // Create a copy of the columns object without the specified columnID
+            const updatedColumns = { ...prevKanbanData.columns };
+            delete updatedColumns[columnIDToRemove];
+
+            // Create a copy of the columnOrder array without the removed columnID
+            const updatedColumnOrder = prevKanbanData.columnOrder.filter(
+                (columnID) => columnID !== columnIDToRemove
+            );
+
+            return {
+                ...prevKanbanData,
+                columns: updatedColumns,
+                columnOrder: updatedColumnOrder,
+            };
+        });
+    }
+
+    const onDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        const activeColumnId = active.id;
+        const overColumnId = over.id;
+
+        setKanbanData((prevKanbanData) => {
+            const updatedColumns = { ...prevKanbanData.columns };
+            const activeColumnIndex = prevKanbanData.columnOrder.findIndex((col) => col.id === activeColumnId);
+            const overColumnIndex = prevKanbanData.columnOrder.findIndex(())
+        })
+    }
 
     return (
         <main className="w-full h-full">
@@ -240,21 +295,27 @@ export default function Page({ params }: { params: { id: string } }) {
                 <h1>Test {params.id}</h1>
             </div>
             <div className="grid grid-flow-col auto-cols-auto grid-rows-1 gap-x-4">
-                <DndContext onDragEnd={() => { console.log("drag finished") }}>
-                    {
-                        kanbanData.columnOrder.map((columnID) => {
-                            const columnData = kanbanData.columns[columnID as string];
-                            return (
-                                <ColumnElement
-                                    title={columnData.title}
-                                    cardsList={columnData.cardsList}
-                                    type={columnData.type}
-                                    id={columnData.id}
-                                    key={columnData.id} />
-                            );
-                        })
-                    }
+                <DndContext onDragEnd={(event: DragEndEvent) => { console.log("DRAG END", event) }} onDragStart={(event: DragStartEvent) => { console.log("DRAG START", event) }}>
+                    <SortableContext items={columnsID}>
+                        {
+                            kanbanData.columnOrder.map((columnID) => {
+                                const columnData = kanbanData.columns[columnID as string];
+                                return (
+                                    <ColumnElement
+                                        title={columnData.title}
+                                        cardsList={columnData.cardsList}
+                                        type={columnData.type}
+                                        id={columnData.id}
+                                        key={columnData.id}
+                                        removeFunc={removeColumn} />
+                                );
+                            })
+                        }
+                    </SortableContext>
                 </DndContext>
+                <button onClick={addColumn} className='border-2 border-neutral-600 rounded-md p-2 bg-neutral-50 w-fit h-fit'>
+                    add column
+                </button>
             </div>
         </main>
     );
