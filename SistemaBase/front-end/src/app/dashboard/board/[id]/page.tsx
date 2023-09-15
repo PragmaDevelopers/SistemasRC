@@ -5,7 +5,7 @@ import { MouseEventHandler, useEffect, useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { PlusCircleIcon, TrashIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { MinusCircleIcon, PlusCircleIcon, TrashIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 type CheckList = {
     name: string,
@@ -272,6 +272,90 @@ function ColumnContainer(props: ColumnContainerProps) {
     );
 }
 
+interface CreateEditCardProps {
+    showCreateCardForm: boolean,
+    createCardForm: any,
+    card: Card,
+    updateListTitle: any,
+    handleRemoveInput: any,
+    handleRemoveList: any
+    handleAddList: any,
+    handleAddInput: any,
+    setShowCreateCardForm: any,
+    handleInputChange: any,
+}
+
+function CreateEditCard(props: CreateEditCardProps) {
+    const { setShowCreateCardForm, showCreateCardForm, createCardForm, card, handleAddList, handleRemoveInput, handleRemoveList, updateListTitle, handleAddInput, handleInputChange } = props;
+    const { checklists } = card;
+
+    return (
+        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
+            <div className='relative w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
+                <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
+                <form onSubmit={createCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
+                    <div className='w-full h-[85%] overflow-y-auto pb-4'>
+                        <div className='flex my-2'>
+                            <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
+                            <input className='bg-neutral-50' id="CardTitle" type='text' name='title' placeholder='Digite um titulo' />
+                        </div>
+                        <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none'>
+                            <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
+                            <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
+                        </div>
+                        <div>
+                            {lists.map((list, listIndex) => (
+                                <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
+                                    <div className='flex items-center mb-4'>
+                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.title} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveList(listIndex)}
+                                        >
+                                            <MinusCircleIcon className='w-6 aspect-square' />
+                                        </button>
+                                    </div>
+                                    {list.inputs.map((inputValue, inputIndex) => (
+                                        <div key={inputIndex} className='flex items-center my-2'>
+                                            <input
+                                                className='border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
+                                                type="text"
+                                                value={inputValue}
+                                                placeholder='Adicionar Tarefa'
+                                                onChange={(e) =>
+                                                    handleInputChange(listIndex, inputIndex, e.target.value)
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveInput(listIndex, inputIndex)}
+                                            >
+                                                <MinusCircleIcon className='w-6 aspect-square' />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button type="button" className="flex items-center justify-center w-full" onClick={() => handleAddInput(listIndex)}>
+                                        <h1 className='mr-2'>Nova Tarefa</h1>
+                                        <PlusCircleIcon className='w-6 aspect-square' />
+                                    </button>
+                                </div>
+                            ))}
+                            <button type="button" onClick={handleAddList} className='my-2 rounded-md w-80 p-2 border-neutral-950 border-2 flex justify-center items-center'>
+                                <h1 className="mr-2">Nova Lista</h1>
+                                <PlusCircleIcon className='w-6 aspect-square' />
+                            </button>
+                        </div>
+                    </div>
+                    <div className='w-full absolute bottom-0 flex justify-center items-center'>
+                        <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
+                    </div>
+                </form>
+                <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
+            </div>
+        </div>
+    );
+}
+
 export default function Page({ params }: { params: { id: string } }) {
     const [tempDragState, setTempDragState] = useState<any>(null);
     const [kanbanData, setKanbanData] = useState<any>(data);
@@ -280,7 +364,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const columnsId = useMemo(() => kanbanData.columns.map((col: Column) => col.id), [kanbanData]);
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
-    const [lists, setLists] = useState([{ title: '', inputs: [''], id: generateRandomString() }]);
+    const [lists, setLists] = useState([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -529,8 +613,8 @@ export default function Page({ params }: { params: { id: string } }) {
                     const destColumn = prevKanbanData.columns.find((col: Column) => col.id === over.data.current?.card.columnID);
                     if (!destColumn) return prevKanbanData;
 
-                    const srcCardIndex = sourceColumn.cardsList.findIndex((card: Card) => card.id === activeID);
-                    const destCardIndex = destColumn.cardsList.findIndex((card: Card) => card.id === overID);
+                    //const srcCardIndex = sourceColumn.cardsList.findIndex((card: Card) => card.id === activeID);
+                    //const destCardIndex = destColumn.cardsList.findIndex((card: Card) => card.id === overID);
 
                     const updatedSourceCardsList = sourceColumn.cardsList.filter((card) => card.id !== activeID);
 
@@ -573,36 +657,17 @@ export default function Page({ params }: { params: { id: string } }) {
         setShowCreateCardForm(true);
     };
 
-    const handleInputChange = (listIndex: any, inputIndex: any, value: any) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs[inputIndex] = value;
-        setLists(newLists);
-    };
-
-    const updateListTitle = (listIndex: any, value: string) => {
-        const newLists = [...lists];
-        newLists[listIndex].title = value;
-        setLists(newLists);
-    }
-
-    const handleAddList = () => {
-        setLists([...lists, { title: 'Empty List', inputs: [''], id: generateRandomString() }]); // Add a new list
-    };
-
-    const handleAddInput = (listIndex: any) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs.push('');
-        setLists(newLists);
-    };
-
-
-
     const createCardForm = (event: any) => {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         const cardDescription: string = event.target.description.value;
-        //const checklistsItems: CheckListItem =
-        console.log(lists);
+
+        const checklists: CheckList[] = lists.map((itn) => {
+            const items = itn.inputs.map((i) => {
+                return { name: i, completed: false, checklistId: itn.id } as CheckListItem;
+            });
+            return { name: itn.title, items: items, id: itn.id } as CheckList;
+        });
 
         // Check if the card title is not empty before creating the card
         if (cardTitle.trim() !== "") {
@@ -612,7 +677,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     title: cardTitle,
                     columnID: tempColumnID,
                     description: cardDescription,
-                    checklists: [],
+                    checklists: checklists,
                 }
 
                 const targetColumn = prevData.columns.find((column) => column.id === tempColumnID);
@@ -636,6 +701,7 @@ export default function Page({ params }: { params: { id: string } }) {
         }
         event.target.reset();
         setTempColumnID("");
+        setLists([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
         setShowCreateCardForm(false);
     };
 
@@ -664,54 +730,45 @@ export default function Page({ params }: { params: { id: string } }) {
         });
     };
 
+    const handleInputChange = (listIndex: any, inputIndex: any, value: any) => {
+        const newLists = [...lists];
+        newLists[listIndex].inputs[inputIndex] = value;
+        setLists(newLists);
+    };
+
+    const updateListTitle = (listIndex: any, value: string) => {
+        const newLists = [...lists];
+        newLists[listIndex].title = value;
+        setLists(newLists);
+    }
+
+    const handleAddList = () => {
+        setLists([...lists, { title: 'Empty List', inputs: [''], id: generateRandomString() }]); // Add a new list
+    };
+
+    const handleAddInput = (listIndex: any) => {
+        const newLists = [...lists];
+        newLists[listIndex].inputs.push('');
+        setLists(newLists);
+    };
+
+    const handleRemoveInput = (listIndex: any, inputIndex: any) => {
+        const newLists = [...lists];
+        newLists[listIndex].inputs.splice(inputIndex, 1);
+        setLists(newLists);
+    };
+
+    const handleRemoveList = (listIndex: any) => {
+        const newLists = [...lists];
+        newLists.splice(listIndex, 1);
+        setLists(newLists);
+    };
+
     return (
         <main className="w-full h-full overflow-x-auto overflow-y-hidden shrink-0">
-            <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
-                <div className='relative w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
-                    <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
-                    <form onSubmit={createCardForm} className='w-[80%] h-[80%] relative'>
-                        <div className='flex my-2'>
-                            <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
-                            <input id="CardTitle" type='text' name='title' placeholder='Digite um nome' />
-                        </div>
-                        <div className='flex flex-col my-2'>
-                            <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
-                            <textarea id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
-                        </div>
-                        <div className='w-full absolute bottom-0 flex justify-center items-center'>
-                            <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
-                        </div>
-                        <div>
-                            {lists.map((list, listIndex) => (
-                                <div key={listIndex}>
-                                    <input type='text' value={list.title} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
-                                    <h2>{list.title}</h2>
-                                    {list.inputs.map((inputValue, inputIndex) => (
-                                        <div key={inputIndex}>
-                                            <input
-                                                type="text"
-                                                value={inputValue}
-                                                onChange={(e) =>
-                                                    handleInputChange(listIndex, inputIndex, e.target.value)
-                                                }
-                                            />
-                                        </div>
-                                    ))}
-                                    <button type="button" onClick={() => handleAddInput(listIndex)}>
-                                        Add Input
-                                    </button>
-                                </div>
-                            ))}
-                            <button type="button" onClick={handleAddList}>
-                                Add List
-                            </button>
-                        </div>
-                    </form>
-                    <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
-                </div>
-            </div>
+
             <div className="">
-                <h1>Test {params.id}</h1>
+                <h1>{params.id}</h1>
             </div>
             <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
                 <div className="flex flex-row justify-start items-start gap-x-2 w-full h-[95%] overflow-auto shrink-0">
@@ -724,8 +781,9 @@ export default function Page({ params }: { params: { id: string } }) {
                             column={col}
                             deleteColumn={removeColumn} />)}
                     </SortableContext>
-                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 justify-center items-center' onClick={createNewColumn}>
-                        Add Column
+                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
+                        <h1 className='mb-2'>Add Column</h1>
+                        <PlusCircleIcon className='w-8 aspect-square' />
                     </button>
                 </div>
                 {createPortal(
