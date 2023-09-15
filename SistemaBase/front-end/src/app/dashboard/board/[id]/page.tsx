@@ -183,7 +183,7 @@ function ColumnContainer(props: ColumnContainerProps) {
     }
 
     const handleCreateCard = () => {
-        createCard(column.id);
+        createCard(column.id,);
     }
 
     return (
@@ -228,41 +228,14 @@ export default function Page({ params }: { params: { id: string } }) {
     const [kanbanData, setKanbanData] = useState<any>(data);
     const [activeColumn, setActiveColumn] = useState<Column | null>(null);
     const columnsId = useMemo(() => kanbanData.columns.map((col: Column) => col.id), [kanbanData]);
+    const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
+    const [tempColumnID, setTempColumnID] = useState<string>("");
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
             distance: 2,  // 2px
         }
     }));
 
-    const createCard = (columnID: string) => {
-        setKanbanData((prevData: KanbanData) => {
-            const newCard: Card = {
-                id: generateRandomString(),
-                title: "New Card",
-                columnID: columnID,
-                description: "Insert Description",
-                checklists: [],
-            }
-
-            const targetColumn = prevData.columns.find((column) => column.id === columnID);
-            if (!targetColumn) {
-                return prevData;
-            }
-
-            const updatedColumn = {
-                ...targetColumn,
-                cardsList: [...targetColumn.cardsList, newCard],
-            };
-            const updatedColumns = prevData.columns.map((column) =>
-                column.id === columnID ? updatedColumn : column
-            );
-
-            return {
-                ...prevData,
-                columns: updatedColumns,
-            };
-        });
-    };
 
     const createNewColumn = () => {
         const newColumn = {
@@ -335,10 +308,60 @@ export default function Page({ params }: { params: { id: string } }) {
                 columns: newColumns,
             }
         })
-    }
+    };
+
+    const createCard = (columnID: string) => {
+        setTempColumnID(columnID);
+        setShowCreateCardForm(true);
+    };
+
+    const createCardForm = (event: any) => {
+        event.preventDefault();
+        const cardTitle: string = event.target.title;
+        const cardDescription: string = event.target.description;
+        setKanbanData((prevData: KanbanData) => {
+            const newCard: Card = {
+                id: generateRandomString(),
+                title: cardTitle,
+                columnID: tempColumnID,
+                description: cardDescription,
+                checklists: [],
+            }
+
+            const targetColumn = prevData.columns.find((column) => column.id === tempColumnID);
+            if (!targetColumn) {
+                return prevData;
+            }
+
+            const updatedColumn = {
+                ...targetColumn,
+                cardsList: [...targetColumn.cardsList, newCard],
+            };
+            const updatedColumns = prevData.columns.map((column) =>
+                column.id === tempColumnID ? updatedColumn : column
+            );
+
+            return {
+                ...prevData,
+                columns: updatedColumns,
+            };
+        });
+        setTempColumnID("");
+        setShowCreateCardForm(false);
+    };
 
     return (
         <main className="w-full h-full">
+            <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 w-screen h-screen z-20 justify-center items-center'}>
+                <div>
+                    <form onSubmit={createCardForm}>
+                        <input type='text' name='title' placeholder='Nome' />
+                        <textarea name='description'>Description</textarea>
+                        <button type='submit'>Create Card</button>
+                    </form>
+                    <button onClick={() => setShowCreateCardForm(false)}>Close</button>
+                </div>
+            </div>
             <div className="">
                 <h1>Test {params.id}</h1>
             </div>
