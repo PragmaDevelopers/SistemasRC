@@ -25,8 +25,8 @@ export default function Layout({ children }: any) {
     const IconStyles: string = "w-8 aspect-square mr-2";
 
     return (
-        <main className="w-full h-full flex flex-row items-start justify-between overflow-hidden">
-            <div className="grow relative w-56 h-full flex flex-col justify-start items-start border-r-2 border-neutral-400">
+        <main className="w-full h-full flex flex-row items-start justify-between">
+            <div className="grow relative w-56 h-full flex flex-col justify-start items-start">
                 <form className="hidden">
                     <input type="text" placeholder="Pesquisar Card" />
                 </form>
@@ -79,7 +79,7 @@ export default function Layout({ children }: any) {
                     </Link>
                 </div>
             </div>
-            <div className="grow w-full h-full overflow-y-hidden overflow-x-auto p-2 bg-neutral-200">
+            <div className="grow w-full h-full p-2 bg-neutral-100 rounded-tl-md">
                 {children}
             </div>
         </main>
