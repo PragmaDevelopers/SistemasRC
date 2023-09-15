@@ -1,6 +1,5 @@
 "use client";
 
-//import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent, DragOverlay, useSensors, useSensor, PointerSensor, DragOverEvent } from '@dnd-kit/core';
 import { MouseEventHandler, useEffect, useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
@@ -357,7 +356,9 @@ export default function Page({ params }: { params: { id: string } }) {
         } else if (active.data.current?.type === "CARD") {
             console.log("CARD END");
             const destCol: Column = over.data.current?.column;
-
+            // TODO: Move Card from srcCol to destCol
+            // remove from src
+            // update everything.
         }
 
         console.log("DRAG END", event);
