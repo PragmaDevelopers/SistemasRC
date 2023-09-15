@@ -414,12 +414,9 @@ export default function Page({ params }: { params: { id: string } }) {
                     );
 
                     return {
-                        ...prevData,
+                        ...prevKanbanData,
                         columns: updatedColumns,
                     };
-
-
-                    const newSrcCardArray: Card[] = 
                 }
             });
         }
