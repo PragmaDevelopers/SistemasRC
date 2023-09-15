@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent, DragOverlay, useSensors, useSensor, PointerSensor, DragOverEvent } from '@dnd-kit/core';
-import { MouseEventHandler, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
@@ -38,113 +38,6 @@ type KanbanData = {
     columns: Column[],
     kanbanId: string,
 }
-
-
-const data: KanbanData = {
-    kanbanId: 'aaaaaaaaaa-bbbbbbbbbb-cccccccccc',
-    columns: [
-        {
-            id: 'column-0',
-            columnType: 0,
-            title: "Column 00",
-            cardsList: [
-                {
-                    title: "Card 00",
-                    id: 'card-0',
-                    columnID: 'column-0',
-                    description: "Example Card",
-                    checklists: [
-                        {
-                            name: "CheckList 00",
-                            id: 'checklist-0',
-                            items: [
-                                {
-                                    name: "Item 00",
-                                    completed: false,
-                                    checklistId: 'checklist-0'
-                                },
-                                {
-                                    name: "Item 01",
-                                    completed: true,
-                                    checklistId: 'checklist-0'
-                                },
-
-                                {
-                                    name: "Item 02",
-                                    completed: false,
-                                    checklistId: 'checklist-0'
-                                },
-
-                            ]
-                        },
-                    ],
-                },
-                {
-                    title: "Card 01",
-                    id: 'card-1',
-                    columnID: 'column-0',
-                    description: "Example Card",
-                    checklists: [
-                        {
-                            name: "CheckList 00",
-                            id: 'checklist-0',
-                            items: [
-                                {
-                                    name: "Item 00",
-                                    completed: false,
-                                    checklistId: 'checklist-0'
-                                },
-                                {
-                                    name: "Item 01",
-                                    completed: true,
-                                    checklistId: 'checklist-0'
-                                },
-
-                                {
-                                    name: "Item 02",
-                                    completed: false,
-                                    checklistId: 'checklist-0'
-                                },
-
-                            ]
-                        },
-                    ],
-                },
-                {
-                    title: "Card 02",
-                    id: 'card-2',
-                    columnID: 'column-0',
-                    description: "Example Card",
-                    checklists: [
-                        {
-                            name: "CheckList 00",
-                            id: 'checklist-0',
-                            items: [
-                                {
-                                    name: "Item 00",
-                                    completed: false,
-                                    checklistId: 'checklist-0'
-                                },
-                                {
-                                    name: "Item 01",
-                                    completed: true,
-                                    checklistId: 'checklist-0'
-                                },
-
-                                {
-                                    name: "Item 02",
-                                    completed: false,
-                                    checklistId: 'checklist-0'
-                                },
-
-                            ]
-                        },
-                    ],
-                },
-            ],
-        },
-    ],
-};
 
 interface CardElementProps {
     card: Card,
@@ -304,7 +197,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div>
-                            {lists.map((list, listIndex) => (
+                            {lists.map((list: any, listIndex: any) => (
                                 <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
                                         <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.title} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
@@ -315,7 +208,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                             <MinusCircleIcon className='w-6 aspect-square' />
                                         </button>
                                     </div>
-                                    {list.inputs.map((inputValue, inputIndex) => (
+                                    {list.inputs.map((inputValue: any, inputIndex: any) => (
                                         <div key={inputIndex} className='flex items-center my-2'>
                                             <input
                                                 className='border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
@@ -358,10 +251,16 @@ function CreateEditCard(props: CreateEditCardProps) {
 
 export default function Page({ params }: { params: { id: string } }) {
     const [tempDragState, setTempDragState] = useState<any>(null);
-    const [kanbanData, setKanbanData] = useState<any>(data);
+    const [kanbanData, setKanbanData] = useState<any>({});
     const [activeColumn, setActiveColumn] = useState<Column | null>(null);
     const [activeCard, setActiveCard] = useState<Card | null>(null);
-    const columnsId = useMemo(() => kanbanData.columns.map((col: Column) => col.id), [kanbanData]);
+    const columnsId = kanbanData !== undefined ? (Object.keys(kanbanData).length > 0 ? useMemo(() => {
+        if (kanbanData.columns !== undefined) {
+            return kanbanData.columns?.map((col: Column) => col.id);
+        } else {
+            return [''];
+        }
+    }, [kanbanData]) : [""]) : [""];
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
     const [lists, setLists] = useState([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
@@ -374,17 +273,32 @@ export default function Page({ params }: { params: { id: string } }) {
 
 
     const createNewColumn = () => {
-        const newColumn = {
-            id: generateRandomString(),
-            type: 0,
-            title: `Column ${kanbanData.columns.length}`,
-            cardsList: [],
-        };
+        console.log(columnsId);
+        if (kanbanData.columns !== undefined) {
+            const newColumn = {
+                id: generateRandomString(),
+                type: 0,
+                title: `Column ${kanbanData.columns.length}`,
+                cardsList: [],
+            };
 
-        setKanbanData((prevData: KanbanData) => ({
-            ...prevData,
-            columns: [...prevData.columns, newColumn],
-        }));
+            setKanbanData((prevData: KanbanData) => ({
+                ...prevData,
+                columns: [...prevData.columns, newColumn],
+            }));
+        } else {
+            const newColumn = {
+                id: generateRandomString(),
+                type: 0,
+                title: 'Column 0',
+                cardsList: [],
+            };
+
+            setKanbanData((prevData: KanbanData) => ({
+                ...prevData,
+                columns: [newColumn],
+            }));
+        }
     }
 
     const removeColumn = (columnIDToRemove: string) => {
@@ -773,7 +687,7 @@ export default function Page({ params }: { params: { id: string } }) {
             <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
                 <div className="flex flex-row justify-start items-start gap-x-2 w-full h-[95%] overflow-auto shrink-0">
                     <SortableContext items={columnsId}>
-                        {kanbanData.columns.map((col: Column) => <ColumnContainer
+                        {kanbanData.columns?.map((col: Column) => <ColumnContainer
                             createCard={createCard}
                             deleteCard={deleteCard}
                             updateColumnTitle={updateColumnTitle}

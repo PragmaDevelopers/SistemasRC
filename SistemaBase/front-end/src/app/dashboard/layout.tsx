@@ -4,25 +4,50 @@ import { usePathname } from "next/navigation";
 import { CalendarIcon, ChartPieIcon, CogIcon, ServerStackIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { BuildingOffice2Icon } from "@heroicons/react/24/solid";
 
 interface BoardMenuEntryProps {
     href: string;
     name: string;
-    picture: string;
+    //picture: string;
 }
+
+//function BoardMenuEntry(props: BoardMenuEntryProps) {
+//    return (
+//        <Link href={props.href} className="my-2 flex flex-row items-center">
+//            <Image src={props.picture} alt={props.name} width={640} height={640} className="w-8 aspect-square rounded-md overflow-hidden mr-2" />
+//            <h1>{props.name}</h1>
+//        </Link>
+//    );
+//}
 
 function BoardMenuEntry(props: BoardMenuEntryProps) {
     return (
         <Link href={props.href} className="my-2 flex flex-row items-center">
-            <Image src={props.picture} alt={props.name} width={640} height={640} className="w-8 aspect-square rounded-md overflow-hidden mr-2" />
+            <BuildingOffice2Icon className="w-6 aspect-square mr-2" />
             <h1>{props.name}</h1>
         </Link>
     );
 }
 
 export default function Layout({ children }: any) {
+    const [dashboards, setDashboards] = useState<{ name: string, url: string }[]>();
     const pathName: string = usePathname();
     const IconStyles: string = "w-8 aspect-square mr-2";
+
+    const addDashBoard = (event: any) => {
+        event.preventDefault();
+        if (dashboards !== undefined) {
+            if (dashboards?.length > 0) {
+                setDashboards([...dashboards as unknown as { name: string, url: string }[], { name: event.target.boardname.value, url: generateRandomString() }]);
+            } else {
+                setDashboards([{ name: event.target.boardname.value, url: generateRandomString() }]);
+            }
+        } else {
+            setDashboards([{ name: event.target.boardname.value, url: generateRandomString() }]);
+        }
+    }
 
     return (
         <main className="w-full h-full flex flex-row items-start justify-between">
@@ -55,22 +80,14 @@ export default function Layout({ children }: any) {
                     <details className="p-2 overflow-x-hidden overflow-y-auto">
                         <summary>Areas de Trabalho</summary>
                         <div className="">
-                            <BoardMenuEntry href={`/dashboard/board/nome00`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome01`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome02`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome03`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome04`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome05`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome06`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome07`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome08`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome09`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome10`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome11`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome12`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome13`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome14`} picture="/84693449.png" name="nome" />
-                            <BoardMenuEntry href={`/dashboard/board/nome15`} picture="/84693449.png" name="nome" />
+                            {dashboards?.map((element) => <BoardMenuEntry href={`/dashboard/board/${element.url}`} name={element.name} />)}
+                        </div>
+                        <div>
+
+                            <form onSubmit={addDashBoard}>
+                                <input name="boardname" placeholder="Board Name" type="text" />
+                                <button type="submit">Create New Board</button>
+                            </form>
                         </div>
                     </details>
                     <Link href="/" className="bg-neutral-50 p-2 flex flex-row items-center">
@@ -85,3 +102,22 @@ export default function Layout({ children }: any) {
         </main>
     );
 }
+
+function generateRandomString(): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const format = [10, 21];
+
+    for (let i = 0; i < 32; i++) {
+        // Insert hyphens at the specified positions
+        if (format.includes(i)) {
+            result += '-';
+        } else {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            result += characters[randomIndex];
+        }
+    }
+
+    return result;
+}
+
