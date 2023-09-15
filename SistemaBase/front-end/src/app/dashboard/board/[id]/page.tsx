@@ -342,16 +342,23 @@ export default function Page({ params }: { params: { id: string } }) {
         const overColumnID = over.id;
         if (activeColumnID === overColumnID) return;
 
-        setKanbanData((prevKanbanData: KanbanData) => {
-            const activeColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === activeColumnID);
-            const overColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === overColumnID);
-            const newColumnsArray: Column[] = arrayMove(prevKanbanData.columns, activeColumnIndex, overColumnIndex);
 
-            return {
-                ...prevKanbanData,
-                columns: newColumnsArray,
-            };
-        });
+        if (active.data.current?.type === "COLUMN") {
+            setKanbanData((prevKanbanData: KanbanData) => {
+                const activeColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === activeColumnID);
+                const overColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === overColumnID);
+                const newColumnsArray: Column[] = arrayMove(prevKanbanData.columns, activeColumnIndex, overColumnIndex);
+
+                return {
+                    ...prevKanbanData,
+                    columns: newColumnsArray,
+                };
+            });
+        } else if (active.data.current?.type === "CARD") {
+            console.log("CARD END");
+            const destCol: Column = over.data.current?.column;
+
+        }
 
         console.log("DRAG END", event);
     }
