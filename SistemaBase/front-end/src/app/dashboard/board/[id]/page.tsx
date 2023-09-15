@@ -168,14 +168,14 @@ function CardElement(props: CardElementProps) {
 
     if (isDragging) {
         return (
-            <div className='bg-neutral-300 border-neutral-800 rounded-md w-64 h-16 border-2'
+            <div className='bg-neutral-300 border-neutral-950 rounded-md w-64 h-16 border-2'
                 ref={setNodeRef} style={style} />
         );
     }
 
 
     return (
-        <div className='my-2 bg-neutral-50 border-neutral-600 border-2 rounded-md p-2 relative'
+        <div className='my-2 bg-neutral-50 border-neutral-950 border-2 rounded-md p-2 relative'
             ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <h1>{card.title}</h1>
             <p>{card.description}</p>
@@ -223,7 +223,7 @@ function ColumnContainer(props: ColumnContainerProps) {
 
     if (isDragging) {
         return (
-            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-600 content-[" "]'>
+            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-950 content-[" "]'>
             </div>
         );
     }
@@ -234,10 +234,10 @@ function ColumnContainer(props: ColumnContainerProps) {
 
     return (
         <div className='relative w-64 h-full overflow-auto'
-            ref={setNodeRef} style={style}>
+            ref={setNodeRef} style={style} {...attributes} {...listeners} >
             <div className='w-full bg-neutral-50 rounded-md border-2 border-neutral-950 p-2 mb-4 flex flex-row justify-between items-center'>
                 <div
-                    {...attributes} {...listeners} onClick={() => setEditMode(true)}>
+                    onClick={() => setEditMode(true)}>
                     {editMode ? <input
                         type='text'
                         autoFocus
@@ -264,7 +264,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                     })}
                 </SortableContext>
             </div>
-            <button onClick={handleCreateCard} className=' relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center mb-8'>
+            <button onClick={handleCreateCard} className=' relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center'>
                 <PlusCircleIcon className='w-8 aspect-square absolute top-1 left-2' />
                 <h1 className='w-full text-center'>Add Card</h1>
             </button>
@@ -357,8 +357,8 @@ export default function Page({ params }: { params: { id: string } }) {
                     columns: newColumnsArray,
                 };
             });
-        } else if (active.data.current?.type === "CARD") {
-            console.log("ACTIVE CARD");
+        } else {
+            console.log("ACTIVE CARD", active.data.current?.type);
             if (over.data.current?.type === "COLUMN") {
                 console.log("OVER COLUMN");
                 setKanbanData((prevKanbanData: KanbanData) => {
@@ -401,7 +401,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 })
             } else if (over.data.current?.type === "CARD") {
                 console.log("OVER CARD");
-                if (Object.keys(active.data.current).length !== 0) {
+                if (Object.keys(active.data.current as any).length !== 0) {
                     console.log("CURRENT NOT EMPTY", event);
                     setKanbanData((prevKanbanData: KanbanData) => {
                         const cardEl: Card = active.data.current?.card;
@@ -637,9 +637,9 @@ export default function Page({ params }: { params: { id: string } }) {
     };
 
     return (
-        <main className="w-full h-full overflow-x-auto overflow-y-none">
+        <main className="w-full h-full overflow-x-auto overflow-y-hidden shrink-0">
             <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
-                <div className='w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-600 border-2'>
+                <div className='w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2'>
                     <form onSubmit={createCardForm}>
                         <input type='text' name='title' placeholder='Digite um nome' />
                         <textarea name='description' placeholder='Digite uma descrição'></textarea>
@@ -652,7 +652,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 <h1>Test {params.id}</h1>
             </div>
             <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragOver={onDragOver}>
-                <div className="flex flex-row justify-start items-start gap-x-2 w-full h-full">
+                <div className="flex flex-row justify-start items-start gap-x-2 w-full h-[95%] overflow-auto shrink-0">
                     <SortableContext items={columnsId}>
                         {kanbanData.columns.map((col: Column) => <ColumnContainer
                             createCard={createCard}
@@ -662,7 +662,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             column={col}
                             deleteColumn={removeColumn} />)}
                     </SortableContext>
-                    <button onClick={createNewColumn}>
+                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 justify-center items-center' onClick={createNewColumn}>
                         Add Column
                     </button>
                 </div>
