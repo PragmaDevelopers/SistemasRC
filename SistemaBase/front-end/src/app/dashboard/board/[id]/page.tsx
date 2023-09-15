@@ -280,6 +280,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const columnsId = useMemo(() => kanbanData.columns.map((col: Column) => col.id), [kanbanData]);
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
+    const [inputs, setInputs] = useState<String[]>(['']);
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
             distance: 2,  // 2px
@@ -571,10 +572,26 @@ export default function Page({ params }: { params: { id: string } }) {
         setShowCreateCardForm(true);
     };
 
+
+
+    const handleAddInput = () => {
+        setInputs([...inputs, '']); // Add a new input field
+    };
+
+    const handleInputChange = (index: number, value: any) => {
+        const newInputs = [...inputs];
+        newInputs[index] = value;
+        setInputs(newInputs);
+    };
+
+
+
     const createCardForm = (event: any) => {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         const cardDescription: string = event.target.description.value;
+        const checklistsItems: CheckListItem =
+            console.log(inputs);
 
         // Check if the card title is not empty before creating the card
         if (cardTitle.trim() !== "") {
@@ -639,13 +656,34 @@ export default function Page({ params }: { params: { id: string } }) {
     return (
         <main className="w-full h-full overflow-x-auto overflow-y-hidden shrink-0">
             <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
-                <div className='w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2'>
-                    <form onSubmit={createCardForm}>
-                        <input type='text' name='title' placeholder='Digite um nome' />
-                        <textarea name='description' placeholder='Digite uma descrição'></textarea>
-                        <button type='submit'>Create Card</button>
+                <div className='relative w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
+                    <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
+                    <form onSubmit={createCardForm} className='w-[80%] h-[80%] relative'>
+                        <div className='flex my-2'>
+                            <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
+                            <input id="CardTitle" type='text' name='title' placeholder='Digite um nome' />
+                        </div>
+                        <div className='flex flex-col my-2'>
+                            <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
+                            <textarea id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
+                        </div>
+                        <div className='w-full absolute bottom-0 flex justify-center items-center'>
+                            <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
+                        </div>
+                        {inputs.map((inputValue, index) => (
+                            <div key={index}>
+                                <input
+                                    type="text"
+                                    value={inputValue as any}
+                                    onChange={(e) => handleInputChange(index, e.target.value)}
+                                />
+                            </div>
+                        ))}
+                        <button type="button" onClick={handleAddInput}>
+                            Add Input
+                        </button>
                     </form>
-                    <button onClick={() => setShowCreateCardForm(false)}>Close</button>
+                    <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
                 </div>
             </div>
             <div className="">
