@@ -273,6 +273,7 @@ function ColumnContainer(props: ColumnContainerProps) {
 }
 
 export default function Page({ params }: { params: { id: string } }) {
+    const [tempDragState, setTempDragState] = useState<any>(null);
     const [kanbanData, setKanbanData] = useState<any>(data);
     const [activeColumn, setActiveColumn] = useState<Column | null>(null);
     const [activeCard, setActiveCard] = useState<Card | null>(null);
@@ -315,6 +316,8 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const onDragStart = (event: DragStartEvent) => {
         console.log("DRAG START", event);
+        setTempDragState(event);
+
         if (event.active.data.current !== undefined) {
             if (event.active.data.current.type === "COLUMN") {
                 setActiveColumn(event.active.data.current.column);
@@ -341,8 +344,9 @@ export default function Page({ params }: { params: { id: string } }) {
         const overColumnID = over.id;
         if (activeColumnID === overColumnID) return;
 
-
+        console.log("ON DRAG END EVENT", event);
         if (active.data.current?.type === "COLUMN") {
+            console.log("ACTIVE COLUMN");
             setKanbanData((prevKanbanData: KanbanData) => {
                 const activeColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === activeColumnID);
                 const overColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === overColumnID);
@@ -354,11 +358,127 @@ export default function Page({ params }: { params: { id: string } }) {
                 };
             });
         } else if (active.data.current?.type === "CARD") {
-            console.log("CARD END");
-            const destCol: Column = over.data.current?.column;
-            // TODO: Move Card from srcCol to destCol
-            // remove from src
-            // update everything.
+            console.log("ACTIVE CARD");
+            if (over.data.current?.type === "COLUMN") {
+                console.log("OVER COLUMN");
+                setKanbanData((prevKanbanData: KanbanData) => {
+                    // Drop on other column
+                    const cardEl: Card = active.data.current?.card;
+                    const destCol: Column = over.data.current?.column;
+                    const srcCol: Column | undefined = prevKanbanData.columns.find((col: Column) => col.id === active.data.current?.card.columnID);
+                    if (!srcCol) return;
+
+                    const updatedCardsList = srcCol.cardsList.filter((card) => card.id !== cardEl.id);
+
+                    const updatedColumn = {
+                        ...srcCol,
+                        cardsList: updatedCardsList,
+                    };
+
+                    const newCard: Card = {
+                        ...cardEl,
+                        columnID: destCol.id,
+                    }
+
+                    const resultDestCol: Column = {
+                        ...destCol,
+                        cardsList: [...destCol.cardsList, newCard],
+                    }
+
+                    const updatedSrcColumns: Column[] = prevKanbanData.columns.map((column: Column) =>
+                        column.id === updatedColumn.id ? updatedColumn : column
+                    );
+
+                    const updatedColumns: Column[] = updatedSrcColumns.map((col: Column) => col.id === resultDestCol.id ? resultDestCol : col);
+
+                    return {
+                        ...prevKanbanData,
+                        columns: updatedColumns,
+                    };
+
+                    // drop on card in other column
+
+                })
+            } else if (over.data.current?.type === "CARD") {
+                console.log("OVER CARD");
+                if (Object.keys(active.data.current).length !== 0) {
+                    console.log("CURRENT NOT EMPTY", event);
+                    setKanbanData((prevKanbanData: KanbanData) => {
+                        const cardEl: Card = active.data.current?.card;
+                        const destCol: Column | undefined = prevKanbanData.columns.find((col: Column) => col.id === over.data.current?.card.columnID);
+                        const srcCol: Column | undefined = prevKanbanData.columns.find((col: Column) => col.id === active.data.current?.card.columnID);
+                        if (!srcCol) return;
+                        if (destCol === undefined) return;
+
+                        console.log(destCol, srcCol);
+                        const updatedCardsList = srcCol.cardsList.filter((card) => card.id !== cardEl.id);
+
+                        const updatedColumn = {
+                            ...srcCol,
+                            cardsList: updatedCardsList,
+                        };
+
+                        const newCard: Card = {
+                            ...cardEl,
+                            columnID: destCol.id,
+                        }
+                        const resultDestCol: Column = {
+                            ...destCol,
+                            cardsList: [...destCol.cardsList, newCard],
+                        }
+
+                        const updatedSrcColumns: Column[] = prevKanbanData.columns.map((column: Column) =>
+                            column.id === updatedColumn.id ? updatedColumn : column
+                        );
+
+                        const updatedColumns: Column[] = updatedSrcColumns.map((col: Column) => col.id === resultDestCol.id ? resultDestCol : col);
+
+                        return {
+                            ...prevKanbanData,
+                            columns: updatedColumns,
+                        };
+
+                    });
+                } else {
+                    console.log("CURRENT EMPTY");
+                    setKanbanData((prevKanbanData: KanbanData) => {
+                        const tempEndDragState: DragEndEvent = tempDragState as DragEndEvent;
+                        const cardEl: Card = tempEndDragState.active.data.current?.card;
+                        const destCol: Column | undefined = prevKanbanData.columns.find((col: Column) => col.id === over.data.current?.card.columnID);
+                        const srcCol: Column | undefined = prevKanbanData.columns.find((col: Column) => col.id === tempEndDragState.active.data.current?.card.columnID);
+                        if (!srcCol) return;
+                        if (destCol === undefined) return;
+
+                        const updatedCardsList = srcCol.cardsList.filter((card) => card.id !== cardEl.id);
+
+                        const updatedColumn = {
+                            ...srcCol,
+                            cardsList: updatedCardsList,
+                        };
+
+                        const newCard: Card = {
+                            ...cardEl,
+                            columnID: destCol.id,
+                        }
+                        const resultDestCol: Column = {
+                            ...destCol,
+                            cardsList: [...destCol.cardsList, newCard],
+                        }
+
+                        const updatedSrcColumns: Column[] = prevKanbanData.columns.map((column: Column) =>
+                            column.id === updatedColumn.id ? updatedColumn : column
+                        );
+
+                        const updatedColumns: Column[] = updatedSrcColumns.map((col: Column) => col.id === resultDestCol.id ? resultDestCol : col);
+
+                        return {
+                            ...prevKanbanData,
+                            columns: updatedColumns,
+                        };
+
+                    });
+                }
+            }
         }
 
         console.log("DRAG END", event);
@@ -479,8 +599,6 @@ export default function Page({ params }: { params: { id: string } }) {
                 const updatedColumns = prevData.columns.map((column) =>
                     column.id === tempColumnID ? updatedColumn : column
                 );
-
-                console.log(newCard);
 
                 return {
                     ...prevData,
