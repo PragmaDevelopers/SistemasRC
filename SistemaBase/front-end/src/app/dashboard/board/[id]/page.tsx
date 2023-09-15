@@ -280,7 +280,8 @@ export default function Page({ params }: { params: { id: string } }) {
     const columnsId = useMemo(() => kanbanData.columns.map((col: Column) => col.id), [kanbanData]);
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
-    const [inputs, setInputs] = useState<String[]>(['']);
+    const [lists, setLists] = useState([{ title: '', inputs: [''], id: generateRandomString() }]);
+
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
             distance: 2,  // 2px
@@ -572,16 +573,26 @@ export default function Page({ params }: { params: { id: string } }) {
         setShowCreateCardForm(true);
     };
 
-
-
-    const handleAddInput = () => {
-        setInputs([...inputs, '']); // Add a new input field
+    const handleInputChange = (listIndex: any, inputIndex: any, value: any) => {
+        const newLists = [...lists];
+        newLists[listIndex].inputs[inputIndex] = value;
+        setLists(newLists);
     };
 
-    const handleInputChange = (index: number, value: any) => {
-        const newInputs = [...inputs];
-        newInputs[index] = value;
-        setInputs(newInputs);
+    const updateListTitle = (listIndex: any, value: string) => {
+        const newLists = [...lists];
+        newLists[listIndex].title = value;
+        setLists(newLists);
+    }
+
+    const handleAddList = () => {
+        setLists([...lists, { title: 'Empty List', inputs: [''], id: generateRandomString() }]); // Add a new list
+    };
+
+    const handleAddInput = (listIndex: any) => {
+        const newLists = [...lists];
+        newLists[listIndex].inputs.push('');
+        setLists(newLists);
     };
 
 
@@ -590,8 +601,8 @@ export default function Page({ params }: { params: { id: string } }) {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         const cardDescription: string = event.target.description.value;
-        const checklistsItems: CheckListItem =
-            console.log(inputs);
+        //const checklistsItems: CheckListItem =
+        console.log(lists);
 
         // Check if the card title is not empty before creating the card
         if (cardTitle.trim() !== "") {
@@ -670,18 +681,31 @@ export default function Page({ params }: { params: { id: string } }) {
                         <div className='w-full absolute bottom-0 flex justify-center items-center'>
                             <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
                         </div>
-                        {inputs.map((inputValue, index) => (
-                            <div key={index}>
-                                <input
-                                    type="text"
-                                    value={inputValue as any}
-                                    onChange={(e) => handleInputChange(index, e.target.value)}
-                                />
-                            </div>
-                        ))}
-                        <button type="button" onClick={handleAddInput}>
-                            Add Input
-                        </button>
+                        <div>
+                            {lists.map((list, listIndex) => (
+                                <div key={listIndex}>
+                                    <input type='text' value={list.title} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                    <h2>{list.title}</h2>
+                                    {list.inputs.map((inputValue, inputIndex) => (
+                                        <div key={inputIndex}>
+                                            <input
+                                                type="text"
+                                                value={inputValue}
+                                                onChange={(e) =>
+                                                    handleInputChange(listIndex, inputIndex, e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                    ))}
+                                    <button type="button" onClick={() => handleAddInput(listIndex)}>
+                                        Add Input
+                                    </button>
+                                </div>
+                            ))}
+                            <button type="button" onClick={handleAddList}>
+                                Add List
+                            </button>
+                        </div>
                     </form>
                     <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
                 </div>
