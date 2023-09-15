@@ -1,10 +1,11 @@
 "use client";
 
 //import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
-import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { useEffect, useMemo, useState } from 'react';
+import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent, DragOverlay, useSensors, useSensor, PointerSensor } from '@dnd-kit/core';
+import { MouseEventHandler, useEffect, useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
-import { SortableContext, useSortable } from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
+import { createPortal } from 'react-dom';
 
 type CheckList = {
     name: string,
@@ -28,113 +29,23 @@ type Card = {
 
 type Column = {
     title: string,
-    type: number,
+    columnType: number,
     id: string,
     cardsList: Card[],
 }
 
 type KanbanData = {
     columns: Column[],
-    columnOrder: String[],
     kanbanId: string,
 }
 
-function CheckListItemElement(props: CheckListItem) {
-    const [checkState, setCheckState] = useState<boolean>(props.completed);
-    const handleCheckState = () => setCheckState(!checkState);
-    return (
-        <div className="flex my-1">
-            <input onClick={handleCheckState} className="mr-2" type="checkbox" checked={checkState} id={props.name} />
-            <label htmlFor={props.name}>{props.name}</label>
-        </div>
-    );
-}
-
-function CheckListElement(props: CheckList) {
-    return (
-        <div>
-            <h1>{props.name}</h1>
-            <div>
-                {props.items.map((check: CheckListItem) => {
-                    return (
-                        <CheckListItemElement name={check.name} completed={check.completed} checklistId={props.id} key={props.id} />
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-interface CardProps extends Card {
-    index: number,
-}
-
-function CardElement(props: CardProps) {
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id: props.id,
-    });
-    const style = {
-        transform: CSS.Translate.toString(transform),
-    }
-
-    return (
-        <div ref={setNodeRef} {...listeners} {...attributes} style={style} className="w-full bg-neutral-50 rounded-md my-4 p-2">
-            <h1>{props.title}</h1>
-            <p>{props.description}</p>
-            <div>
-                {props.checklists.map((item: CheckList) => <CheckListElement id={item.id} name={item.name} items={item.items} />)}
-            </div>
-        </div>
-    );
-}
-
-interface ColumnProps extends Column {
-    removeFunc: any,
-}
-
-function ColumnElement(props: ColumnProps) {
-    const handleRemove = () => {
-        props.removeFunc(props.id)
-    }
-
-    const { setNodeRef, attributes, listeners, transform, transition } = useSortable({
-        id: props.id,
-        data: {
-            dragType: "COLUMN",
-            ...props,
-        }
-    });
-
-    const style = {
-        transition,
-        transform: CSS.Transform.toString(transform),
-    }
-
-    return (
-        <div ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className="w-64">
-            <h1>{props.title}</h1>
-            <h2>{props.type}</h2>
-            <button onClick={handleRemove}>
-                Delete
-            </button>
-            <div>
-                {props.cardsList.map((cardEl: Card, index: number) => <CardElement index={index} title={cardEl.title} id={cardEl.id} columnID={props.id} checklists={cardEl.checklists} description={cardEl.description} />)}
-            </div>
-        </div>
-    );
-}
 
 const data: KanbanData = {
-    columnOrder: ['column-0'],
     kanbanId: 'aaaaaaaaaa-bbbbbbbbbb-cccccccccc',
     columns: [
         {
             id: 'column-0',
-            type: 0,
+            columnType: 0,
             title: "Column 00",
             cardsList: [
                 {
@@ -235,57 +146,194 @@ const data: KanbanData = {
     ],
 };
 
+interface ColumnContainerProps {
+    column: Column;
+    deleteColumn: (id: string) => void;
+    updateColumnTitle: (id: string, title: string) => void;
+    createCard: (columnID: string) => void;
+}
+
+function ColumnContainer(props: ColumnContainerProps) {
+    const { column, deleteColumn, updateColumnTitle, createCard } = props;
+    const [editMode, setEditMode] = useState<boolean>(false);
+
+    const handleRemove = () => {
+        deleteColumn(column.id);
+    }
+
+    const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
+        id: column.id,
+        data: {
+            type: 'COLUMN',
+            column,
+        },
+        disabled: editMode,
+    });
+
+    const style = {
+        transition,
+        transform: CSS.Transform.toString(transform),
+    };
+
+    if (isDragging) {
+        return (
+            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-600'>
+            </div>
+        );
+    }
+
+    const handleCreateCard = () => {
+        createCard(column.id);
+    }
+
+    return (
+        <div className='relative w-64 bg-neutral-50 rounded-md h-fit overflow-hidden'
+            ref={setNodeRef} style={style}>
+            <div className='w-full bg-neutral-100 border-b-2 border-neutral-400 p-2'
+                {...attributes} {...listeners} onClick={() => setEditMode(true)}>
+                {editMode ? <input
+                    type='text'
+                    autoFocus
+                    onBlur={() => setEditMode(false)}
+                    onKeyDown={(e: any) => {
+                        if (e.key !== "Enter") return;
+                        setEditMode(false);
+                    }}
+                    value={column.title}
+                    onChange={(e: any) => updateColumnTitle(column.id, e.target.value)}
+                /> :
+                    column.title}
+
+            </div>
+            <button onClick={handleRemove}>
+                delete
+            </button>
+            <div className='p-2'>
+                {column.cardsList.map((card: Card) => {
+                    return (
+                        <div>
+                            {card.title}
+                        </div>
+                    );
+                })}
+            </div>
+            <button onClick={handleCreateCard}>
+                Add Card
+            </button>
+        </div>
+    );
+}
+
 export default function Page({ params }: { params: { id: string } }) {
-    const [kanbanData, setKanbanData] = useState<KanbanData>(data);
-    const columnsID: any = kanbanData.columnOrder;
-    const addColumn = () => {
-        setKanbanData((prevKanbanData) => {
-            const newColumnID = `column-${prevKanbanData.columnOrder.length}`;
-            const newColumn = {
-                type: 0,
-                id: newColumnID,
-                cardsList: [],
-                title: `Column ${prevKanbanData.columnOrder.length}`,
+    const [kanbanData, setKanbanData] = useState<any>(data);
+    const [activeColumn, setActiveColumn] = useState<Column | null>(null);
+    const columnsId = useMemo(() => kanbanData.columns.map((col: Column) => col.id), [kanbanData]);
+    const sensors = useSensors(useSensor(PointerSensor, {
+        activationConstraint: {
+            distance: 2,  // 2px
+        }
+    }));
+
+    const createCard = (columnID: string) => {
+        setKanbanData((prevData: KanbanData) => {
+            const newCard: Card = {
+                id: generateRandomString(),
+                title: "New Card",
+                columnID: columnID,
+                description: "Insert Description",
+                checklists: [],
+            }
+
+            const targetColumn = prevData.columns.find((column) => column.id === columnID);
+            if (!targetColumn) {
+                return prevData;
+            }
+
+            const updatedColumn = {
+                ...targetColumn,
+                cardsList: [...targetColumn.cardsList, newCard],
             };
+            const updatedColumns = prevData.columns.map((column) =>
+                column.id === columnID ? updatedColumn : column
+            );
+
             return {
-                ...prevKanbanData,
-                columnOrder: [...prevKanbanData.columnOrder, newColumnID],
-                columns: {
-                    ...prevKanbanData.columns,
-                    [newColumnID]: newColumn,
-                },
+                ...prevData,
+                columns: updatedColumns,
             };
         });
     };
 
+    const createNewColumn = () => {
+        const newColumn = {
+            id: generateRandomString(),
+            type: 0,
+            title: `Column ${kanbanData.columns.length}`,
+            cardsList: [],
+        };
+
+        setKanbanData((prevData: KanbanData) => ({
+            ...prevData,
+            columns: [...prevData.columns, newColumn],
+        }));
+    }
+
     const removeColumn = (columnIDToRemove: string) => {
-        setKanbanData((prevKanbanData) => {
-            // Create a copy of the columns object without the specified columnID
-            const updatedColumns = { ...prevKanbanData.columns };
-            delete updatedColumns[columnIDToRemove];
+        // Create a copy of the columns array without the specified column
+        const updatedColumns = kanbanData.columns.filter(
+            (column: Column) => column.id !== columnIDToRemove
+        );
 
-            // Create a copy of the columnOrder array without the removed columnID
-            const updatedColumnOrder = prevKanbanData.columnOrder.filter(
-                (columnID) => columnID !== columnIDToRemove
-            );
+        // Update the Kanban data state with the updated columns array
+        setKanbanData((prevData: KanbanData) => ({
+            ...prevData,
+            columns: updatedColumns,
+        }));
+    }
 
-            return {
-                ...prevKanbanData,
-                columns: updatedColumns,
-                columnOrder: updatedColumnOrder,
-            };
-        });
+
+    const onDragStart = (event: DragStartEvent) => {
+        console.log("DRAG START", event);
+        if (event.active.data.current !== undefined) {
+            if (event.active.data.current.type === "COLUMN") {
+                setActiveColumn(event.active.data.current.column);
+                return;
+            }
+        }
     }
 
     const onDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-        const activeColumnId = active.id;
-        const overColumnId = over.id;
+        if (!over) return;
 
-        setKanbanData((prevKanbanData) => {
-            const updatedColumns = { ...prevKanbanData.columns };
-            const activeColumnIndex = prevKanbanData.columnOrder.findIndex((col) => col.id === activeColumnId);
-            const overColumnIndex = prevKanbanData.columnOrder.findIndex(())
+        const activeColumnID = active.id;
+        const overColumnID = over.id;
+        if (activeColumnID === overColumnID) return;
+
+        setKanbanData((prevKanbanData: KanbanData) => {
+            const activeColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === activeColumnID);
+            const overColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === overColumnID);
+            const newColumnsArray: Column[] = arrayMove(prevKanbanData.columns, activeColumnIndex, overColumnIndex);
+
+            return {
+                ...prevKanbanData,
+                columns: newColumnsArray,
+            };
+        });
+
+        console.log("DRAG END", event);
+    }
+
+    const updateColumnTitle = (columnID: string, title: string) => {
+        setKanbanData((prevKanbanData: KanbanData) => {
+            const newColumns: Column[] = prevKanbanData.columns.map((col: Column) => {
+                if (col.id !== columnID) return col;
+                return { ...col, title: title };
+            })
+            return {
+                ...prevKanbanData,
+                columns: newColumns,
+            }
         })
     }
 
@@ -294,30 +342,40 @@ export default function Page({ params }: { params: { id: string } }) {
             <div className="">
                 <h1>Test {params.id}</h1>
             </div>
-            <div className="grid grid-flow-col auto-cols-auto grid-rows-1 gap-x-4">
-                <DndContext onDragEnd={(event: DragEndEvent) => { console.log("DRAG END", event) }} onDragStart={(event: DragStartEvent) => { console.log("DRAG START", event) }}>
-                    <SortableContext items={columnsID}>
-                        {
-                            kanbanData.columnOrder.map((columnID) => {
-                                const columnData = kanbanData.columns[columnID as string];
-                                return (
-                                    <ColumnElement
-                                        title={columnData.title}
-                                        cardsList={columnData.cardsList}
-                                        type={columnData.type}
-                                        id={columnData.id}
-                                        key={columnData.id}
-                                        removeFunc={removeColumn} />
-                                );
-                            })
-                        }
+            <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+                <div className="grid grid-flow-col auto-cols-auto grid-rows-1 gap-x-2">
+                    <SortableContext items={columnsId}>
+                        {kanbanData.columns.map((col: Column) => <ColumnContainer
+                            createCard={createCard}
+                            updateColumnTitle={updateColumnTitle} key={col.id} column={col} deleteColumn={removeColumn} />)}
                     </SortableContext>
-                </DndContext>
-                <button onClick={addColumn} className='border-2 border-neutral-600 rounded-md p-2 bg-neutral-50 w-fit h-fit'>
-                    add column
-                </button>
-            </div>
+                    <button onClick={createNewColumn}>
+                        Add Column
+                    </button>
+                </div>
+                {createPortal(<DragOverlay>
+                    {activeColumn && <ColumnContainer createCard={createCard} updateColumnTitle={updateColumnTitle} column={activeColumn} deleteColumn={removeColumn} />}
+                </DragOverlay>, document.body)}
+            </DndContext>
         </main>
     );
+}
+
+function generateRandomString(): string {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const format = [10, 21];
+
+    for (let i = 0; i < 32; i++) {
+        // Insert hyphens at the specified positions
+        if (format.includes(i)) {
+            result += '-';
+        } else {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            result += characters[randomIndex];
+        }
+    }
+
+    return result;
 }
 
