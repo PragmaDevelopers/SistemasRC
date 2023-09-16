@@ -254,13 +254,14 @@ export default function Page({ params }: { params: { id: string } }) {
     const [kanbanData, setKanbanData] = useState<any>({});
     const [activeColumn, setActiveColumn] = useState<Column | null>(null);
     const [activeCard, setActiveCard] = useState<Card | null>(null);
-    const columnsId = kanbanData !== undefined ? (Object.keys(kanbanData).length > 0 ? useMemo(() => {
-        if (kanbanData.columns !== undefined) {
-            return kanbanData.columns?.map((col: Column) => col.id);
+    const columnsId = useMemo(() => {
+        if (kanbanData && kanbanData.columns && kanbanData.columns.length > 0) {
+            return kanbanData.columns.map((col: any) => col.id);
         } else {
-            return [''];
+            return [];
         }
-    }, [kanbanData]) : [""]) : [""];
+    }, [kanbanData]);
+
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
     const [lists, setLists] = useState([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
@@ -273,7 +274,6 @@ export default function Page({ params }: { params: { id: string } }) {
 
 
     const createNewColumn = () => {
-        console.log(columnsId);
         if (kanbanData.columns !== undefined) {
             const newColumn = {
                 id: generateRandomString(),
@@ -680,7 +680,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
     return (
         <main className="w-full h-full overflow-x-auto overflow-y-hidden shrink-0">
-
+            <CreateEditCard showCreateCardForm={showCreateCardForm} setShowCreateCardForm={setShowCreateCardForm} />
             <div className="">
                 <h1>{params.id}</h1>
             </div>
