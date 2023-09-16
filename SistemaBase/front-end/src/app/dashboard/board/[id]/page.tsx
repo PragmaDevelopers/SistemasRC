@@ -209,7 +209,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div>
-                            {checklists.map((list: CheckList, listIndex: number) => (
+                            {checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
                                         <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
@@ -332,7 +332,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
 
     const onDragStart = (event: DragStartEvent) => {
-        console.log("DRAG START", event);
+        //console.log("DRAG START", event);
         setTempDragState(event);
 
         if (event.active.data.current !== undefined) {
@@ -361,9 +361,9 @@ export default function Page({ params }: { params: { id: string } }) {
         const overColumnID = over.id;
         if (activeColumnID === overColumnID) return;
 
-        console.log("ON DRAG END EVENT", event);
+        //console.log("ON DRAG END EVENT", event);
         if (active.data.current?.type === "COLUMN") {
-            console.log("ACTIVE COLUMN");
+            //console.log("ACTIVE COLUMN");
             setKanbanData((prevKanbanData: KanbanData) => {
                 const activeColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === activeColumnID);
                 const overColumnIndex = prevKanbanData.columns.findIndex((col: Column) => col.id === overColumnID);
@@ -375,9 +375,9 @@ export default function Page({ params }: { params: { id: string } }) {
                 };
             });
         } else {
-            console.log("ACTIVE CARD", active.data.current?.type);
+            //console.log("ACTIVE CARD", active.data.current?.type);
             if (over.data.current?.type === "COLUMN") {
-                console.log("OVER COLUMN");
+                //console.log("OVER COLUMN");
                 setKanbanData((prevKanbanData: KanbanData) => {
                     // Drop on other column
                     const cardEl: Card = active.data.current?.card;
@@ -417,9 +417,9 @@ export default function Page({ params }: { params: { id: string } }) {
 
                 })
             } else if (over.data.current?.type === "CARD") {
-                console.log("OVER CARD");
+                //console.log("OVER CARD");
                 if (Object.keys(active.data.current as any).length !== 0) {
-                    console.log("CURRENT NOT EMPTY", event);
+                    //console.log("CURRENT NOT EMPTY", event);
                     setKanbanData((prevKanbanData: KanbanData) => {
                         const cardEl: Card = active.data.current?.card;
                         const destCol: Column | undefined = prevKanbanData.columns.find((col: Column) => col.id === over.data.current?.card.columnID);
@@ -427,7 +427,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         if (!srcCol) return;
                         if (destCol === undefined) return;
 
-                        console.log(destCol, srcCol);
+                        //console.log(destCol, srcCol);
                         const updatedCardsList = srcCol.cardsList.filter((card) => card.id !== cardEl.id);
 
                         const updatedColumn = {
@@ -457,7 +457,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
                     });
                 } else {
-                    console.log("CURRENT EMPTY");
+                    //console.log("CURRENT EMPTY");
                     setKanbanData((prevKanbanData: KanbanData) => {
                         const tempEndDragState: DragEndEvent = tempDragState as DragEndEvent;
                         const cardEl: Card = tempEndDragState.active.data.current?.card;
@@ -498,7 +498,7 @@ export default function Page({ params }: { params: { id: string } }) {
             }
         }
 
-        console.log("DRAG END", event);
+        //console.log("DRAG END", event);
     }
 
     const onDragOver = (event: DragOverEvent) => {
@@ -509,7 +509,7 @@ export default function Page({ params }: { params: { id: string } }) {
         const overID = over.id;
         if (activeID === overID) return;
 
-        console.log("DRAG OVER", event);
+        //console.log("DRAG OVER", event);
 
         const isActiveCard = active.data.current?.type === "CARD";
         const isOverCard = over.data.current?.type === "CARD";
@@ -669,6 +669,13 @@ export default function Page({ params }: { params: { id: string } }) {
         });
     };
 
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                                                                       //
+    //                          CHECKLISTS LOGIC                             //
+    //                                                                       //
+    ///////////////////////////////////////////////////////////////////////////
+
     const handleInputChange = (listIndex: any, inputIndex: any, value: any) => {
         const newLists = [...lists];
         newLists[listIndex].inputs[inputIndex] = value;
@@ -683,6 +690,12 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const handleAddList = () => {
         setLists([...lists, { title: 'Empty List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
+        const tmpTempCard: Card = tempCard as Card;
+        setTempCard({
+            title: tmpTempCard.title,
+            id: tmpTempCard.id,
+
+        } as Card);
     };
 
     const handleAddInput = (listIndex: any) => {
