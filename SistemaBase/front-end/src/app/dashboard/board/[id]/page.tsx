@@ -176,10 +176,22 @@ interface CreateEditCardProps {
     handleAddInput: any,
     setShowCreateCardForm: any,
     handleInputChange: any,
+    handleToggleCheckbox: any,
 }
 
 function CreateEditCard(props: CreateEditCardProps) {
-    const { setShowCreateCardForm, showCreateCardForm, createCardForm, card, handleAddList, handleRemoveInput, handleRemoveList, updateListTitle, handleAddInput, handleInputChange } = props;
+    const { setShowCreateCardForm,
+        showCreateCardForm,
+        createCardForm,
+        card,
+        handleAddList,
+        handleRemoveInput,
+        handleRemoveList,
+        updateListTitle,
+        handleAddInput,
+        handleInputChange,
+        handleToggleCheckbox } = props;
+
     const { checklists } = card;
 
     return (
@@ -197,10 +209,10 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div>
-                            {lists.map((list: any, listIndex: any) => (
+                            {checklists.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.title} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -208,12 +220,17 @@ function CreateEditCard(props: CreateEditCardProps) {
                                             <MinusCircleIcon className='w-6 aspect-square' />
                                         </button>
                                     </div>
-                                    {list.inputs.map((inputValue: any, inputIndex: any) => (
+                                    {list.items.map((inputValue: CheckListItem, inputIndex: number) => (
                                         <div key={inputIndex} className='flex items-center my-2'>
+                                            <input
+                                                type="checkbox"
+                                                checked={inputValue.completed}
+                                                onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
+                                            />
                                             <input
                                                 className='border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
                                                 type="text"
-                                                value={inputValue}
+                                                value={inputValue.name}
                                                 placeholder='Adicionar Tarefa'
                                                 onChange={(e) =>
                                                     handleInputChange(listIndex, inputIndex, e.target.value)
@@ -263,7 +280,7 @@ export default function Page({ params }: { params: { id: string } }) {
     }, [kanbanData]);
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
-    const [lists, setLists] = useState([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
+    const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
 
     const sensors = useSensors(useSensor(PointerSensor, {
@@ -586,7 +603,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
         const checklists: CheckList[] = lists.map((itn) => {
             const items = itn.inputs.map((i) => {
-                return { name: i, completed: false, checklistId: itn.id } as CheckListItem;
+                return { name: i.name, completed: i.checked, checklistId: itn.id } as CheckListItem;
             });
             return { name: itn.title, items: items, id: itn.id } as CheckList;
         });
@@ -623,7 +640,7 @@ export default function Page({ params }: { params: { id: string } }) {
         }
         event.target.reset();
         setTempColumnID("");
-        setLists([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
+        setLists([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
         setShowCreateCardForm(false);
     };
 
@@ -658,19 +675,19 @@ export default function Page({ params }: { params: { id: string } }) {
         setLists(newLists);
     };
 
-    const updateListTitle = (listIndex: any, value: string) => {
+    const updateListTitle = (listIndex: any, itemIndex: any, value: string) => {
         const newLists = [...lists];
-        newLists[listIndex].title = value;
+        newLists[listIndex].inputs[itemIndex].name = value;
         setLists(newLists);
     }
 
     const handleAddList = () => {
-        setLists([...lists, { title: 'Empty List', inputs: [''], id: generateRandomString() }]); // Add a new list
+        setLists([...lists, { title: 'Empty List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     };
 
     const handleAddInput = (listIndex: any) => {
         const newLists = [...lists];
-        newLists[listIndex].inputs.push('');
+        newLists[listIndex].inputs.push({ name: '', checked: false });
         setLists(newLists);
     };
 
@@ -683,6 +700,12 @@ export default function Page({ params }: { params: { id: string } }) {
     const handleRemoveList = (listIndex: any) => {
         const newLists = [...lists];
         newLists.splice(listIndex, 1);
+        setLists(newLists);
+    };
+
+    const handleToggleCheckbox = (listIndex: any, itemIndex: any) => {
+        const newLists = [...lists];
+        newLists[listIndex].inputs[itemIndex].checked = !newLists[listIndex].inputs[itemIndex].checked;
         setLists(newLists);
     };
 
@@ -699,6 +722,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 handleAddInput={handleAddInput}
                 handleRemoveList={handleRemoveList}
                 handleRemoveInput={handleRemoveInput}
+                handleToggleCheckbox={handleToggleCheckbox}
             />
             <div className="">
                 <h1>{params.id}</h1>
