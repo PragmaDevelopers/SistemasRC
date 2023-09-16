@@ -261,10 +261,10 @@ export default function Page({ params }: { params: { id: string } }) {
             return [];
         }
     }, [kanbanData]);
-
     const [showCreateCardForm, setShowCreateCardForm] = useState<boolean>(false);
     const [tempColumnID, setTempColumnID] = useState<string>("");
     const [lists, setLists] = useState([{ title: 'New List', inputs: [''], id: generateRandomString() }]);
+    const [tempCard, setTempCard] = useState<any>({});
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -568,6 +568,14 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const createCard = (columnID: string) => {
         setTempColumnID(columnID);
+        const newCard: Card = {
+            id: generateRandomString(),
+            title: "",
+            columnID: columnID,
+            description: "",
+            checklists: [],
+        }
+        setTempCard(newCard);
         setShowCreateCardForm(true);
     };
 
@@ -680,7 +688,18 @@ export default function Page({ params }: { params: { id: string } }) {
 
     return (
         <main className="w-full h-full overflow-x-auto overflow-y-hidden shrink-0">
-            <CreateEditCard showCreateCardForm={showCreateCardForm} setShowCreateCardForm={setShowCreateCardForm} />
+            <CreateEditCard
+                showCreateCardForm={showCreateCardForm}
+                setShowCreateCardForm={setShowCreateCardForm}
+                card={tempCard as Card}
+                createCardForm={createCardForm}
+                updateListTitle={updateListTitle}
+                handleInputChange={handleInputChange}
+                handleAddList={handleAddList}
+                handleAddInput={handleAddInput}
+                handleRemoveList={handleRemoveList}
+                handleRemoveInput={handleRemoveInput}
+            />
             <div className="">
                 <h1>{params.id}</h1>
             </div>
