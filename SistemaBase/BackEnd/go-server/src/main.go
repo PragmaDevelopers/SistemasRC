@@ -37,7 +37,7 @@ type Column struct {
 	Title      string `json:"title"`
 	ID         string `json:"id"`
 	ColumnType uint8  `json:"columnType"`
-	kanbanID   string `json:"kanbanId"`
+	KanbanID   string `json:"kanbanId"`
 }
 
 type Kanban struct {
@@ -170,7 +170,7 @@ func createColumn(db *sql.DB) gin.HandlerFunc {
 
 		db.Exec(`
 			INSERT INTO columns_data (id, title, column_type, kanban_id) VALUES ($1, $2, $3, $4)
-		`, columnData.ID, columnData.Title, columnData.ColumnType, columnData.kanbanID)
+		`, columnData.ID, columnData.Title, columnData.ColumnType, columnData.KanbanID)
 		fmt.Println("COLUMN DATA INSERTED INTO columns_data TABLE")
 
 	}
@@ -179,7 +179,7 @@ func createColumn(db *sql.DB) gin.HandlerFunc {
 func getColumn(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		kanbanId := c.Param("kanbanid")
-
+		fmt.Println(kanbanId)
 	}
 }
 
