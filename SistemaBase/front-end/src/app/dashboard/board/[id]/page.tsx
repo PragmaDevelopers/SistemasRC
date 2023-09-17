@@ -45,10 +45,11 @@ interface CardElementProps {
     setShowCreateCardForm: any;
     setTempCard: any;
     setIsEdition: any;
+    setTempColumnID: any;
 }
 
 function CardElement(props: CardElementProps) {
-    const { card, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition } = props;
+    const { card, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition, setTempColumnID } = props;
     const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
         id: card.id,
         data: {
@@ -71,6 +72,7 @@ function CardElement(props: CardElementProps) {
 
     const editCard = () => {
         setTempCard(card as Card);
+        setTempColumnID(card.columnID);
         setIsEdition(true);
         setShowCreateCardForm(true);
     }
@@ -100,10 +102,11 @@ interface ColumnContainerProps {
     setShowCreateCardForm: any;
     setTempCard: any;
     setIsEdition: any;
+    setTempColumnID: any;
 }
 
 function ColumnContainer(props: ColumnContainerProps) {
-    const { column, deleteColumn, updateColumnTitle, createCard, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition } = props;
+    const { column, deleteColumn, updateColumnTitle, createCard, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition, setTempColumnID } = props;
     const [editMode, setEditMode] = useState<boolean>(false);
     const cardsIds = useMemo(() => { return column.cardsList.map((card: Card) => card.id) }, [column]);
 
@@ -164,7 +167,7 @@ function ColumnContainer(props: ColumnContainerProps) {
             <div>
                 <SortableContext items={cardsIds}>
                     {column.cardsList.map((card: Card) => {
-                        return <CardElement setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} setIsEdition={setIsEdition} />
+                        return <CardElement setTempColumnID={setTempColumnID} setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} setIsEdition={setIsEdition} />
                     })}
                 </SortableContext>
             </div>
@@ -205,11 +208,15 @@ function CreateEditCard(props: CreateEditCardProps) {
         handleToggleCheckbox,
         isEdition } = props;
 
+    const handleCreateCardForm = (event: any) => {
+        createCardForm(event, isEdition);
+    }
+
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
             <div className='relative w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
                 <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
-                <form onSubmit={createCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
+                <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
                             <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
@@ -621,13 +628,13 @@ export default function Page({ params }: { params: { id: string } }) {
                     title: cardTitle,
                     description: cardDescription,
                 }
-                console.log(newCard);
                 const targetColumn = prevData.columns.find((column) => column.id === tempColumnID);
                 if (!targetColumn) {
                     return prevData;
                 }
 
                 if (!isEdition) {
+                    console.log(`CARD ${newCard.id} CREATED.`);
                     const updatedColumn = {
                         ...targetColumn,
                         cardsList: [...targetColumn.cardsList, newCard],
@@ -642,9 +649,11 @@ export default function Page({ params }: { params: { id: string } }) {
                         columns: updatedColumns,
                     };
                 } else {
+                    console.log(`CARD ${newCard.id} EDITED.`);
                     const cardIndex = targetColumn.cardsList.findIndex((card: Card) => card.id === newCard.id);
                     if (cardIndex !== -1) {
                         const updatedColumnCardList = targetColumn.cardsList.map((card: Card) => card.id === newCard.id ? newCard : card)
+                        console.log(updatedColumnCardList);
                         const updatedColumn = {
                             ...targetColumn,
                             cardsList: updatedColumnCardList,
@@ -819,7 +828,8 @@ export default function Page({ params }: { params: { id: string } }) {
                             deleteColumn={removeColumn}
                             setShowCreateCardForm={setShowCreateCardForm}
                             setTempCard={setTempCard}
-                            setIsEdition={setIsEdition} />)}
+                            setIsEdition={setIsEdition}
+                            setTempColumnID={setTempColumnID} />)}
                     </SortableContext>
                     <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
@@ -836,7 +846,8 @@ export default function Page({ params }: { params: { id: string } }) {
                             deleteColumn={removeColumn}
                             setTempCard={setTempCard}
                             setShowCreateCardForm={setShowCreateCardForm}
-                            setIsEdition={setIsEdition} />}
+                            setIsEdition={setIsEdition}
+                            setTempColumnID={setTempColumnID} />}
                     </DragOverlay>,
                     document.body)}
 
