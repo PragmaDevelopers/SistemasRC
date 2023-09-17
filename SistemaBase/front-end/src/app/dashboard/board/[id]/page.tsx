@@ -78,10 +78,12 @@ function CardElement(props: CardElementProps) {
     }
 
     return (
-        <div onClick={editCard} className='my-2 dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 border-neutral-950 border-2 rounded-md p-2 relative'
+        <div className='my-2 dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 border-neutral-950 border-2 rounded-md relative'
             ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            <h1>{card.title}</h1>
-            <p>{card.description}</p>
+            <div className='p-2 w-full h-full' onClick={editCard}>
+                <h1>{card.title}</h1>
+                <p>{card.description}</p>
+            </div>
             <button className='absolute top-2 right-2' onClick={() => deleteCard(card.columnID, card.id)}>
                 <XCircleIcon className='w-6 aspect-square' />
             </button>
