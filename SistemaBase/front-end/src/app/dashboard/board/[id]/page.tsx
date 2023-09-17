@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent, DragOverlay, useSensors, useSensor, PointerSensor, DragOverEvent } from '@dnd-kit/core';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
@@ -308,6 +308,12 @@ export default function Page({ params }: { params: { id: string } }) {
         }
     }));
 
+    useEffect(() => {
+        fetch(`http://localhost:8080/api/dashboard/column/getall/${params.id}`).then(response => response.json()).then(data => {
+
+        })
+    }, []);
+
 
     const createNewColumn = () => {
         if (kanbanData.columns !== undefined) {
@@ -322,6 +328,18 @@ export default function Page({ params }: { params: { id: string } }) {
                 ...prevData,
                 columns: [...prevData.columns, newColumn],
             }));
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    columnId: newColumn.id,
+                    title: newColumn.title,
+                    columnType: newColumn.type,
+                    kanbanId: params.id,
+                }),
+            };
+
+            fetch(`http://localhost:8080/api/dashboard/column/create/${params.id}`, requestOptions).then(response => response.json).then(data => console.log(data))
         } else {
             const newColumn = {
                 id: generateRandomString(),
@@ -329,6 +347,18 @@ export default function Page({ params }: { params: { id: string } }) {
                 title: 'Column 0',
                 cardsList: [],
             };
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: newColumn.id,
+                    title: newColumn.title,
+                    columnType: newColumn.type,
+                    kanbanId: params.id,
+                }),
+            };
+
+            fetch(`http://localhost:8080/api/dashboard/column/create/${params.id}`, requestOptions).then(response => response.json).then(data => console.log(data))
 
             setKanbanData((prevData: KanbanData) => ({
                 ...prevData,
