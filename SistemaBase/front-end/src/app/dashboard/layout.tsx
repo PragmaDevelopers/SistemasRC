@@ -4,8 +4,9 @@ import { usePathname } from "next/navigation";
 import { CalendarIcon, ChartPieIcon, CogIcon, ServerStackIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BuildingOffice2Icon } from "@heroicons/react/24/solid";
+import { throws } from "assert";
 
 interface BoardMenuEntryProps {
     href: string;
@@ -32,20 +33,41 @@ function BoardMenuEntry(props: BoardMenuEntryProps) {
 }
 
 export default function Layout({ children }: any) {
-    const [dashboards, setDashboards] = useState<{ name: string, url: string }[]>();
+    const [dashboards, setDashboards] = useState<{ name: string, url: string, columns: string[] }[]>();
     const pathName: string = usePathname();
     const IconStyles: string = "w-8 aspect-square mr-2";
+    const SERVER_ADDRESS: string = "http://localhost:8080";
+
 
     const addDashBoard = (event: any) => {
         event.preventDefault();
+        const dashboardItem: { name: string, url: string, columns: string[] } = {
+            name: event.target.boardname.value, url: generateRandomString(), columns: []
+        }
+
         if (dashboards !== undefined) {
-            if (dashboards?.length > 0) {
-                setDashboards([...dashboards as unknown as { name: string, url: string }[], { name: event.target.boardname.value, url: generateRandomString() }]);
+            if (dashboards?.length >= 0) {
+                setDashboards([...dashboards as unknown as { name: string, url: string, columns: string[] }[], dashboardItem]);
             } else {
-                setDashboards([{ name: event.target.boardname.value, url: generateRandomString() }]);
+                setDashboards([dashboardItem]);
             }
         } else {
-            setDashboards([{ name: event.target.boardname.value, url: generateRandomString() }]);
+            setDashboards([dashboardItem]);
+        }
+
+        console.log(dashboards);
+
+        if (dashboards !== undefined) {
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    kanbanId: 'aaaaaaaaaa-bbbbbbbbbb-cccccccccc',
+                    columns: [],
+                    name: 'testKanban'
+                })
+            };
+            fetch(`http:localhost:8080/dashboard/create`, requestOptions).then(response => response.json()).then(data => console.log(data));
         }
     }
 
