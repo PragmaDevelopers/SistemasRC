@@ -44,10 +44,11 @@ interface CardElementProps {
     deleteCard: (columnID: string, cardID: string) => void;
     setShowCreateCardForm: any;
     setTempCard: any;
+    setIsEdition: any;
 }
 
 function CardElement(props: CardElementProps) {
-    const { card, deleteCard, setShowCreateCardForm, setTempCard } = props;
+    const { card, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition } = props;
     const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
         id: card.id,
         data: {
@@ -70,6 +71,7 @@ function CardElement(props: CardElementProps) {
 
     const editCard = () => {
         setTempCard(card as Card);
+        setIsEdition(true);
         setShowCreateCardForm(true);
     }
 
@@ -97,10 +99,11 @@ interface ColumnContainerProps {
     deleteCard: (columnID: string, cardID: string) => void;
     setShowCreateCardForm: any;
     setTempCard: any;
+    setIsEdition: any;
 }
 
 function ColumnContainer(props: ColumnContainerProps) {
-    const { column, deleteColumn, updateColumnTitle, createCard, deleteCard, setShowCreateCardForm, setTempCard } = props;
+    const { column, deleteColumn, updateColumnTitle, createCard, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition } = props;
     const [editMode, setEditMode] = useState<boolean>(false);
     const cardsIds = useMemo(() => { return column.cardsList.map((card: Card) => card.id) }, [column]);
 
@@ -161,7 +164,7 @@ function ColumnContainer(props: ColumnContainerProps) {
             <div>
                 <SortableContext items={cardsIds}>
                     {column.cardsList.map((card: Card) => {
-                        return <CardElement setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} />
+                        return <CardElement setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} setIsEdition={setIsEdition} />
                     })}
                 </SortableContext>
             </div>
@@ -639,7 +642,23 @@ export default function Page({ params }: { params: { id: string } }) {
                         columns: updatedColumns,
                     };
                 } else {
+                    const cardIndex = targetColumn.cardsList.findIndex((card: Card) => card.id === newCard.id);
+                    if (cardIndex !== -1) {
+                        const updatedColumnCardList = targetColumn.cardsList.map((card: Card) => card.id === newCard.id ? newCard : card)
+                        const updatedColumn = {
+                            ...targetColumn,
+                            cardsList: updatedColumnCardList,
+                        };
 
+                        const updatedColumns = prevData.columns.map((column) =>
+                            column.id === tempColumnID ? updatedColumn : column
+                        );
+
+                        return {
+                            ...prevData,
+                            columns: updatedColumns,
+                        };
+                    }
                 }
             });
         }
@@ -783,6 +802,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 handleRemoveList={handleRemoveList}
                 handleRemoveInput={handleRemoveInput}
                 handleToggleCheckbox={handleToggleCheckbox}
+                isEdition={isEdition}
             />
             <div className="">
                 <h1>{params.id}</h1>
@@ -798,7 +818,8 @@ export default function Page({ params }: { params: { id: string } }) {
                             column={col}
                             deleteColumn={removeColumn}
                             setShowCreateCardForm={setShowCreateCardForm}
-                            setTempCard={setTempCard} />)}
+                            setTempCard={setTempCard}
+                            setIsEdition={setIsEdition} />)}
                     </SortableContext>
                     <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
@@ -814,7 +835,8 @@ export default function Page({ params }: { params: { id: string } }) {
                             column={activeColumn}
                             deleteColumn={removeColumn}
                             setTempCard={setTempCard}
-                            setShowCreateCardForm={setShowCreateCardForm} />}
+                            setShowCreateCardForm={setShowCreateCardForm}
+                            setIsEdition={setIsEdition} />}
                     </DragOverlay>,
                     document.body)}
 
