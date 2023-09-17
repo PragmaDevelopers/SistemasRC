@@ -42,10 +42,12 @@ type KanbanData = {
 interface CardElementProps {
     card: Card,
     deleteCard: (columnID: string, cardID: string) => void;
+    setShowCreateCardForm: any;
+    setTempCard: any;
 }
 
 function CardElement(props: CardElementProps) {
-    const { card, deleteCard } = props;
+    const { card, deleteCard, setShowCreateCardForm, setTempCard } = props;
     const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
         id: card.id,
         data: {
@@ -66,9 +68,13 @@ function CardElement(props: CardElementProps) {
         );
     }
 
+    const editCard = () => {
+        setTempCard(card as Card);
+        setShowCreateCardForm(true);
+    }
 
     return (
-        <div className='my-2 bg-neutral-50 border-neutral-950 border-2 rounded-md p-2 relative'
+        <div onClick={editCard} className='my-2 bg-neutral-50 border-neutral-950 border-2 rounded-md p-2 relative'
             ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <h1>{card.title}</h1>
             <p>{card.description}</p>
@@ -89,10 +95,12 @@ interface ColumnContainerProps {
     updateColumnTitle: (id: string, title: string) => void;
     createCard: (columnID: string) => void;
     deleteCard: (columnID: string, cardID: string) => void;
+    setShowCreateCardForm: any;
+    setTempCard: any;
 }
 
 function ColumnContainer(props: ColumnContainerProps) {
-    const { column, deleteColumn, updateColumnTitle, createCard, deleteCard } = props;
+    const { column, deleteColumn, updateColumnTitle, createCard, deleteCard, setShowCreateCardForm, setTempCard } = props;
     const [editMode, setEditMode] = useState<boolean>(false);
     const cardsIds = useMemo(() => { return column.cardsList.map((card: Card) => card.id) }, [column]);
 
@@ -153,7 +161,7 @@ function ColumnContainer(props: ColumnContainerProps) {
             <div>
                 <SortableContext items={cardsIds}>
                     {column.cardsList.map((card: Card) => {
-                        return <CardElement card={card} deleteCard={deleteCard} />
+                        return <CardElement setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} />
                     })}
                 </SortableContext>
             </div>
@@ -177,6 +185,7 @@ interface CreateEditCardProps {
     setShowCreateCardForm: any,
     handleInputChange: any,
     handleToggleCheckbox: any,
+    isEdition: boolean,
 }
 
 function CreateEditCard(props: CreateEditCardProps) {
@@ -190,9 +199,8 @@ function CreateEditCard(props: CreateEditCardProps) {
         updateListTitle,
         handleAddInput,
         handleInputChange,
-        handleToggleCheckbox } = props;
-
-    const { checklists } = card;
+        handleToggleCheckbox,
+        isEdition } = props;
 
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
@@ -202,14 +210,14 @@ function CreateEditCard(props: CreateEditCardProps) {
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
                             <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
-                            <input className='bg-neutral-50' id="CardTitle" type='text' name='title' placeholder='Digite um titulo' />
+                            <input className='bg-neutral-50' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
                         <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none'>
                             <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
-                            <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" name='description' placeholder='Digite uma descrição'></textarea>
+                            <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div>
-                            {checklists?.map((list: CheckList, listIndex: number) => (
+                            {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
                                         <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
@@ -220,7 +228,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                             <MinusCircleIcon className='w-6 aspect-square' />
                                         </button>
                                     </div>
-                                    {list.items.map((inputValue: CheckListItem, inputIndex: number) => (
+                                    {list.items?.map((inputValue: CheckListItem, inputIndex: number) => (
                                         <div key={inputIndex} className='flex items-center my-2'>
                                             <input
                                                 type="checkbox"
@@ -282,6 +290,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const [tempColumnID, setTempColumnID] = useState<string>("");
     const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
+    const [isEdition, setIsEdition] = useState<boolean>(false);
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -585,62 +594,64 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const createCard = (columnID: string) => {
         setTempColumnID(columnID);
-        const newCard: Card = {
+        setTempCard({
             id: generateRandomString(),
             title: "",
             columnID: columnID,
             description: "",
             checklists: [],
-        }
-        setTempCard(newCard);
+        } as Card);
+        setIsEdition(false);
         setShowCreateCardForm(true);
     };
 
-    const createCardForm = (event: any) => {
+    const createCardForm = (event: any, isEdition: boolean) => {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         const cardDescription: string = event.target.description.value;
-
-        const checklists: CheckList[] = lists.map((itn) => {
-            const items = itn.inputs.map((i) => {
-                return { name: i.name, completed: i.checked, checklistId: itn.id } as CheckListItem;
-            });
-            return { name: itn.title, items: items, id: itn.id } as CheckList;
-        });
 
         // Check if the card title is not empty before creating the card
         if (cardTitle.trim() !== "") {
             setKanbanData((prevData: KanbanData) => {
                 const newCard: Card = {
-                    id: generateRandomString(),
+                    ...tempCard,
                     title: cardTitle,
-                    columnID: tempColumnID,
                     description: cardDescription,
-                    checklists: checklists,
                 }
-
+                console.log(newCard);
                 const targetColumn = prevData.columns.find((column) => column.id === tempColumnID);
                 if (!targetColumn) {
                     return prevData;
                 }
 
-                const updatedColumn = {
-                    ...targetColumn,
-                    cardsList: [...targetColumn.cardsList, newCard],
-                };
-                const updatedColumns = prevData.columns.map((column) =>
-                    column.id === tempColumnID ? updatedColumn : column
-                );
+                if (!isEdition) {
+                    const updatedColumn = {
+                        ...targetColumn,
+                        cardsList: [...targetColumn.cardsList, newCard],
+                    };
 
-                return {
-                    ...prevData,
-                    columns: updatedColumns,
-                };
+                    const updatedColumns = prevData.columns.map((column) =>
+                        column.id === tempColumnID ? updatedColumn : column
+                    );
+
+                    return {
+                        ...prevData,
+                        columns: updatedColumns,
+                    };
+                } else {
+
+                }
             });
         }
         event.target.reset();
         setTempColumnID("");
-        setLists([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
+        setTempCard({
+            id: generateRandomString(),
+            title: "",
+            columnID: "",
+            description: "",
+            checklists: [],
+        } as Card);
         setShowCreateCardForm(false);
     };
 
@@ -677,49 +688,85 @@ export default function Page({ params }: { params: { id: string } }) {
     ///////////////////////////////////////////////////////////////////////////
 
     const handleInputChange = (listIndex: any, inputIndex: any, value: any) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs[inputIndex] = value;
-        setLists(newLists);
+        setTempCard((prevCard: Card) => {
+            const newChecklists = [...prevCard.checklists];
+            newChecklists[listIndex].items[inputIndex].name = value;
+            return {
+                ...prevCard,
+                checklists: newChecklists,
+            } as Card;
+        });
     };
 
-    const updateListTitle = (listIndex: any, itemIndex: any, value: string) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs[itemIndex].name = value;
-        setLists(newLists);
+    const updateListTitle = (listIndex: any, value: string) => {
+        setTempCard((prevCard: Card) => {
+            const newChecklists = [...prevCard.checklists];
+            newChecklists[listIndex].name = value;
+            console.log(newChecklists[listIndex].name, listIndex);
+            return {
+                ...prevCard,
+                checklists: newChecklists,
+            } as Card;
+        });
     }
 
     const handleAddList = () => {
-        setLists([...lists, { title: 'Empty List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
-        const tmpTempCard: Card = tempCard as Card;
-        setTempCard({
-            title: tmpTempCard.title,
-            id: tmpTempCard.id,
-
-        } as Card);
+        const checklistId = generateRandomString();
+        setTempCard((prevCard: Card) => ({
+            ...prevCard,
+            checklists: [
+                ...prevCard.checklists,
+                {
+                    name: 'New Checklist',
+                    items: [{ name: '', completed: false, checklistId: checklistId }],
+                    id: checklistId,
+                },
+            ],
+        }) as Card);
     };
 
     const handleAddInput = (listIndex: any) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs.push({ name: '', checked: false });
-        setLists(newLists);
+        setTempCard((prevCard: Card) => {
+            const newChecklists = [...prevCard.checklists];
+            newChecklists[listIndex].items.push({ name: '', completed: false, checklistId: newChecklists[listIndex].id } as CheckListItem);
+            return {
+                ...prevCard,
+                checklists: newChecklists,
+            } as Card;
+        });
     };
 
     const handleRemoveInput = (listIndex: any, inputIndex: any) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs.splice(inputIndex, 1);
-        setLists(newLists);
+        setTempCard((prevCard: Card) => {
+            const newChecklists = [...prevCard.checklists];
+            newChecklists[listIndex].items.splice(inputIndex, 1);
+            return {
+                ...prevCard,
+                checklists: newChecklists,
+            } as Card;
+        });
     };
 
     const handleRemoveList = (listIndex: any) => {
-        const newLists = [...lists];
-        newLists.splice(listIndex, 1);
-        setLists(newLists);
+        setTempCard((prevCard: Card) => {
+            const newChecklists = [...prevCard.checklists];
+            newChecklists.splice(listIndex, 1);
+            return {
+                ...prevCard,
+                checklists: newChecklists,
+            } as Card;
+        });
     };
 
     const handleToggleCheckbox = (listIndex: any, itemIndex: any) => {
-        const newLists = [...lists];
-        newLists[listIndex].inputs[itemIndex].checked = !newLists[listIndex].inputs[itemIndex].checked;
-        setLists(newLists);
+        setTempCard((prevCard: Card) => {
+            const newChecklists = [...prevCard.checklists];
+            newChecklists[listIndex].items[itemIndex].completed = !newChecklists[listIndex].items[itemIndex].completed;
+            return {
+                ...prevCard,
+                checklists: newChecklists,
+            } as Card;
+        });
     };
 
     return (
@@ -749,7 +796,9 @@ export default function Page({ params }: { params: { id: string } }) {
                             updateColumnTitle={updateColumnTitle}
                             key={col.id}
                             column={col}
-                            deleteColumn={removeColumn} />)}
+                            deleteColumn={removeColumn}
+                            setShowCreateCardForm={setShowCreateCardForm}
+                            setTempCard={setTempCard} />)}
                     </SortableContext>
                     <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
@@ -763,7 +812,9 @@ export default function Page({ params }: { params: { id: string } }) {
                             createCard={createCard}
                             updateColumnTitle={updateColumnTitle}
                             column={activeColumn}
-                            deleteColumn={removeColumn} />}
+                            deleteColumn={removeColumn}
+                            setTempCard={setTempCard}
+                            setShowCreateCardForm={setShowCreateCardForm} />}
                     </DragOverlay>,
                     document.body)}
 
