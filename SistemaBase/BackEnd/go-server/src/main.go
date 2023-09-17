@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type CheckListItem struct {
@@ -64,7 +65,7 @@ func generateRandomString() string {
 }
 
 func createKanban(db *sql.DB) gin.HandlerFunc {
-	ginRetFunc := func(c *gin.Context) {
+	return func(c *gin.Context) {
 		var kanbanData Kanban
 		if err := c.ShouldBindJSON(&kanbanData); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -73,23 +74,72 @@ func createKanban(db *sql.DB) gin.HandlerFunc {
 
 		fmt.Println(kanbanData)
 
-		//db.Exec(`
-		//	INSERT INTO dashboards (name, dashid, columns) VALUES ($1, $2, $3)
-		//`, kanbanData.Name, kanbanData.ID, kanbanData.Columns)
+		db.Exec(`
+			INSERT INTO dashboards (name, dashid, columns) VALUES ($1, $2, $3)
+		`, kanbanData.Name, kanbanData.ID, pq.Array(kanbanData.Columns))
+		fmt.Println("KANBAN DATA INSERTED INTO dashboards TABLE")
 	}
+}
 
-	return ginRetFunc
+func getAllKanbans(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rows, err := db.Query("SELECT * FROM dashboards")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var ID int
+			var name, dashid string
+			var columns []string
+
+			err := rows.Scan(&ID, &name, &dashid, pq.Array(&columns))
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("TABLE DATA\n\tID:\t%d\n\tName:\t%s\n\tDASHID:\t%s\n\tCOLUMNS:\t%v\n", ID, name, dashid, columns)
+		}
+		if err = rows.Err(); err != nil {
+			panic(err)
+		}
+	}
 }
 
 func initDatabase(db *sql.DB) error {
-	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS dashboards (
-			dbid	SERIAL			PRIMARY		KEY,
-			name	TEXT,
-			dashid	TEXT,
-			columns	VARCHAR(32)[]
-		)
-	`)
+	_, err := db.Exec(`CREATE TABLE kanban (
+    kanban_id UUID PRIMARY KEY,
+    name TEXT
+);
+`)
+	_, err = db.Exec(`CREATE TABLE column (
+    column_id UUID PRIMARY KEY,
+    kanban_id UUID REFERENCES kanban(kanban_id),
+    title TEXT,
+    column_type INT
+);
+`)
+	_, err = db.Exec(`CREATE TABLE card (
+    card_id UUID PRIMARY KEY,
+    column_id UUID REFERENCES column(column_id),
+    title TEXT,
+    description TEXT
+);
+`)
+	_, err = db.Exec(`CREATE TABLE checklist (
+    checklist_id UUID PRIMARY KEY,
+    card_id UUID REFERENCES card(card_id),
+    name TEXT
+);
+`)
+	_, err = db.Exec(`CREATE TABLE checklist_item (
+    item_id UUID PRIMARY KEY,
+    checklist_id UUID REFERENCES checklist(checklist_id),
+    name TEXT,
+    completed BOOLEAN
+);
+`)
 
 	return err
 }
@@ -97,6 +147,7 @@ func initDatabase(db *sql.DB) error {
 func main() {
 	db, err := sql.Open("postgres", "user=mirai dbname=myDatabaseName sslmode=disable")
 	router := gin.Default()
+	router.Use(cors.Default())
 	if err != nil {
 		panic(err)
 	}
@@ -107,12 +158,16 @@ func main() {
 		panic(err)
 	}
 
-	initDatabase(db)
+	err = initDatabase(db)
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println("Connected to PostgreSQL database")
 
 	// Kanban End-points
 	router.POST("/dashboard/create", createKanban(db))
+	router.GET("/dashboard/getall", getAllKanbans(db))
 
 	router.Run()
 
