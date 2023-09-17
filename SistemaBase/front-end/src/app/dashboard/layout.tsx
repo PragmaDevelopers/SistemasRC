@@ -33,21 +33,22 @@ function BoardMenuEntry(props: BoardMenuEntryProps) {
 }
 
 export default function Layout({ children }: any) {
-    const [dashboards, setDashboards] = useState<{ name: string, url: string, columns: string[] }[]>();
-    const pathName: string = usePathname();
+    const [dashboards, setDashboards] = useState<{ kanbanId: string, name: string }[]>();
     const IconStyles: string = "w-8 aspect-square mr-2";
-    const SERVER_ADDRESS: string = "http://localhost:8080";
 
+    useEffect(() => {
+        fetch("http://localhost:8080/api/dashboard/kanban/getall").then(response => response.json()).then(data => setDashboards(data))
+    }, [setDashboards]);
 
     const addDashBoard = (event: any) => {
         event.preventDefault();
-        const dashboardItem: { name: string, url: string, columns: string[] } = {
-            name: event.target.boardname.value, url: generateRandomString(), columns: []
+        const dashboardItem: { name: string, kanbanId: string } = {
+            name: event.target.boardname.value, kanbanId: generateRandomString()
         }
 
         if (dashboards !== undefined) {
             if (dashboards?.length >= 0) {
-                setDashboards([...dashboards as unknown as { name: string, url: string, columns: string[] }[], dashboardItem]);
+                setDashboards([...dashboards as unknown as { name: string, kanbanId: string }[], dashboardItem]);
             } else {
                 setDashboards([dashboardItem]);
             }
@@ -57,17 +58,17 @@ export default function Layout({ children }: any) {
 
         console.log(dashboards);
 
-        if (dashboards !== undefined) {
+        if (dashboardItem !== undefined) {
+            console.log(JSON.stringify(dashboardItem));
             const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    kanbanId: 'aaaaaaaaaa-bbbbbbbbbb-cccccccccc',
-                    columns: [],
-                    name: 'testKanban'
-                })
+                    kanbanId: dashboardItem.kanbanId,
+                    name: dashboardItem.name,
+                }),
             };
-            fetch(`http:localhost:8080/dashboard/create`, requestOptions).then(response => response.json()).then(data => console.log(data));
+            fetch('http://localhost:8080/api/dashboard/kanban/create', requestOptions).then(response => response.json()).then(data => console.log(data));
         }
     }
 
@@ -102,7 +103,7 @@ export default function Layout({ children }: any) {
                     <details className="p-2 overflow-x-hidden overflow-y-auto">
                         <summary>Areas de Trabalho</summary>
                         <div className="">
-                            {dashboards?.map((element) => <BoardMenuEntry href={`/dashboard/board/${element.url}`} name={element.name} />)}
+                            {dashboards?.map((element) => <BoardMenuEntry href={`/dashboard/board/${element.kanbanId}`} name={element.name} />)}
                         </div>
                         <div>
 
@@ -112,13 +113,13 @@ export default function Layout({ children }: any) {
                             </form>
                         </div>
                     </details>
-                    <Link href="/" className="bg-neutral-50 p-2 flex flex-row items-center">
+                    <Link href="/" className="bg-neutral-50 dark:bg-neutral-950 p-2 flex flex-row items-center">
                         <CogIcon className={IconStyles} />
                         <h1>Configurações</h1>
                     </Link>
                 </div>
             </div>
-            <div className="grow w-full h-full p-2 bg-neutral-100 rounded-tl-md">
+            <div className="grow w-full h-full p-2 bg-neutral-100 dark:bg-neutral-800 rounded-tl-md">
                 {children}
             </div>
         </main>

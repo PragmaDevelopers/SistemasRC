@@ -65,7 +65,7 @@ function CardElement(props: CardElementProps) {
 
     if (isDragging) {
         return (
-            <div className='bg-neutral-300 border-neutral-950 rounded-md w-64 h-16 border-2'
+            <div className='bg-neutral-300 dark:bg-neutral-700 dark:border-neutral-50 border-neutral-950 rounded-md w-64 h-16 border-2'
                 ref={setNodeRef} style={style} />
         );
     }
@@ -78,7 +78,7 @@ function CardElement(props: CardElementProps) {
     }
 
     return (
-        <div onClick={editCard} className='my-2 bg-neutral-50 border-neutral-950 border-2 rounded-md p-2 relative'
+        <div onClick={editCard} className='my-2 dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 border-neutral-950 border-2 rounded-md p-2 relative'
             ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <h1>{card.title}</h1>
             <p>{card.description}</p>
@@ -130,7 +130,7 @@ function ColumnContainer(props: ColumnContainerProps) {
 
     if (isDragging) {
         return (
-            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-950 content-[" "]'>
+            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-950 dark:bg-neutral-700 dark:border-neutral-50 content-[" "]'>
             </div>
         );
     }
@@ -142,7 +142,7 @@ function ColumnContainer(props: ColumnContainerProps) {
     return (
         <div className='relative w-64 h-full overflow-auto'
             ref={setNodeRef} style={style} {...attributes} {...listeners} >
-            <div className='w-full bg-neutral-50 rounded-md border-2 border-neutral-950 p-2 mb-4 flex flex-row justify-between items-center'>
+            <div className='w-full bg-neutral-50 rounded-md border-2 border-neutral-950 p-2 mb-4 flex flex-row justify-between items-center dark:bg-neutral-950 dark:border-neutral-50'>
                 <div
                     onClick={() => setEditMode(true)}>
                     {editMode ? <input
@@ -155,7 +155,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                         }}
                         value={column.title}
                         onChange={(e: any) => updateColumnTitle(column.id, e.target.value)}
-                        className='w-full bg-neutral-50 outline-none'
+                        className='w-full bg-neutral-50 dark:bg-neutral-950 outline-none'
                     /> :
                         column.title}
 
@@ -171,7 +171,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                     })}
                 </SortableContext>
             </div>
-            <button onClick={handleCreateCard} className=' relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center'>
+            <button onClick={handleCreateCard} className=' relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center dark:border-neutral-50'>
                 <PlusCircleIcon className='w-8 aspect-square absolute top-1 left-2' />
                 <h1 className='w-full text-center'>Add Card</h1>
             </button>
@@ -213,24 +213,24 @@ function CreateEditCard(props: CreateEditCardProps) {
     }
 
     return (
-        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
-            <div className='relative w-[60%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
+        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50 dark:bg-black/50'}>
+            <div className='relative w-[60%] h-[80%] dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
                 <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
                             <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
-                            <input className='bg-neutral-50' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
+                            <input className='bg-neutral-50 dark:bg-neutral-950' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
-                        <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none'>
+                        <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none dark:border-neutral-50'>
                             <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
-                            <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                            <textarea className='resize-none w-full h-32 bg-neutral-50 dark:bg-neutral-50' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
-                                <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
+                                <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2 dark:border-neutral-700'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64 dark:bg-neutral-950' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -246,7 +246,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
                                             />
                                             <input
-                                                className='border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
+                                                className='dark:bg-neutral-900 border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
                                                 type="text"
                                                 value={inputValue.name}
                                                 placeholder='Adicionar Tarefa'
@@ -268,14 +268,14 @@ function CreateEditCard(props: CreateEditCardProps) {
                                     </button>
                                 </div>
                             ))}
-                            <button type="button" onClick={handleAddList} className='my-2 rounded-md w-80 p-2 border-neutral-950 border-2 flex justify-center items-center'>
+                            <button type="button" onClick={handleAddList} className='my-2 rounded-md w-80 p-2 border-neutral-950 dark:border-neutral-50 border-2 flex justify-center items-center'>
                                 <h1 className="mr-2">Nova Lista</h1>
                                 <PlusCircleIcon className='w-6 aspect-square' />
                             </button>
                         </div>
                     </div>
                     <div className='w-full absolute bottom-0 flex justify-center items-center'>
-                        <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
+                        <button type='submit' className='dark:border-neutral-50 w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
                     </div>
                 </form>
                 <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
@@ -831,7 +831,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             setIsEdition={setIsEdition}
                             setTempColumnID={setTempColumnID} />)}
                     </SortableContext>
-                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
+                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center dark:border-neutral-50' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
                         <PlusCircleIcon className='w-8 aspect-square' />
                     </button>

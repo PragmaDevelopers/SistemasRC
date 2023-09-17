@@ -20,15 +20,15 @@ export default function RootLayout({
 }) {
     return (
         <html lang="pt-br">
-            <body className={`${interFont.variable} font-inter w-screen h-screen bg-neutral-50 flex flex-col justify-start items-start transition-all`}>
+            <body className={`${interFont.variable} font-inter w-screen h-screen bg-neutral-50 flex flex-col justify-start items-start transition-all dark:bg-neutral-950 text-neutral-950 dark:text-neutral-50`}>
                 <div className='w-full h-16 flex flex-row justify-between items-center p-2'>
                     <h1>
                         Logo
                     </h1>
                     <nav className='flex flex-row'>
-                        <Link href="/" className='text-neutral-950 hover:text-blue-400 mx-2'>Início</Link>
-                        <Link href="/dashboard" className='text-neutral-950 hover:text-blue-400 mx-2'>Dashboard</Link>
-                        <Link href="/login" className='text-neutral-950 hover:text-blue-400 mx-2'>Cadastrar</Link>
+                        <Link href="/" className='text-neutral-950 hover:text-blue-400 dark:hover:text-neutral-50 dark:hover:text-blue-200 mx-2'>Início</Link>
+                        <Link href="/dashboard" className='text-neutral-950 hover:text-blue-400 dark:hover:text-neutral-50 dark:hover:text-blue-200 mx-2'>Dashboard</Link>
+                        <Link href="/login" className='text-neutral-950 hover:text-blue-400 dark:hover:text-neutral-50 dark:hover:text-blue-200 mx-2'>Cadastrar</Link>
                     </nav>
                 </div>
                 <div className='w-full h-full overflow-hidden'>
