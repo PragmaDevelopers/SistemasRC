@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 type CheckListItem struct {
@@ -37,13 +37,12 @@ type Column struct {
 	Title      string `json:"title"`
 	ID         string `json:"id"`
 	ColumnType uint8  `json:"columnType"`
-	CardsList  []Card `json:"cardsList"`
+	kanbanID   string `json:"kanbanId"`
 }
 
 type Kanban struct {
-	ID      string   `json:"kanbanId"`
-	Columns []Column `json:"columns"`
-	Name    string   `json:"name"`
+	ID   string `json:"kanbanId"`
+	Name string `json:"name"`
 }
 
 func generateRandomString() string {
@@ -64,6 +63,51 @@ func generateRandomString() string {
 	return string(result)
 }
 
+func initDatabase(db *sql.DB) {
+	createTableQueries := []string{
+		`
+        CREATE TABLE IF NOT EXISTS kanban (
+            kanban_id VARCHAR(32) PRIMARY KEY,
+            name TEXT
+        )`,
+		`
+        CREATE TABLE IF NOT EXISTS columns_data (
+            column_id VARCHAR(32) PRIMARY KEY,
+            kanban_id VARCHAR(32) REFERENCES kanban(kanban_id),
+            title TEXT,
+            column_type INT
+        )`,
+		`
+        CREATE TABLE IF NOT EXISTS card (
+            card_id VARCHAR(32) PRIMARY KEY,
+            column_id VARCHAR(32) REFERENCES columns_data(column_id),
+            title TEXT,
+            description TEXT
+        )`,
+		`
+        CREATE TABLE IF NOT EXISTS checklist (
+            checklist_id VARCHAR(32) PRIMARY KEY,
+            card_id VARCHAR(32) REFERENCES card(card_id),
+            name TEXT
+        )`,
+		`
+        CREATE TABLE IF NOT EXISTS checklist_item (
+            item_id VARCHAR(32) PRIMARY KEY,
+            checklist_id VARCHAR(32) REFERENCES checklist(checklist_id),
+            name TEXT,
+            completed BOOLEAN
+        )`,
+	}
+
+	for _, query := range createTableQueries {
+		_, err := db.Exec(query)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Table created successfully.")
+	}
+}
+
 func createKanban(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var kanbanData Kanban
@@ -75,73 +119,68 @@ func createKanban(db *sql.DB) gin.HandlerFunc {
 		fmt.Println(kanbanData)
 
 		db.Exec(`
-			INSERT INTO dashboards (name, dashid, columns) VALUES ($1, $2, $3)
-		`, kanbanData.Name, kanbanData.ID, pq.Array(kanbanData.Columns))
-		fmt.Println("KANBAN DATA INSERTED INTO dashboards TABLE")
+			INSERT INTO kanban (kanban_id, name) VALUES ($1, $2)
+		`, kanbanData.ID, kanbanData.Name)
+		fmt.Println("KANBAN DATA INSERTED INTO kanban TABLE")
 	}
 }
 
 func getAllKanbans(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := db.Query("SELECT * FROM dashboards")
+		rows, err := db.Query("SELECT * FROM kanban")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		defer rows.Close()
 
-		for rows.Next() {
-			var ID int
-			var name, dashid string
-			var columns []string
+		var Kanbans []Kanban
 
-			err := rows.Scan(&ID, &name, &dashid, pq.Array(&columns))
+		for rows.Next() {
+			var kanban_id string
+			var name string
+
+			err := rows.Scan(&kanban_id, &name)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("TABLE DATA\n\tID:\t%d\n\tName:\t%s\n\tDASHID:\t%s\n\tCOLUMNS:\t%v\n", ID, name, dashid, columns)
+			fmt.Printf("TABLE DATA\n\tID:\t%s\n\tName:\t%s\n", kanban_id, name)
+			Kanbans = append(Kanbans, Kanban{Name: name, ID: kanban_id})
 		}
+
+		fmt.Println(Kanbans)
+
 		if err = rows.Err(); err != nil {
 			panic(err)
 		}
+
+		c.JSON(http.StatusOK, Kanbans)
 	}
 }
 
-func initDatabase(db *sql.DB) error {
-	_, err := db.Exec(`CREATE TABLE kanban (
-    kanban_id UUID PRIMARY KEY,
-    name TEXT
-);
-`)
-	_, err = db.Exec(`CREATE TABLE column (
-    column_id UUID PRIMARY KEY,
-    kanban_id UUID REFERENCES kanban(kanban_id),
-    title TEXT,
-    column_type INT
-);
-`)
-	_, err = db.Exec(`CREATE TABLE card (
-    card_id UUID PRIMARY KEY,
-    column_id UUID REFERENCES column(column_id),
-    title TEXT,
-    description TEXT
-);
-`)
-	_, err = db.Exec(`CREATE TABLE checklist (
-    checklist_id UUID PRIMARY KEY,
-    card_id UUID REFERENCES card(card_id),
-    name TEXT
-);
-`)
-	_, err = db.Exec(`CREATE TABLE checklist_item (
-    item_id UUID PRIMARY KEY,
-    checklist_id UUID REFERENCES checklist(checklist_id),
-    name TEXT,
-    completed BOOLEAN
-);
-`)
+func createColumn(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var columnData Column
+		if err := c.ShouldBindJSON(&columnData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		// ACCESS PARAMETERS FROM CONTEXT (not really necessary tho, it works without them)
+		fmt.Println(columnData)
 
-	return err
+		db.Exec(`
+			INSERT INTO columns_data (id, title, column_type, kanban_id) VALUES ($1, $2, $3, $4)
+		`, columnData.ID, columnData.Title, columnData.ColumnType, columnData.kanbanID)
+		fmt.Println("COLUMN DATA INSERTED INTO columns_data TABLE")
+
+	}
+}
+
+func getColumn(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		kanbanId := c.Param("kanbanid")
+
+	}
 }
 
 func main() {
@@ -158,16 +197,17 @@ func main() {
 		panic(err)
 	}
 
-	err = initDatabase(db)
-	if err != nil {
-		panic(err)
-	}
+	initDatabase(db)
 
 	fmt.Println("Connected to PostgreSQL database")
 
-	// Kanban End-points
-	router.POST("/dashboard/create", createKanban(db))
-	router.GET("/dashboard/getall", getAllKanbans(db))
+	// Kanban End-Points
+	router.POST("/api/dashboard/kanban/create", createKanban(db))
+	router.GET("/api/dashboard/kanban/getall", getAllKanbans(db))
+
+	// Columns End-Points
+	router.POST("/api/dashboard/column/create/:kanbanid", createColumn(db))
+	router.GET("/api/dashboard/column/getall/:kanbanid", getColumn(db))
 
 	router.Run()
 
