@@ -26,9 +26,9 @@ export default function RootLayout({
                         Logo
                     </h1>
                     <nav className='flex flex-row'>
-                        <Link href="/" className='text-neutral-950 hover:text-blue-400 dark:hover:text-neutral-50 dark:hover:text-blue-200 mx-2'>Início</Link>
-                        <Link href="/dashboard" className='text-neutral-950 hover:text-blue-400 dark:hover:text-neutral-50 dark:hover:text-blue-200 mx-2'>Dashboard</Link>
-                        <Link href="/login" className='text-neutral-950 hover:text-blue-400 dark:hover:text-neutral-50 dark:hover:text-blue-200 mx-2'>Cadastrar</Link>
+                        <Link href="/" className='text-neutral-950 hover:text-blue-400 dark:text-neutral-50 dark:hover:text-blue-200 mx-2'>Início</Link>
+                        <Link href="/dashboard" className='text-neutral-950 hover:text-blue-400 dark:text-neutral-50 dark:hover:text-blue-200 mx-2'>Dashboard</Link>
+                        <Link href="/login" className='text-neutral-950 hover:text-blue-400 dark:text-neutral-50 dark:hover:text-blue-200 mx-2'>Cadastrar</Link>
                     </nav>
                 </div>
                 <div className='w-full h-full overflow-hidden'>

@@ -108,7 +108,7 @@ export default function Layout({ children }: any) {
                         <div>
 
                             <form onSubmit={addDashBoard}>
-                                <input name="boardname" placeholder="Board Name" type="text" />
+                                <input className="w-full" name="boardname" placeholder="Board Name" type="text" />
                                 <button type="submit">Create New Board</button>
                             </form>
                         </div>
