@@ -32,3 +32,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Ideias para o projeto
+
+### Lista de profissões
+
+Fiz o download de uma lista de profissões no site do governo: http://www.mtecbo.gov.br/cbosite/pages/downloads.jsf.
+Usar como base essa lista para criar nossa API personalizada 
+
+Ultima atualização: 22/06/2023 - 
+Formato do arquivo: CSV
+
+Uma outra alternativa seria usar uma API externa, mas não teriamos tanto controle
+
+
