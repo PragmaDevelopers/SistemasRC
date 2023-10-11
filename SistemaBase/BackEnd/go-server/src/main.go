@@ -165,7 +165,6 @@ func createColumn(db *sql.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		// ACCESS PARAMETERS FROM CONTEXT (not really necessary tho, it works without them)
 		fmt.Println(columnData)
 
 		db.Exec(`
@@ -176,11 +175,40 @@ func createColumn(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func getColumn(db *sql.DB) gin.HandlerFunc {
+func getColumns(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		kanbanId := c.Param("kanbanid")
-		fmt.Println(kanbanId)
+		fmt.Printf("Kanban ID: %s\n", kanbanId)
+		rows, err := db.Query("SELECT * FROM columns_data WHERE kanban_id = $1", kanbanId)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+
+		var Columns []Column
+
+		for rows.Next() {
+			var ID string
+			var title string
+			var columnType uint8
+			var kanbanID string
+
+			err := rows.Scan(&ID, &title, &columnType, &kanbanID)
+			if err != nil {
+				panic(err)
+			}
+			Columns = append(Columns, Column{ID: ID, Title: title, ColumnType: columnType, KanbanID: kanbanID})
+		}
+
+		fmt.Println(Columns)
+		if err = rows.Err(); err != nil {
+			panic(err)
+		}
+
+		c.JSON(http.StatusOK, Columns)
 	}
+
 }
 
 func main() {
@@ -207,7 +235,7 @@ func main() {
 
 	// Columns End-Points
 	router.POST("/api/dashboard/column/create/:kanbanid", createColumn(db))
-	router.GET("/api/dashboard/column/getall/:kanbanid", getColumn(db))
+	router.GET("/api/dashboard/column/getall/:kanbanid", getColumns(db))
 
 	router.Run()
 
