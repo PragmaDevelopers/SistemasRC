@@ -1,17 +1,12 @@
 "use client"
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import InputsInterface from "./InputsInterface";
-import states from "../../../../../../api/states/states";
+import InputsInterface from "./Interface/InputsInterface";
 import issuingBody from "../../../../../../api/issuingBody/issuingBody";
 import addressType from "../../../../../../api/addressType/addressType";
-import { useEffect,useState } from "react";
-import { PowerOfAttorney,Ocuppation } from "./InputSelect/InputSelect";
-import { FullName } from "./InputText/InputText";
-
-type ApiCep = {
-    uf: string
-}
+import { PowerOfAttorney,Ocuppation,Nationality,MaritalStatus,UF,State } from "./InputSelect/InputSelect";
+import { FullName,Email,RG } from "./InputText/InputText";
+import { CommonLawMarriage } from "./InputRadio/InputRadio";
 
 export default function UserForm(){
     const { register, handleSubmit, watch } = useForm<InputsInterface>({
@@ -20,84 +15,23 @@ export default function UserForm(){
         }
     });
     const onSumit : SubmitHandler<InputsInterface> = (data) => console.log(data);
-    const [dataCep,useDataCep] = useState<ApiCep>();
-    useEffect(()=>{
-        const subscription = watch();
-        console.log(subscription)
-        async function getAddressByCep(){
-            const data = await fetch(`https://viacep.com.br/ws/${watch().cep}/json/`);
-            const response = await data.json().catch(error=>console.log(error));
-            useDataCep(response)
-        }
-        console.log(watch().cep )
-        if(watch().cep){
-            if(watch().cep.length === 8){
-                getAddressByCep();
-            }
-        }
-    },[watch()])
+    
     return (
         <form style={{width: "700px",margin: "0 auto"}} onSubmit={handleSubmit(onSumit)}>
             <div>
                 <h3>Campos gerais</h3>
-                <PowerOfAttorney register={register} />
-                <FullName register={register} />
-                <Ocuppation register={register} />
-                <div style={{marginBottom: 10}}>
-                    {/* PRIMEIRA FORMA DE SELECIONAR OS DADOS. MAIS FLEXIVEL */}
-                    <label htmlFor="input-nationality">Nacionalidade: </label>
-                    <select required id="input-nationality" {...register("nationality")}>
-                        <option disabled value="default">-- Escolha uma Nacionalidade --</option>
-                        <option value="brazilian-male">Brasileiro</option>
-                        <option value="brazilian-female">Brasileira</option>
-                    </select>
-                    {/* 
-                        //SEGUNDA FORMA DE SELECIONAR OS DADOS. MENOS FLEXIVEL
-
-                        <p>Nacionalidade: </p>
-                        <input required type="radio" value="brazilian-male" id="input-nationality-male" {...register("nationality")} />
-                        <label htmlFor="input-nationality-male">Brasileiro</label>
-                        <input required type="radio" value="brazilian-female" id="input-nationality-female" {...register("nationality")} />
-                        <label htmlFor="input-nationality-female">Brasileira</label> 
-                    */}
-                Ocuppation</div>
-                <div>
-                    <label htmlFor="input-email">Endereço Eletronico/E-mail: </label>
-                    <input required type="email" id="input-email" {...register("email")} />
-                </div>
+                <PowerOfAttorney marginBottom={10} register={register} watch={watch} />
+                <FullName marginBottom={10} register={register} />
+                <Ocuppation marginBottom={10} register={register} watch={watch} />
+                <Nationality marginBottom={10} register={register} watch={watch} />
+                <Email register={register} />
             </div>
             <div>
                 <h3>Campos de documentos</h3>
-                <div style={{marginBottom: 10}}>
-                    <label htmlFor="input-marital-status">Estado Civil: </label>
-                    <select required defaultValue="default" id="input-marital-status" {...register("marital_status")}>
-                        <option disabled value="default">-- Escolha um Estado Civil --</option>
-                        <option value="single">Solteiro (a)</option>
-                        <option value="married">Casado (a)</option>
-                        <option value="divorced">Divorciado (a)</option>
-                        <option value="widowed">Viúvo (a)</option>
-                    </select>
-                </div>
-                <div style={{marginBottom: 10}}>
-                    <span>Vive em União Estável: </span>
-                    <input required type="radio" value="true" id="input-true-common-law-marriage" {...register("common_law_marriage")} />
-                    <label htmlFor="input-common-law-marriage">Sim</label>
-                    <input required type="radio" value="false" id="input-false-common-law-marriage" {...register("common_law_marriage")} />
-                    <label htmlFor="input-common-law-marriage">Não</label>
-                </div>
-                <div style={{marginBottom: 10}}>
-                    <label htmlFor="input-RG">Identidade/RG: </label>
-                    <input required type="text" id="input-RG" {...register("rg")} />
-                </div>
-                <div style={{marginBottom: 10}}>
-                    <label htmlFor="input-UF">UF: </label>
-                    <select required defaultValue="default" id="input-UF" {...register("uf_id")}>
-                        <option disabled value="default">-- Escolha um Estado --</option>
-                        {states.map(state=>{
-                            return <option key={state.id} value={state.id}>{state.abbreviation} - {state.name}</option>   
-                        })}
-                    </select>
-                </div>
+                <MaritalStatus marginBottom={10} register={register} watch={watch} />
+                <CommonLawMarriage marginBottom={10} register={register} />
+                <RG marginBottom={10} register={register} />
+                <UF marginBottom={10} register={register} watch={watch} />
                 <div style={{marginBottom: 10}}> 
                     <label htmlFor="input-issuing-body">Órgão Emissor: </label>
                     <select required defaultValue="default" id="input-issuing-body" {...register("issuing_body_id")}>
@@ -128,16 +62,7 @@ export default function UserForm(){
                                 <label htmlFor="input-cep-not-found">Ative caso o CEP não seja encontrado: </label>
                                 <input type="checkbox" id="input-cep-not-found" {...register("cepNotFound")} />
                             </div>
-                            <div style={{marginBottom: 10}}>
-                                <label htmlFor="input-state">Estado: </label>
-                                <select disabled={!watch().cepNotFound} defaultValue="default" required id="input-state" {...register("state_id")}>
-                                    <option disabled value="default">-- Escolha um Estado --</option>
-                                    {states.map(state=>{
-                                        return <option selected={dataCep && dataCep.uf == state.abbreviation}
-                                         key={state.id} value={state.id}>{state.abbreviation} - {state.name}</option>   
-                                    })}
-                                </select>
-                            </div>
+                            <State marginBottom={10} register={register} watch={watch} />
                             <div style={{marginBottom: 10}}>
                                 <label htmlFor="input-address-type">Tipo de logradouro: </label>
                                 <select disabled={!watch().cepNotFound} defaultValue="default" required id="input-address-type" {...register("address_type_id")}>

@@ -1,5 +1,5 @@
-import UserForm from "./components/form"
+import Form from "./components/form"
 
 export default function SignUpPage(){
-    return <UserForm />
+    return <Form />
 }
