@@ -1,0 +1,22 @@
+export default interface Inputs {
+    power_of_attorney: string,
+    full_name: string,
+    ocuppation: string,
+    nationality: string,
+    marital_status: string,
+    common_law_marriage: boolean,
+    rg: string,
+    uf_id: number,
+    issuing_body_id: number,
+    cpf: string,
+    mother_name: string,
+    email: string,
+    address_type_id: number,
+    address_name: string,
+    address_complement_type: string,
+    address_complement: string,
+    cep: string,
+    cepNotFound: boolean,
+    state_id: string,
+    neighborhood: string
+}
