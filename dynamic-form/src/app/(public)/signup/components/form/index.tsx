@@ -169,7 +169,7 @@ export default function UserForm() {
         </div>
       )}
       {watch().power_of_attorney === "trabalhista" && <h1>Trabalhista</h1>}
-      {watch().power_of_attorney === "admnistrativo" && <h1>Admnistrativo</h1>}
+      {watch().power_of_attorney === "administrativo" && <h1>Administrativo</h1>}
       {watch().power_of_attorney === "civel" && <h1>Cível</h1>}
       <br />
       <button>Enviar</button>

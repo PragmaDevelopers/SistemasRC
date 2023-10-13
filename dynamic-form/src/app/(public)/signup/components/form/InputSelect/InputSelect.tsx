@@ -21,7 +21,7 @@ export function PowerOfAttorney({register,marginBottom}:SelectInterface){
                 <option disabled value="default">-- Escolha um tipo de procuração --</option>
                 <option value="previdenciario">Previdenciário</option>
                 <option value="trabalhista">Trabalhista</option>
-                <option value="admnistrativo">Admnistrativo</option>
+                <option value="administrativo">Administrativo</option>
                 <option value="civel">Cível</option>
             </select>
         </div>
