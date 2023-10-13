@@ -18,15 +18,16 @@ import { CommonLawMarriage } from "./InputRadio/InputRadio";
 interface AccordionItemProps {
   title: string;
   children: ReactNode;
+  isOpen?: boolean; // Adicione a propriedade isOpen para controlar o estado inicial do accordion
 }
 
-const AccordionItem: React.FC<AccordionItemProps> = ({ title, children }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen = false }) => {
+  const [isAccordionOpen, setIsAccordionOpen] = useState(isOpen);
 
   return (
     <div>
-      <button onClick={() => setIsOpen(!isOpen)}>{title}</button>
-      {isOpen && <div>{children}</div>}
+      <button onClick={() => setIsAccordionOpen(!isAccordionOpen)}>{title}</button>
+      {isAccordionOpen && <div>{children}</div>}
     </div>
   );
 };
@@ -43,7 +44,7 @@ export default function UserForm() {
   return (
     <form style={{ width: "700px", margin: "0 auto" }} onSubmit={handleSubmit(onSubmit)}>
       <div>
-        <AccordionItem title="Campos gerais">
+        <AccordionItem title="Campos gerais" isOpen={true}>
           <PowerOfAttorney marginBottom={10} register={register} watch={watch} />
           <FullName marginBottom={10} register={register} />
           <Ocuppation marginBottom={10} register={register} watch={watch} />
