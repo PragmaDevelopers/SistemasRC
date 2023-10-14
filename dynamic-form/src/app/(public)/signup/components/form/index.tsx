@@ -45,7 +45,12 @@ export default function UserForm() {
 
   const onSubmit: SubmitHandler<InputsInterface> = (data) => console.log(data);
   
-  const [cepData,setCepData] = useState<CepDataInterface>();
+  const [cepData,setCepData] = useState<CepDataInterface>({
+    uf: "",
+    localidade: "",
+    bairro: "",
+    logradouro: ""
+  });
   React.useEffect(()=>{
       async function getAddressByCep(){
           const data = await fetch(`https://viacep.com.br/ws/${watch().cep}/json/`);
@@ -58,10 +63,10 @@ export default function UserForm() {
   },[watch().cep])
 
   async function getAddress(){
-      // const data = await fetch(`https://viacep.com.br/ws/${watch().state_for_address_id}/${
-      //   watch().city_id}/${watch().neighborhood_id}/json/`);
-      // const response = await data.json().catch(error=>console.log(error));
-      // setCepData(response)
+      const data = await fetch(`https://viacep.com.br/ws/${watch().state_for_address_id}/${
+        watch().city_id}/${watch().neighborhood_id}/json/`);
+      const response = await data.json().catch(error=>console.log(error));
+      setCepData(response)
   }
 
   return (

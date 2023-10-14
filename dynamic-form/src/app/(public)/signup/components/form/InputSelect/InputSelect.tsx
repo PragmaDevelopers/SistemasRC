@@ -120,8 +120,7 @@ export function StateForAddress({register,watch,apiUf,marginBottom}:SelectInterf
             <select disabled={watch ? !watch().cepNotFound : false} defaultValue="default" required {...register("state_for_address_id")}>
                 <option disabled value="default">-- Escolha um Estado --</option>
                 {states.map(state=>{
-                    return <option selected={apiUf ? apiUf == state.abbreviation : false}
-                        key={state.id} value={state.abbreviation}>{state.abbreviation} - {state.name}</option>
+                    return <option key={state.id} value={state.abbreviation}>{state.abbreviation} - {state.name}</option>
                 })}
             </select>
         </div>
