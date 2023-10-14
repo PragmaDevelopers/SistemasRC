@@ -1,4 +1,4 @@
-const issuingBody = [
+export default [
     {
         id: 1,
         abbreviation: 'ABNC',
@@ -834,6 +834,4 @@ const issuingBody = [
         abbreviation: 'ZZZ',
         name: 'Outro',
     },
-];
-
-export default issuingBody;
+]

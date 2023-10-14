@@ -1,4 +1,4 @@
-const addressType = [
+export default [
   { id: 1, type: "aeroporto" },
   { id: 2, type: "alameda" },
   { id: 3, type: "área" },
@@ -43,5 +43,3 @@ const addressType = [
   { id: 42, type: "viela" },
   { id: 43, type: "vila" },
 ];
-  
-export default addressType;

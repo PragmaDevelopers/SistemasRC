@@ -1,4 +1,4 @@
-const states = [
+export default [
     {
         id: 1,
         abbreviation: "AC",
@@ -134,6 +134,4 @@ const states = [
         abbreviation: "TO",
         name: "Tocantins"
     }
-];
-
-export default states;
+]
