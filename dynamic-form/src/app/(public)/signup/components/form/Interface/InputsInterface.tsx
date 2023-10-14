@@ -1,4 +1,4 @@
-export default interface Inputs {
+export default interface InputsInterface {
     power_of_attorney: string,
     full_name: string,
     ocuppation: string,

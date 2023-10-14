@@ -1,6 +1,7 @@
 "use client";
 import React, { ReactNode, useState } from "react";
 import InputsInterface from "./Interface/InputsInterface";
+import CepDataInterface from "./Interface/CepData";
 import { useForm, SubmitHandler } from "react-hook-form";
 import {
   PowerOfAttorney,
@@ -17,7 +18,6 @@ import {
 } from "./InputSelect/InputSelect";
 import { FullName, Email, RG,CPF,MotherName,CEP,AddressName,CTPSn,CTPSserie } from "./InputText/InputText";
 import { CommonLawMarriage,AddressComplement } from "./InputRadio/InputRadio";
-import CepDataInterface from "./Interface/cepData";
 
 interface AccordionItemProps {
   title: string;
