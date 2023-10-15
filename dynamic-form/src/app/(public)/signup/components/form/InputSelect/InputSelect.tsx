@@ -120,59 +120,108 @@ export function StateForAddress({register,setValue,watch,apiInfo,marginBottom}:I
     //State é para as informações para endereço
     const [state,setState] = useState("");
     useEffect(()=>{
-        if(apiInfo.length === 1){
+        if(apiInfo?.length === 1){
             setState(apiInfo[0])
             setValue("state_for_address",apiInfo[0])
         }
-    },[apiInfo[0]])
+    },[apiInfo])
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-state">Estado: </label>
-            <input onChange={(e)=>{
-                setState(e.target.value)
-                setValue("state_for_address",e.target.value)
-            }} value={state} disabled={!watch().cepNotFound} type="search" id="input-state" required />
             <input type="hidden" {...register("state_for_address")} />
+            {!watch().cepNotFound ? 
+                <input onChange={(e)=>{
+                    setState(e.target.value)
+                    setValue("state_for_address",e.target.value)
+                }} value={state} disabled={true} type="text" id="input-state" required />
+            :
+                <select defaultValue="default" required id="input-state" onChange={(e)=>{
+                    setState(e.target.value)
+                    setValue("state_for_address",e.target.value)
+                        }}>
+                    <option disabled value="default">-- Escolha um Estado --</option>
+                    {states.map(state=>{
+                        return <option key={state.id} value={state.abbreviation}>{state.abbreviation} - {state.name}</option>   
+                    })}
+                </select>
+            }
+            
         </div>
     )
 }
 
 export function City({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
     const [city,setCity] = useState("");
+    const [isReset,setIsReset] = useState(false);
     useEffect(()=>{
-        if(apiInfo.length === 1){
+        if(apiInfo?.length === 1){
             setCity(apiInfo[0]);
             setValue("city",apiInfo[0])
         }
-    },[apiInfo[0]])
+        setIsReset(false)
+    },[apiInfo])
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-city">Cidade: </label>
+            <input type="hidden" {...register("city")} />    
+            {(apiInfo?.length <= 1 || isReset) ? 
             <input onChange={(e)=>{
                 setCity(e.target.value)
                 setValue("city",e.target.value)
-            }} value={city} disabled={!watch().cepNotFound} type="search" id="input-city" />
-            <input type="hidden" {...register("city")} />    
+            }} value={city} disabled={!watch().cepNotFound} type="text" id="input-city" />
+            :
+                <>
+                    <select id="input-city" onChange={(e)=>{
+                        setCity(e.target.value)
+                        setValue("city",e.target.value)
+                    }}>
+                        {apiInfo.map((info)=>{
+                            return <option key={info} value={info}>{info}</option>
+                        })}
+                    </select>
+                    <button type="button" onClick={()=>{setIsReset(true)}}
+                    >Reset</button>
+                </>
+            }
         </div>
     )
 }
 
 export function Neighborhood({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
     const [neighborhood,setNeighborhood] = useState("");
+    const [isReset,setIsReset] = useState(false);
     useEffect(()=>{
-        if(apiInfo.length === 1){
+        if(apiInfo?.length === 1){
             setNeighborhood(apiInfo[0]);
             setValue("neighborhood",apiInfo[0]);
         }
-    },[apiInfo[0]])
+        setIsReset(false);
+    },[apiInfo])
     return (
         <div style={{marginBottom: marginBottom}}>
-            <label htmlFor="input-neighborhood">Bairro: </label>
-            <input onChange={(e)=>{
-                setNeighborhood(e.target.value)
-                setValue("neighborhood",e.target.value);
-            }} value={neighborhood} disabled={!watch().cepNotFound} type="search" id="input-neighborhood" />      
-            <input type="hidden" value={neighborhood} {...register("neighborhood",{required:true})} /> 
+            <label htmlFor="input-neighborhood">Bairro (Coloque ao menos 3 caracteres): </label>
+            <input type="hidden" {...register("neighborhood",{required:true})} /> 
+            {(apiInfo?.length <= 1 || isReset)? 
+                <>
+                    <input onChange={(e)=>{
+                        setNeighborhood(e.target.value)
+                        setValue("neighborhood",e.target.value);
+                    }} value={neighborhood} disabled={!watch().cepNotFound} type="text" id="input-neighborhood" />
+                </>
+            : 
+            <>
+                <select id="input-neighborhood" onChange={(e)=>{
+                        setNeighborhood(e.target.value)
+                        setValue("neighborhood",e.target.value);
+                    }}>
+                    {apiInfo.map((info)=>{
+                        return <option key={info} value={info}>{info}</option>
+                    })}
+                </select>
+                <button type="button" onClick={()=>{setIsReset(true)}}
+                >Reset</button>
+            </>  
+            }     
         </div>
     )
 }
@@ -180,22 +229,30 @@ export function Neighborhood({register,setValue,watch,apiInfo,marginBottom}:IAdv
 export function AddressName({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
     const [addressName,setAddressName] = useState("");
     useEffect(()=>{
-        if(apiInfo.length === 1){
+        if(apiInfo?.length === 1){
             setAddressName(apiInfo[0]);
             setValue("address_name",apiInfo[0]);
         }
-    },[apiInfo[0]])
+    },[apiInfo])
     return (
         <div style={{ marginBottom: marginBottom }}>
-            <label htmlFor="input-address-name"> Nome: </label>
+            <label htmlFor="input-address-name"> Nome: </label> 
+            <input type="hidden" {...register("address_name")} />
+            {apiInfo?.length <= 1 ? 
+            
             <input onChange={(e)=>{
                 setAddressName(e.target.value)
                 setValue("address_name",e.target.value);
-            }} value={addressName} disabled={!watch().cepNotFound} type="search" id="input-address-name" />      
-            <input type="hidden" {...register("address_name")} />
-            {apiInfo.length > 1 && (<select>
-                <option>adsad</option>
-            </select>)} 
+            }} value={addressName} disabled={true} type="text" id="input-address-name" />   
+            
+            : <select id="input-address-name" onChange={(e)=>{
+                setAddressName(e.target.value)
+                setValue("address_name",e.target.value);
+            }}>
+                {apiInfo.map((info)=>{
+                    return <option key={info} value={info}>{info}</option>
+                })}
+            </select>} 
         </div>
     )
 }

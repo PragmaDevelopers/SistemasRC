@@ -63,7 +63,7 @@ export default function UserForm() {
   },[watch().cep])
 
   return (
-    <form style={{ width: "700px", margin: "0 auto" }} onSubmit={handleSubmit(onSubmit)}>
+    <form className="bg-red-900 opacity-0" style={{ width: "700px", margin: "0 auto" }} onSubmit={handleSubmit(onSubmit)}>
       <div>
         <AccordionItem title="Campos gerais" isOpen={true}>
           <PowerOfAttorney marginBottom={10} register={register} />
@@ -100,7 +100,7 @@ export default function UserForm() {
                     >Buscar Endereço</button>
                   )
               }
-              <AddressName marginBottom={10} register={register} watch={watch} setValue={setValue} apiInfo={[...cepData?.logradouro]} />
+              <AddressName marginBottom={10} register={register} watch={watch} setValue={setValue} apiInfo={cepData.logradouro} />
               {["previdenciario","civel"].includes(watch().power_of_attorney) && (
                 <AddressComplement marginBottom={10} register={register} watch={watch} />
               )}
