@@ -3,12 +3,12 @@ import InputsInterface from "../Interface/InputsInterface";
 
 type ISimpleSelection = {
     register: UseFormRegister<InputsInterface>,
-    marginBottom: number | string
+    className: string
 }
 
-export function CommonLawMarriage({register,marginBottom}:ISimpleSelection){
+export function CommonLawMarriage({register,className}:ISimpleSelection){
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <span>Vive em União Estável: </span>
             <input required type="radio" value="true" id="input-true-common-law-marriage" {...register("common_law_marriage")} />
             <label htmlFor="input-common-law-marriage">Sim</label>
@@ -21,12 +21,12 @@ export function CommonLawMarriage({register,marginBottom}:ISimpleSelection){
 type IAdvancedSelection = {
   register: UseFormRegister<InputsInterface>,
   watch: UseFormWatch<InputsInterface>,
-  marginBottom?: number | string
+  className: string
 }
 
-export function AddressComplement({register,watch,marginBottom}:IAdvancedSelection){
+export function AddressComplement({register,watch,className}:IAdvancedSelection){
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <span>Tipo de Complemento: </span>
               <input
                 required

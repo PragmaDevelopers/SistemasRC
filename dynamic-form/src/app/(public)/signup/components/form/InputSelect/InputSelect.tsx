@@ -9,14 +9,14 @@ import { useEffect,useState } from "react";
 
 type ISimpleSelection = {
     register: UseFormRegister<InputsInterface>,
-    marginBottom: number | string
+    className: string
 }
 
-export function PowerOfAttorney({register,marginBottom}:ISimpleSelection){
+export function PowerOfAttorney({register,className}:ISimpleSelection){
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <label htmlFor="input-power-attorney">Procuração: </label>
-            <select required defaultValue="default" id="input-power-attorney" {...register("power_of_attorney")}>
+            <select className="w-full" defaultValue="default" id="input-power-attorney" {...register("power_of_attorney",{required:true})}>
                 <option disabled value="default">-- Escolha um tipo de procuração --</option>
                 <option value="previdenciario">Previdenciário</option>
                 <option value="trabalhista">Trabalhista</option>
@@ -27,22 +27,22 @@ export function PowerOfAttorney({register,marginBottom}:ISimpleSelection){
     )
 }
 
-export function Ocuppation({register,marginBottom}:ISimpleSelection){
+export function Ocuppation({register,className}:ISimpleSelection){
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             {/* Futuramente criar um select com várias opções de cargo */}
             <label htmlFor="input-ocuppation">Profissão: </label>
-            <input required type="text" id="input-ocuppation" {...register("ocuppation")} />
+            <input className="w-full" type="text" id="input-ocuppation" {...register("ocuppation",{required:true})} />
         </div>
     )
 }
 
-export function Nationality({register,marginBottom}:ISimpleSelection){
+export function Nationality({register,className}:ISimpleSelection){
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             {/* PRIMEIRA FORMA DE SELECIONAR OS DADOS. MAIS FLEXIVEL */}
             <label htmlFor="input-nationality">Nacionalidade: </label>
-            <select required defaultValue="default" id="input-nationality" {...register("nationality")}>
+            <select className="w-full" defaultValue="default" id="input-nationality" {...register("nationality",{required:true})}>
                 <option disabled value="default">-- Escolha uma Nacionalidade --</option>
                 <option value="brazilian-male">Brasileiro</option>
                 <option value="brazilian-female">Brasileira</option>
@@ -60,11 +60,11 @@ export function Nationality({register,marginBottom}:ISimpleSelection){
     )
 }
 
-export function MaritalStatus({register,marginBottom}:ISimpleSelection){
+export function MaritalStatus({register,className}:ISimpleSelection){
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <label htmlFor="input-marital-status">Estado Civil: </label>
-            <select required defaultValue="default" id="input-marital-status" {...register("marital_status")}>
+            <select className="w-full" defaultValue="default" id="input-marital-status" {...register("marital_status",{required:true})}>
                 <option disabled value="default">-- Escolha um Estado Civil --</option>
                 <option value="single">Solteiro (a)</option>
                 <option value="married">Casado (a)</option>
@@ -75,12 +75,12 @@ export function MaritalStatus({register,marginBottom}:ISimpleSelection){
     )
 }
 
-export function UfForRG({register,marginBottom}:ISimpleSelection){
+export function UfForRG({register,className}:ISimpleSelection){
     //UF é para as informações do documentos
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <label htmlFor="input-UF">UF: </label>
-            <select required defaultValue="default" id="input-UF" {...register("uf_for_RG_id")}>
+            <select className="w-full" defaultValue="default" id="input-UF" {...register("uf_for_RG_id",{required:true})}>
                 <option disabled value="default">-- Escolha um Estado --</option>
                 {states.map(state=>{
                     return <option key={state.id} value={state.id}>{state.abbreviation} - {state.name}</option>   
@@ -90,11 +90,11 @@ export function UfForRG({register,marginBottom}:ISimpleSelection){
     )
 }
 
-export function IssuingBody({register,marginBottom}:ISimpleSelection){
+export function IssuingBody({register,className}:ISimpleSelection){
     return (
-        <div style={{ marginBottom: marginBottom }}>
+        <div className={className}>
             <label htmlFor="input-issuing-body">Órgão Emissor: </label>
-            <select required defaultValue="default" id="input-issuing-body" {...register("issuing_body_id")}>
+            <select className="w-full" defaultValue="default" id="input-issuing-body" {...register("issuing_body_id",{required:true})}>
                 <option disabled value="default">-- Escolha um Órgão Emissor --</option>
                 {issuingBodies.map((issuingBody) => {
                 return (
@@ -113,10 +113,10 @@ type IAdvancedSelection = {
     setValue: UseFormSetValue<InputsInterface>,
     watch: UseFormWatch<InputsInterface>,
     apiInfo: string[]
-    marginBottom: number | string
+    className: string
 }
 
-export function StateForAddress({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+export function StateForAddress({register,setValue,watch,apiInfo,className}:IAdvancedSelection){
     //State é para as informações para endereço
     const [state,setState] = useState("");
     useEffect(()=>{
@@ -126,16 +126,16 @@ export function StateForAddress({register,setValue,watch,apiInfo,marginBottom}:I
         }
     },[apiInfo])
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <label htmlFor="input-state">Estado: </label>
-            <input type="hidden" {...register("state_for_address")} />
+            <input type="hidden" {...register("state_for_address",{required:true})} />
             {!watch().cepNotFound ? 
-                <input onChange={(e)=>{
+                <input className="w-full bg-white" onChange={(e)=>{
                     setState(e.target.value)
                     setValue("state_for_address",e.target.value)
                 }} value={state} disabled={true} type="text" id="input-state" required />
             :
-                <select defaultValue="default" required id="input-state" onChange={(e)=>{
+                <select className="w-full" defaultValue="default" required id="input-state" onChange={(e)=>{
                     setState(e.target.value)
                     setValue("state_for_address",e.target.value)
                         }}>
@@ -143,6 +143,7 @@ export function StateForAddress({register,setValue,watch,apiInfo,marginBottom}:I
                     {states.map(state=>{
                         return <option key={state.id} value={state.abbreviation}>{state.abbreviation} - {state.name}</option>   
                     })}
+                    
                 </select>
             }
             
@@ -150,7 +151,7 @@ export function StateForAddress({register,setValue,watch,apiInfo,marginBottom}:I
     )
 }
 
-export function City({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+export function City({register,setValue,watch,apiInfo,className}:IAdvancedSelection){
     const [city,setCity] = useState("");
     const [isReset,setIsReset] = useState(false);
     useEffect(()=>{
@@ -161,23 +162,24 @@ export function City({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSel
         setIsReset(false)
     },[apiInfo])
     return (
-        <div style={{marginBottom: marginBottom}}>
-            <label htmlFor="input-city">Cidade: </label>
-            <input type="hidden" {...register("city")} />    
+        <div className={className}>
+            <label htmlFor="input-city">Cidade {watch().cepNotFound && "(Coloque ao menos 3 caracteres)"}: </label>
+            <input type="hidden" {...register("city",{required:true})} />    
             {(apiInfo?.length <= 1 || isReset) ? 
-            <input onChange={(e)=>{
+            <input className="w-full bg-white" onChange={(e)=>{
                 setCity(e.target.value)
                 setValue("city",e.target.value)
-            }} value={city} disabled={!watch().cepNotFound} type="text" id="input-city" />
+            }} value={city} disabled={!watch().cepNotFound} type="text" id="input-city" required />
             :
                 <>
-                    <select id="input-city" onChange={(e)=>{
+                    <select className="w-full" required id="input-city" onChange={(e)=>{
                         setCity(e.target.value)
                         setValue("city",e.target.value)
                     }}>
                         {apiInfo.map((info)=>{
                             return <option key={info} value={info}>{info}</option>
                         })}
+                        
                     </select>
                     <button type="button" onClick={()=>{setIsReset(true)}}
                     >Reset</button>
@@ -187,7 +189,7 @@ export function City({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSel
     )
 }
 
-export function Neighborhood({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+export function Neighborhood({register,setValue,watch,apiInfo,className}:IAdvancedSelection){
     const [neighborhood,setNeighborhood] = useState("");
     const [isReset,setIsReset] = useState(false);
     useEffect(()=>{
@@ -198,25 +200,24 @@ export function Neighborhood({register,setValue,watch,apiInfo,marginBottom}:IAdv
         setIsReset(false);
     },[apiInfo])
     return (
-        <div style={{marginBottom: marginBottom}}>
-            <label htmlFor="input-neighborhood">Bairro (Coloque ao menos 3 caracteres): </label>
+        <div className={className}>
+            <label htmlFor="input-neighborhood">Bairro {watch().cepNotFound && "(Coloque ao menos 3 caracteres)"}: </label>
             <input type="hidden" {...register("neighborhood",{required:true})} /> 
             {(apiInfo?.length <= 1 || isReset)? 
-                <>
-                    <input onChange={(e)=>{
-                        setNeighborhood(e.target.value)
-                        setValue("neighborhood",e.target.value);
-                    }} value={neighborhood} disabled={!watch().cepNotFound} type="text" id="input-neighborhood" />
-                </>
+                <input className="w-full bg-white" onChange={(e)=>{
+                    setNeighborhood(e.target.value)
+                    setValue("neighborhood",e.target.value);
+                }} value={neighborhood} disabled={!watch().cepNotFound} type="text" id="input-neighborhood" required />
             : 
             <>
-                <select id="input-neighborhood" onChange={(e)=>{
+                <select className="w-full" required id="input-neighborhood" onChange={(e)=>{
                         setNeighborhood(e.target.value)
                         setValue("neighborhood",e.target.value);
                     }}>
                     {apiInfo.map((info)=>{
                         return <option key={info} value={info}>{info}</option>
                     })}
+                    
                 </select>
                 <button type="button" onClick={()=>{setIsReset(true)}}
                 >Reset</button>
@@ -226,40 +227,49 @@ export function Neighborhood({register,setValue,watch,apiInfo,marginBottom}:IAdv
     )
 }
 
-export function AddressName({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+export function AddressName({register,setValue,watch,apiInfo,className}:IAdvancedSelection){
     const [addressName,setAddressName] = useState("");
+    const [isReset,setIsReset] = useState(false);
     useEffect(()=>{
         if(apiInfo?.length === 1){
             setAddressName(apiInfo[0]);
             setValue("address_name",apiInfo[0]);
         }
+        setIsReset(false)
     },[apiInfo])
     return (
-        <div style={{ marginBottom: marginBottom }}>
-            <label htmlFor="input-address-name"> Nome: </label> 
-            <input type="hidden" {...register("address_name")} />
-            {apiInfo?.length <= 1 ? 
+        <div className={className}>
+            <label htmlFor="input-address-name">Logradouro: </label> 
+            <input type="hidden" {...register("address_name",{required:true})} />
+            {apiInfo?.length <= 1 || isReset ? 
             
-            <input onChange={(e)=>{
+            <input className="w-full bg-white" onChange={(e)=>{
                 setAddressName(e.target.value)
                 setValue("address_name",e.target.value);
-            }} value={addressName} disabled={true} type="text" id="input-address-name" />   
+            }} value={addressName} disabled={!watch().cepNotFound} type="text" id="input-address-name" required />   
             
-            : <select id="input-address-name" onChange={(e)=>{
-                setAddressName(e.target.value)
-                setValue("address_name",e.target.value);
-            }}>
-                {apiInfo.map((info)=>{
-                    return <option key={info} value={info}>{info}</option>
-                })}
-            </select>} 
+            :
+            <>
+                <select className="w-full" required id="input-address-name" onChange={(e)=>{
+                    setAddressName(e.target.value)
+                    setValue("address_name",e.target.value);
+                }}>
+                    {apiInfo.map((info)=>{
+                        return <option key={info} value={info}>{info}</option>
+                    })}
+                    
+                </select>
+                <button type="button" onClick={()=>{setIsReset(true)}}
+                >Reset</button>
+            </> 
+            } 
         </div>
     )
 }
 
-// export function AddressType({register,watch,marginBottom}:SelectInterface){
+// export function AddressType({register,watch,className}:SelectInterface){
 //     return (
-//         <div style={{ marginBottom: marginBottom }}>
+//         <div className={{className}}>
 //             <label htmlFor="input-address-type">Tipo de logradouro: </label>
 //             <select
 //             disabled={watch ? !watch().cepNotFound : false}
@@ -281,12 +291,12 @@ export function AddressName({register,setValue,watch,apiInfo,marginBottom}:IAdva
 //     )
 // }
 
-export function UfForCTPS({register,marginBottom}:ISimpleSelection){
+export function UfForCTPS({register,className}:ISimpleSelection){
     //UF é para as informações de CTPS
     return (
-        <div style={{marginBottom: marginBottom}}>
+        <div className={className}>
             <label htmlFor="input-ctps-uf">UF: </label>
-            <select defaultValue="default" required id="input-ctps-uf" {...register("uf_for_ctps")}>
+            <select className="w-full" defaultValue="default" id="input-ctps-uf" {...register("uf_for_ctps",{required:true})}>
                 <option disabled value="default">-- Escolha um Estado --</option>
                 {states.map(state=>{
                     return <option key={state.id} value={state.id}>{state.abbreviation} - {state.name}</option>   
