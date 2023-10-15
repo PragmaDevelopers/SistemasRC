@@ -1,4 +1,4 @@
-import { UseFormRegister,UseFormWatch } from "react-hook-form";
+import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
 import InputsInterface from "../Interface/InputsInterface";
 import issuingBodies from "../../../../../../../api/issuingBody/issuingBody";
 import states from "../../../../../../../api/states/states";
@@ -7,16 +7,12 @@ import neighborhoods from "../../../../../../../api/neighborhoods/neighborhoods"
 import addressTypes from "../../../../../../../api/addressType/addressType";
 import { useEffect,useState } from "react";
 
-type SelectInterface = {
+type ISimpleSelection = {
     register: UseFormRegister<InputsInterface>,
-    watch?: UseFormWatch<InputsInterface>,
-    marginBottom?: number | string,
-    apiUf?: string,
-    apiCity?: string,
-    apiNeighborhood?: string
+    marginBottom: number | string
 }
 
-export function PowerOfAttorney({register,marginBottom}:SelectInterface){
+export function PowerOfAttorney({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-power-attorney">Procuração: </label>
@@ -31,7 +27,7 @@ export function PowerOfAttorney({register,marginBottom}:SelectInterface){
     )
 }
 
-export function Ocuppation({register,marginBottom}:SelectInterface){
+export function Ocuppation({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             {/* Futuramente criar um select com várias opções de cargo */}
@@ -41,7 +37,7 @@ export function Ocuppation({register,marginBottom}:SelectInterface){
     )
 }
 
-export function Nationality({register,marginBottom}:SelectInterface){
+export function Nationality({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             {/* PRIMEIRA FORMA DE SELECIONAR OS DADOS. MAIS FLEXIVEL */}
@@ -64,7 +60,7 @@ export function Nationality({register,marginBottom}:SelectInterface){
     )
 }
 
-export function MaritalStatus({register,marginBottom}:SelectInterface){
+export function MaritalStatus({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-marital-status">Estado Civil: </label>
@@ -79,7 +75,7 @@ export function MaritalStatus({register,marginBottom}:SelectInterface){
     )
 }
 
-export function UfForRG({register,marginBottom}:SelectInterface){
+export function UfForRG({register,marginBottom}:ISimpleSelection){
     //UF é para as informações do documentos
     return (
         <div style={{marginBottom: marginBottom}}>
@@ -94,7 +90,7 @@ export function UfForRG({register,marginBottom}:SelectInterface){
     )
 }
 
-export function IssuingBody({register,marginBottom}:SelectInterface){
+export function IssuingBody({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{ marginBottom: marginBottom }}>
             <label htmlFor="input-issuing-body">Órgão Emissor: </label>
@@ -112,37 +108,94 @@ export function IssuingBody({register,marginBottom}:SelectInterface){
     )
 }
 
-export function StateForAddress({register,watch,apiUf,marginBottom}:SelectInterface){
+type IAdvancedSelection = {
+    register: UseFormRegister<InputsInterface>,
+    setValue: UseFormSetValue<InputsInterface>,
+    watch: UseFormWatch<InputsInterface>,
+    apiInfo: string[]
+    marginBottom: number | string
+}
+
+export function StateForAddress({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
     //State é para as informações para endereço
+    const [state,setState] = useState("");
+    useEffect(()=>{
+        if(apiInfo.length === 1){
+            setState(apiInfo[0])
+            setValue("state_for_address",apiInfo[0])
+        }
+    },[apiInfo[0]])
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-state">Estado: </label>
-            <select disabled={watch ? !watch().cepNotFound : false} defaultValue="default" required {...register("state_for_address_id")}>
-                <option disabled value="default">-- Escolha um Estado --</option>
-                {states.map(state=>{
-                    return <option key={state.id} value={state.abbreviation}>{state.abbreviation} - {state.name}</option>
-                })}
-            </select>
+            <input onChange={(e)=>{
+                setState(e.target.value)
+                setValue("state_for_address",e.target.value)
+            }} value={state} disabled={!watch().cepNotFound} type="search" id="input-state" required />
+            <input type="hidden" {...register("state_for_address")} />
         </div>
     )
 }
 
-export function City({register,watch,apiCity,marginBottom}:SelectInterface){
-    const cepNotFound = watch ? !watch().cepNotFound : false;
+export function City({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+    const [city,setCity] = useState("");
+    useEffect(()=>{
+        if(apiInfo.length === 1){
+            setCity(apiInfo[0]);
+            setValue("city",apiInfo[0])
+        }
+    },[apiInfo[0]])
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-city">Cidade: </label>
-            <input value={cepNotFound ? apiCity : watch && watch().city_id} disabled={cepNotFound} type="search" id="input-city" {...register("city_id",{required:true})} />      
+            <input onChange={(e)=>{
+                setCity(e.target.value)
+                setValue("city",e.target.value)
+            }} value={city} disabled={!watch().cepNotFound} type="search" id="input-city" />
+            <input type="hidden" {...register("city")} />    
         </div>
     )
 }
 
-export function Neighborhood({register,watch,apiNeighborhood,marginBottom}:SelectInterface){
-    const cepNotFound = watch ? !watch().cepNotFound : false;
+export function Neighborhood({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+    const [neighborhood,setNeighborhood] = useState("");
+    useEffect(()=>{
+        if(apiInfo.length === 1){
+            setNeighborhood(apiInfo[0]);
+            setValue("neighborhood",apiInfo[0]);
+        }
+    },[apiInfo[0]])
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-neighborhood">Bairro: </label>
-            <input value={cepNotFound ? apiNeighborhood : watch && watch().neighborhood_id} disabled={cepNotFound} type="search" id="input-neighborhood" {...register("neighborhood_id",{required:true})} />      
+            <input onChange={(e)=>{
+                setNeighborhood(e.target.value)
+                setValue("neighborhood",e.target.value);
+            }} value={neighborhood} disabled={!watch().cepNotFound} type="search" id="input-neighborhood" />      
+            <input type="hidden" value={neighborhood} {...register("neighborhood",{required:true})} /> 
+        </div>
+    )
+}
+
+export function AddressName({register,setValue,watch,apiInfo,marginBottom}:IAdvancedSelection){
+    const [addressName,setAddressName] = useState("");
+    useEffect(()=>{
+        if(apiInfo.length === 1){
+            setAddressName(apiInfo[0]);
+            setValue("address_name",apiInfo[0]);
+        }
+    },[apiInfo[0]])
+    return (
+        <div style={{ marginBottom: marginBottom }}>
+            <label htmlFor="input-address-name"> Nome: </label>
+            <input onChange={(e)=>{
+                setAddressName(e.target.value)
+                setValue("address_name",e.target.value);
+            }} value={addressName} disabled={!watch().cepNotFound} type="search" id="input-address-name" />      
+            <input type="hidden" {...register("address_name")} />
+            {apiInfo.length > 1 && (<select>
+                <option>adsad</option>
+            </select>)} 
         </div>
     )
 }
@@ -171,7 +224,7 @@ export function Neighborhood({register,watch,apiNeighborhood,marginBottom}:Selec
 //     )
 // }
 
-export function UfForCTPS({register,marginBottom}:SelectInterface){
+export function UfForCTPS({register,marginBottom}:ISimpleSelection){
     //UF é para as informações de CTPS
     return (
         <div style={{marginBottom: marginBottom}}>

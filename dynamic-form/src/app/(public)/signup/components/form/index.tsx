@@ -14,10 +14,12 @@ import {
   City,
   // AddressType,
   Neighborhood,
+  AddressName,
   UfForCTPS
 } from "./InputSelect/InputSelect";
-import { FullName, Email, RG,CPF,MotherName,CEP,AddressName,CTPSn,CTPSserie } from "./InputText/InputText";
+import { FullName, Email, RG,CPF,MotherName,CEP,CTPSn,CTPSserie } from "./InputText/InputText";
 import { CommonLawMarriage,AddressComplement } from "./InputRadio/InputRadio";
+import { getAddressManually, tryGetAddressByCep } from "@/app/utils/handleError";
 
 interface AccordionItemProps {
   title: string;
@@ -25,7 +27,7 @@ interface AccordionItemProps {
   isOpen?: boolean; // Adicione a propriedade isOpen para controlar o estado inicial do accordion
 }
 
-const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen = false }) => {
+const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen = true }) => {
   const [isAccordionOpen, setIsAccordionOpen] = useState(isOpen);
 
   return (
@@ -37,7 +39,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen =
 };
 
 export default function UserForm() {
-  const { register, handleSubmit, watch } = useForm<InputsInterface>({
+  const { register, handleSubmit, watch,setValue } = useForm<InputsInterface>({
     defaultValues: {
       cepNotFound: false,
     },
@@ -46,28 +48,19 @@ export default function UserForm() {
   const onSubmit: SubmitHandler<InputsInterface> = (data) => console.log(data);
   
   const [cepData,setCepData] = useState<CepDataInterface>({
-    uf: "",
-    localidade: "",
-    bairro: "",
-    logradouro: ""
+    uf: [],
+    localidade: [],
+    bairro: [],
+    logradouro: []
   });
+  
   React.useEffect(()=>{
-      async function getAddressByCep(){
-          const data = await fetch(`https://viacep.com.br/ws/${watch().cep}/json/`);
-          const response = await data.json().catch(error=>console.log(error));
-          setCepData(response)
-      }
-      if(watch().cep?.length === 8){
-          getAddressByCep();
-      }
+    async function awaitFunction(){
+       const response = await tryGetAddressByCep(watch);
+       setCepData(response);
+    }
+    awaitFunction();
   },[watch().cep])
-
-  async function getAddress(){
-      const data = await fetch(`https://viacep.com.br/ws/${watch().state_for_address_id}/${
-        watch().city_id}/${watch().neighborhood_id}/json/`);
-      const response = await data.json().catch(error=>console.log(error));
-      setCepData(response)
-  }
 
   return (
     <form style={{ width: "700px", margin: "0 auto" }} onSubmit={handleSubmit(onSubmit)}>
@@ -96,14 +89,18 @@ export default function UserForm() {
           <div>
             <AccordionItem title="Campos extras">
               <CEP marginBottom={10} register={register} />
-              <StateForAddress marginBottom={10} register={register} watch={watch} apiUf={cepData?.uf} />
-              <City marginBottom={10} register={register} watch={watch} apiCity={cepData?.localidade} />
-              <Neighborhood marginBottom={10} register={register} watch={watch} apiNeighborhood={cepData?.bairro} />
+              <StateForAddress marginBottom={10} register={register} watch={watch} setValue={setValue} apiInfo={cepData.uf} />
+              <City marginBottom={10} register={register} watch={watch} setValue={setValue} apiInfo={cepData.localidade} />
+              <Neighborhood marginBottom={10} register={register} watch={watch} setValue={setValue} apiInfo={cepData.bairro} />
               {/* <AddressType marginBottom={10} register={register} watch={watch} /> */}
-              <AddressName marginBottom={10} register={register} watch={watch} apiAddressName={cepData?.logradouro} />
-
-               {watch().cepNotFound && (<button type="button" onClick={()=>getAddress()}>Buscar Endereço</button>)}
-
+              {
+                watch().cepNotFound && 
+                  (
+                    <button type="button" onClick={async()=>{setCepData(await getAddressManually(watch))}}
+                    >Buscar Endereço</button>
+                  )
+              }
+              <AddressName marginBottom={10} register={register} watch={watch} setValue={setValue} apiInfo={[...cepData?.logradouro]} />
               {["previdenciario","civel"].includes(watch().power_of_attorney) && (
                 <AddressComplement marginBottom={10} register={register} watch={watch} />
               )}

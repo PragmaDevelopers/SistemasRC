@@ -1,13 +1,12 @@
 import { UseFormRegister,UseFormWatch } from "react-hook-form";
 import InputsInterface from "../Interface/InputsInterface";
 
-type RadioInterface = {
+type ISimpleSelection = {
     register: UseFormRegister<InputsInterface>,
-    watch?: UseFormWatch<InputsInterface>,
-    marginBottom?: number | string
+    marginBottom: number | string
 }
 
-export function CommonLawMarriage({register,marginBottom}:RadioInterface){
+export function CommonLawMarriage({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <span>Vive em União Estável: </span>
@@ -19,7 +18,13 @@ export function CommonLawMarriage({register,marginBottom}:RadioInterface){
     )
 }
 
-export function AddressComplement({register,watch,marginBottom}:RadioInterface){
+type IAdvancedSelection = {
+  register: UseFormRegister<InputsInterface>,
+  watch: UseFormWatch<InputsInterface>,
+  marginBottom?: number | string
+}
+
+export function AddressComplement({register,watch,marginBottom}:IAdvancedSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <span>Tipo de Complemento: </span>
@@ -39,14 +44,14 @@ export function AddressComplement({register,watch,marginBottom}:RadioInterface){
                 {...register("address_complement_type")}
               />
               <label htmlFor="input-address-complement-qd-lt">Qd/Lt </label>
-              {watch && watch().address_complement_type === "number" ? (
+              {watch().address_complement_type === "number" ? (
                 <input
                   placeholder="Adicione o número"
                   required
                   type="number"
                   {...register("address_complement_name")}
                 />
-              ) : watch && watch().address_complement_type === "qd-lt" && (
+              ) : watch().address_complement_type === "qd-lt" && (
                 <input
                   placeholder="Adicione a quadra e lote"
                   required

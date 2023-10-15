@@ -1,14 +1,12 @@
-import { UseFormRegister,UseFormWatch } from "react-hook-form";
+import { UseFormRegister } from "react-hook-form";
 import InputsInterface from "../Interface/InputsInterface";
 
-type TextInterface = {
+type ISimpleSelection = {
     register: UseFormRegister<InputsInterface>,
-    watch?: UseFormWatch<InputsInterface>,
-    marginBottom?: number | string,
-    apiAddressName?: string
+    marginBottom: number | string,
 }
 
-export function FullName({register,marginBottom}:TextInterface){
+export function FullName({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-full-name">Nome Completo: </label>
@@ -17,7 +15,7 @@ export function FullName({register,marginBottom}:TextInterface){
     )
 }
 
-export function Email({register,marginBottom}:TextInterface){
+export function Email({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-email">Endereço Eletronico/E-mail: </label>
@@ -26,7 +24,7 @@ export function Email({register,marginBottom}:TextInterface){
     )
 }
 
-export function RG({register,marginBottom}:TextInterface){
+export function RG({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{marginBottom: marginBottom}}>
             <label htmlFor="input-rg">Identidade/RG: </label>
@@ -35,7 +33,7 @@ export function RG({register,marginBottom}:TextInterface){
     )
 }
 
-export function CPF({register,marginBottom}:TextInterface){
+export function CPF({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{ marginBottom: marginBottom }}>
             <label htmlFor="input-cpf">CPF: </label>
@@ -44,7 +42,7 @@ export function CPF({register,marginBottom}:TextInterface){
     )
 }
 
-export function MotherName({register,marginBottom}:TextInterface){
+export function MotherName({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{ marginBottom: marginBottom }}>
             <label htmlFor="input-mother-name">Nome da mãe: </label>
@@ -53,7 +51,7 @@ export function MotherName({register,marginBottom}:TextInterface){
     )
 }
 
-export function CEP({register,marginBottom}:TextInterface){
+export function CEP({register,marginBottom}:ISimpleSelection){
     return (
         <>
         <div style={{ marginBottom: marginBottom }}>
@@ -68,24 +66,7 @@ export function CEP({register,marginBottom}:TextInterface){
     )
 }
 
-export function AddressName({register,watch,apiAddressName,marginBottom}:TextInterface){
-    const cepNotFound = watch ? !watch().cepNotFound : false;
-    return (
-        <div style={{ marginBottom: marginBottom }}>
-            <label htmlFor="input-address-name"> Nome: </label>
-            <input
-            value={cepNotFound ? apiAddressName :watch && watch().address_name}
-            disabled={cepNotFound}
-            placeholder="Ex: Rua Camaleão Astuto"
-            type="search"
-            id="input-address-name"
-            {...register("address_name",{required:true})}
-            />
-        </div>
-    )
-}
-
-export function CTPSn({register,marginBottom}:TextInterface){
+export function CTPSn({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{ marginBottom: marginBottom }}>
             <label htmlFor="input-ctps-n">CTPS nº xxx: </label>
@@ -94,7 +75,7 @@ export function CTPSn({register,marginBottom}:TextInterface){
     )
 }
 
-export function CTPSserie({register,marginBottom}:TextInterface){
+export function CTPSserie({register,marginBottom}:ISimpleSelection){
     return (
         <div style={{ marginBottom: marginBottom }}>
             <label htmlFor="input-TPS-serie">Serie xxx: </label>
