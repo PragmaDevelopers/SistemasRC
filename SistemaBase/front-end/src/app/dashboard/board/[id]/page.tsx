@@ -226,7 +226,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         </div>
                         <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none dark:border-neutral-50'>
                             <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
-                            <textarea className='resize-none w-full h-32 bg-neutral-50 dark:bg-neutral-50' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                            <textarea className='resize-none w-full h-32 bg-neutral-50 dark:bg-neutral-950' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
