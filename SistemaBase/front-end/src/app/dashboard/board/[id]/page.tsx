@@ -194,6 +194,8 @@ interface CreateEditCardProps {
     handleInputChange: any,
     handleToggleCheckbox: any,
     isEdition: boolean,
+    tags: any,
+    addNewTag: any,
 }
 
 function CreateEditCard(props: CreateEditCardProps) {
@@ -208,7 +210,9 @@ function CreateEditCard(props: CreateEditCardProps) {
         handleAddInput,
         handleInputChange,
         handleToggleCheckbox,
-        isEdition } = props;
+        isEdition,
+        tags,
+        addNewTag } = props;
 
     const handleCreateCardForm = (event: any) => {
         createCardForm(event, isEdition);
@@ -228,6 +232,17 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
                             <textarea className='resize-none w-full h-32 bg-neutral-50 dark:bg-neutral-950' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
+                        <div>
+                            {tags.map((items: any) => (
+                                <div>
+                                    <input id="tag" type='radio' name='Tag' value="x" />
+                                    <label htmlFor="tag">{items?.title}</label>
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={() => addNewTag()}>
+                            Add New Tag
+                        </button>
                         <div>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2 dark:border-neutral-700'>
@@ -303,12 +318,24 @@ export default function Page({ params }: { params: { id: string } }) {
     const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
+    const [tags, setTags] = useState([{ title: 'New Tag', color: '#000000', id: generateRandomString() }]);
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
             distance: 2,  // 2px
         }
     }));
+
+    const addNewTag = () => {
+        setTags((prevTag) => {
+            const newTag = {
+                title: 'New Tag',
+                color: '#f0f0f0',
+                id: generateRandomString(),
+            }
+            return [...prevTag, newTag];
+        });
+    }
 
     useEffect(() => {
         fetch(`http://localhost:8080/api/dashboard/column/getall/${params.id}`).then(response => response.json()).then(data => {
@@ -844,6 +871,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 handleRemoveInput={handleRemoveInput}
                 handleToggleCheckbox={handleToggleCheckbox}
                 isEdition={isEdition}
+                tags={tags}
+                addNewTag={addNewTag}
             />
             <div className="">
                 <h1>{params.id}</h1>
