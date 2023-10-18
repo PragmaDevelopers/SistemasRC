@@ -1,6 +1,6 @@
 import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
 import InputsInterface from "../Interface/InputsInterface";
-import issuingBodies from "../../../../../../../api/issuingBody/issuingBody";
+import issuingBodies from "../../../../../../../api/issuingBodies/issuingBodies";
 import states from "../../../../../../../api/states/states";
 import cities from "../../../../../../../api/cities/cities";
 import neighborhoods from "../../../../../../../api/neighborhoods/neighborhoods";
@@ -9,6 +9,14 @@ import { useEffect,useState } from "react";
 
 type ISimpleSelection = {
     register: UseFormRegister<InputsInterface>,
+    className: string
+}
+
+type IAdvancedSelection = {
+    register: UseFormRegister<InputsInterface>,
+    setValue: UseFormSetValue<InputsInterface>,
+    watch: UseFormWatch<InputsInterface>,
+    apiInfo: string[]
     className: string
 }
 
@@ -98,7 +106,7 @@ export function IssuingBody({register,className}:ISimpleSelection){
                 <option disabled value="default">-- Escolha um Órgão Emissor --</option>
                 {issuingBodies.map((issuingBody) => {
                 return (
-                    <option key={issuingBody.abbreviation + issuingBody.name} value={issuingBody.id}>
+                    <option key={issuingBody.id} value={issuingBody.id}>
                     {issuingBody.abbreviation} - {issuingBody.name}
                     </option>
                 );
@@ -106,14 +114,6 @@ export function IssuingBody({register,className}:ISimpleSelection){
             </select>
         </div>
     )
-}
-
-type IAdvancedSelection = {
-    register: UseFormRegister<InputsInterface>,
-    setValue: UseFormSetValue<InputsInterface>,
-    watch: UseFormWatch<InputsInterface>,
-    apiInfo: string[]
-    className: string
 }
 
 export function StateForAddress({register,setValue,watch,apiInfo,className}:IAdvancedSelection){
@@ -133,7 +133,7 @@ export function StateForAddress({register,setValue,watch,apiInfo,className}:IAdv
                 <input className="w-full bg-white" onChange={(e)=>{
                     setState(e.target.value)
                     setValue("state_for_address",e.target.value)
-                }} value={state} disabled={true} type="text" id="input-state" required />
+                }} value={state} disabled={true} type="text" id="input-state" />
             :
                 <select className="w-full" defaultValue="default" required id="input-state" onChange={(e)=>{
                     setState(e.target.value)
@@ -169,7 +169,7 @@ export function City({register,setValue,watch,apiInfo,className}:IAdvancedSelect
             <input className="w-full bg-white" onChange={(e)=>{
                 setCity(e.target.value)
                 setValue("city",e.target.value)
-            }} value={city} disabled={!watch().cepNotFound} type="text" id="input-city" required />
+            }} value={city} disabled={!watch().cepNotFound} type="text" id="input-city" />
             :
                 <>
                     <select className="w-full" required id="input-city" onChange={(e)=>{
@@ -210,7 +210,7 @@ export function Neighborhood({register,setValue,watch,apiInfo,className}:IAdvanc
                 }} value={neighborhood} disabled={!watch().cepNotFound} type="text" id="input-neighborhood" required />
             : 
             <>
-                <select className="w-full" required id="input-neighborhood" onChange={(e)=>{
+                <select className="w-full" id="input-neighborhood" onChange={(e)=>{
                         setNeighborhood(e.target.value)
                         setValue("neighborhood",e.target.value);
                     }}>
@@ -246,11 +246,11 @@ export function AddressName({register,setValue,watch,apiInfo,className}:IAdvance
             <input className="w-full bg-white" onChange={(e)=>{
                 setAddressName(e.target.value)
                 setValue("address_name",e.target.value);
-            }} value={addressName} disabled={!watch().cepNotFound} type="text" id="input-address-name" required />   
+            }} value={addressName} disabled={!watch().cepNotFound} type="text" id="input-address-name" />   
             
             :
             <>
-                <select className="w-full" required id="input-address-name" onChange={(e)=>{
+                <select className="w-full" id="input-address-name" onChange={(e)=>{
                     setAddressName(e.target.value)
                     setValue("address_name",e.target.value);
                 }}>
@@ -296,7 +296,7 @@ export function UfForCTPS({register,className}:ISimpleSelection){
     return (
         <div className={className}>
             <label htmlFor="input-ctps-uf">UF: </label>
-            <select className="w-full" defaultValue="default" id="input-ctps-uf" {...register("uf_for_ctps",{required:true})}>
+            <select className="w-full" defaultValue="default" id="input-ctps-uf" {...register("uf_for_ctps_id",{required:true})}>
                 <option disabled value="default">-- Escolha um Estado --</option>
                 {states.map(state=>{
                     return <option key={state.id} value={state.id}>{state.abbreviation} - {state.name}</option>   

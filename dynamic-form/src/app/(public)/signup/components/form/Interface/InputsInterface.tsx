@@ -1,26 +1,6 @@
-export default interface InputsInterface {
-    power_of_attorney: string,
-    full_name: string,
-    ocuppation: string,
-    nationality: string,
-    marital_status: string,
-    common_law_marriage: boolean,
-    rg: string,
-    uf_for_RG_id: number,
-    issuing_body_id: number,
-    cpf: string,
-    email: string,
-    mother_name: string,
-    cep: string,
-    cepNotFound: boolean,
-    state_for_address: string,
-    city: string,
-    neighborhood: string,
-    // address_type_id: number,
-    address_name: string,
-    address_complement_type: string,
-    address_complement_name: string,
-    ctps_n: string,
-    ctps_serie: string,
-    uf_for_ctps: string
-}
+import { z, ZodType, TypeOf } from 'zod';
+import signUpSchema from '@/utils/inputsValidation';
+
+type InputsInterface = TypeOf<typeof signUpSchema>;
+
+export default InputsInterface;
