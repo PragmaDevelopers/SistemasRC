@@ -232,15 +232,15 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
                             <textarea className='resize-none w-full h-32 bg-neutral-50 dark:bg-neutral-950' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
-                        <div>
+                        <div className='grid'>
                             {tags.map((items: any) => (
-                                <div>
+                                <div className='flex'>
                                     <input id="tag" type='radio' name='Tag' value="x" />
-                                    <label htmlFor="tag">{items?.title}</label>
+                                    <input className='bg-neutral-50 dark:bg-neutral-950 text-neutral-950 dark:text-neutral-50' defaultValue={items?.title} />
                                 </div>
                             ))}
                         </div>
-                        <button onClick={() => addNewTag()}>
+                        <button type='button' onClick={() => addNewTag()}>
                             Add New Tag
                         </button>
                         <div>
