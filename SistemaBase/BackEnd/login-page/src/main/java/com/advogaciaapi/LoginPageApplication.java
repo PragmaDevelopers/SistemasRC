@@ -1,4 +1,4 @@
-package com.loginpage.loginpage;
+package com.advogaciaapi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
