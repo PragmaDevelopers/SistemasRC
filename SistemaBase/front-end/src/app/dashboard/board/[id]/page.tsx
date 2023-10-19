@@ -196,6 +196,7 @@ interface CreateEditCardProps {
     isEdition: boolean,
     tags: any,
     addNewTag: any,
+    removeCurrentTag: any,
 }
 
 function CreateEditCard(props: CreateEditCardProps) {
@@ -212,7 +213,8 @@ function CreateEditCard(props: CreateEditCardProps) {
         handleToggleCheckbox,
         isEdition,
         tags,
-        addNewTag } = props;
+        addNewTag,
+        removeCurrentTag } = props;
 
     const handleCreateCardForm = (event: any) => {
         createCardForm(event, isEdition);
@@ -235,7 +237,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <div className='grid'>
                             {tags.map((items: any) => (
                                 <div className='flex'>
-                                    <input id="tag" type='radio' name='Tag' value="x" />
+                                    <button onClick={() => removeCurrentTag(items?.id)}>X</button>
                                     <input className='bg-neutral-50 dark:bg-neutral-950 text-neutral-950 dark:text-neutral-50' defaultValue={items?.title} />
                                 </div>
                             ))}
@@ -325,6 +327,12 @@ export default function Page({ params }: { params: { id: string } }) {
             distance: 2,  // 2px
         }
     }));
+
+    const removeCurrentTag = (tagID: string) => {
+        setTags((prevTags) => {
+            return prevTags.filter(item => item.id != tagID);
+        });
+    };
 
     const addNewTag = () => {
         setTags((prevTag) => {
@@ -873,6 +881,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 isEdition={isEdition}
                 tags={tags}
                 addNewTag={addNewTag}
+                removeCurrentTag={removeCurrentTag}
             />
             <div className="">
                 <h1>{params.id}</h1>
