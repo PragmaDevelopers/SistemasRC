@@ -1,10 +1,10 @@
 import { UseFormRegister, UseFormWatch } from "react-hook-form";
 import InputsInterface from "../Interface/InputsInterface";
-import issuingBodies from "../../../../../../api/issuingBody/issuingBody";
-import states from "../../../../../../api/states/states";
-import cities from "../../../../../../api/cities/cities";
-import neighborhoods from "../../../../../../api/neighborhoods/neighborhoods";
-import addressTypes from "../../../../../../api/addressType/addressType";
+import issuingBodies from "../../../../../api/issuingBody/issuingBody";
+import states from "../../../../../api/states/states";
+import cities from "../../../../../api/cities/cities";
+import neighborhoods from "../../../../../api/neighborhoods/neighborhoods";
+import addressTypes from "../../../../../api/addressType/addressType";
 import { useEffect, useState } from "react";
 
 type SelectInterface = {

@@ -8,47 +8,10 @@ import { createPortal } from 'react-dom';
 import { MinusCircleIcon, PlusCircleIcon, TrashIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { HexColorPicker } from "react-colorful";
+import { CardElementProps, ColumnContainerProps, CreateEditCardProps } from '@/app/interfaces/KanbanInterfaces';
+import { Card, CheckList, CheckListItem, Column, KanbanData } from '@/app/types/KanbanTypes';
+import { generateRandomString } from '@/app/utils/generators';
 
-type CheckList = {
-    name: string,
-    id: string,
-    items: CheckListItem[],
-}
-
-type CheckListItem = {
-    name: string,
-    completed: boolean,
-    checklistId: string,
-}
-
-type Card = {
-    title: string,
-    id: string,
-    columnID: string,
-    description: string,
-    checklists: CheckList[],
-}
-
-type Column = {
-    title: string,
-    columnType: number,
-    id: string,
-    cardsList: Card[],
-}
-
-type KanbanData = {
-    columns: Column[],
-    kanbanId: string,
-}
-
-interface CardElementProps {
-    card: Card,
-    deleteCard: (columnID: string, cardID: string) => void;
-    setShowCreateCardForm: any;
-    setTempCard: any;
-    setIsEdition: any;
-    setTempColumnID: any;
-}
 
 function CardElement(props: CardElementProps) {
     const { card, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition, setTempColumnID } = props;
@@ -91,22 +54,6 @@ function CardElement(props: CardElementProps) {
             </button>
         </div>
     );
-}
-
-
-
-
-
-interface ColumnContainerProps {
-    column: Column;
-    deleteColumn: (id: string) => void;
-    updateColumnTitle: (id: string, title: string) => void;
-    createCard: (columnID: string) => void;
-    deleteCard: (columnID: string, cardID: string) => void;
-    setShowCreateCardForm: any;
-    setTempCard: any;
-    setIsEdition: any;
-    setTempColumnID: any;
 }
 
 function ColumnContainer(props: ColumnContainerProps) {
@@ -183,23 +130,7 @@ function ColumnContainer(props: ColumnContainerProps) {
     );
 }
 
-interface CreateEditCardProps {
-    showCreateCardForm: boolean,
-    createCardForm: any,
-    card: Card,
-    updateListTitle: any,
-    handleRemoveInput: any,
-    handleRemoveList: any
-    handleAddList: any,
-    handleAddInput: any,
-    setShowCreateCardForm: any,
-    handleInputChange: any,
-    handleToggleCheckbox: any,
-    isEdition: boolean,
-    tags: any,
-    addNewTag: any,
-    removeCurrentTag: any,
-}
+
 
 function CreateEditCard(props: CreateEditCardProps) {
     const { setShowCreateCardForm,
@@ -353,7 +284,7 @@ export default function Page({ params }: { params: { id: string } }) {
         fetch(`http://localhost:8080/api/dashboard/column/getall/${params.id}`).then(response => response.json()).then(data => {
 
         })
-    }, []);
+    }, [params.id]);
 
 
     const createNewColumn = () => {
@@ -929,22 +860,3 @@ export default function Page({ params }: { params: { id: string } }) {
         </main>
     );
 }
-
-function generateRandomString(): string {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const format = [10, 21];
-
-    for (let i = 0; i < 32; i++) {
-        // Insert hyphens at the specified positions
-        if (format.includes(i)) {
-            result += '-';
-        } else {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            result += characters[randomIndex];
-        }
-    }
-
-    return result;
-}
-

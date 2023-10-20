@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BuildingOffice2Icon } from "@heroicons/react/24/solid";
 import { throws } from "assert";
+import { generateRandomString } from "../utils/generators";
 
 interface BoardMenuEntryProps {
     href: string;
@@ -125,22 +126,3 @@ export default function Layout({ children }: any) {
         </main>
     );
 }
-
-function generateRandomString(): string {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const format = [10, 21];
-
-    for (let i = 0; i < 32; i++) {
-        // Insert hyphens at the specified positions
-        if (format.includes(i)) {
-            result += '-';
-        } else {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            result += characters[randomIndex];
-        }
-    }
-
-    return result;
-}
-
