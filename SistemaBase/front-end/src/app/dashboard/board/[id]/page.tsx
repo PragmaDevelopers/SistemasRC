@@ -78,7 +78,7 @@ function CardElement(props: CardElementProps) {
     }
 
     return (
-        <div className='my-2 bg-neutral-50 border-neutral-950 border-2 rounded-md relative'
+        <div className='my-2 bg-neutral-50 drop-shadow rounded-md relative'
             ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <div className='p-2 w-full h-full' onClick={editCard}>
                 <h1>{card.title}</h1>
@@ -126,9 +126,9 @@ function ColumnContainer(props: ColumnContainerProps) {
     }
 
     return (
-        <div className='relative w-64 h-full overflow-auto'
+        <div className='relative w-64 h-full overflow-auto p-1'
             ref={setNodeRef} style={style} {...attributes} {...listeners} >
-            <div className='w-full bg-neutral-50 rounded-md border-2 border-neutral-950 p-2 mb-4 flex flex-row justify-between items-center'>
+            <div className='w-full bg-neutral-50 rounded-md drop-shadow p-2 mb-4 flex flex-row justify-between items-center'>
                 <div
                     onClick={() => setEditMode(true)}>
                     {editMode ? <input
@@ -157,7 +157,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                     })}
                 </SortableContext>
             </div>
-            <button onClick={handleCreateCard} className='relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center'>
+            <button onClick={handleCreateCard} className='relative rounded-md drop-shadow bg-neutral-50 p-2 flex w-full items-center justify-center'>
                 <PlusCircleIcon className='w-8 aspect-square absolute top-1 left-2' />
                 <h1 className='w-full text-center'>Add Card</h1>
             </button>
@@ -870,7 +870,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             setIsEdition={setIsEdition}
                             setTempColumnID={setTempColumnID} />)}
                     </SortableContext>
-                    <button className='w-64 h-full rounded-md shadow-inner bg-neutral-100 border-neutral-200 border-[1px] flex flex-col justify-center items-center' onClick={createNewColumn}>
+                    <button className='w-64 h-full rounded-md shadow-inner bg-[#F0F0F0] border-neutral-200 border-[1px] flex flex-col justify-center items-center' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
                         <PlusCircleIcon className='w-8 aspect-square' />
                     </button>
@@ -889,7 +889,6 @@ export default function Page({ params }: { params: { id: string } }) {
                             setTempColumnID={setTempColumnID} />}
                     </DragOverlay>,
                     document.body)}
-
             </DndContext>
         </main>
     );
