@@ -1,15 +1,50 @@
 "use client";
 
-import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent, DragOverlay, useSensors, useSensor, PointerSensor, DragOverEvent } from '@dnd-kit/core';
-import { CSSProperties, useEffect, useMemo, useState } from 'react';
+import {
+    DndContext,
+    useDroppable,
+    useDraggable,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+    useSensors,
+    useSensor,
+    PointerSensor,
+    DragOverEvent
+} from '@dnd-kit/core';
+import {
+    CSSProperties,
+    useEffect,
+    useMemo,
+    useState
+} from 'react';
 import { CSS } from '@dnd-kit/utilities';
-import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
+import {
+    SortableContext,
+    arrayMove,
+    useSortable
+} from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { MinusCircleIcon, PlusCircleIcon, TrashIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import {
+    MinusCircleIcon,
+    PlusCircleIcon,
+    TrashIcon,
+    XCircleIcon
+} from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { HexColorPicker } from "react-colorful";
-import { CardElementProps, ColumnContainerProps, CreateEditCardProps } from '@/app/interfaces/KanbanInterfaces';
-import { Card, CheckList, CheckListItem, Column, KanbanData } from '@/app/types/KanbanTypes';
+import {
+    CardElementProps,
+    ColumnContainerProps,
+    CreateEditCardProps
+} from '@/app/interfaces/KanbanInterfaces';
+import {
+    Card,
+    CheckList,
+    CheckListItem,
+    Column,
+    KanbanData
+} from '@/app/types/KanbanTypes';
 import { generateRandomString } from '@/app/utils/generators';
 
 
@@ -160,18 +195,16 @@ function CreateEditCard(props: CreateEditCardProps) {
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
-                            <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
                             <input className='bg-neutral-50' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
-                        <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none'>
-                            <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
-                            <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                        <div className='flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100'>
+                            <textarea className='resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
-                        <div className='grid'>
+                        <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {tags.map((items: any) => (
-                                <div className='flex w-fit p-2' style={{ backgroundColor: items?.color } as CSSProperties}>
-                                    <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-6' /></button>
-                                    <input className='bg-neutral-50 text-neutral-950' defaultValue={items?.title} />
+                                <div className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow' style={{ backgroundColor: items?.color } as CSSProperties}>
+                                    <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-4' /></button>
+                                    <h1 style={{ backgroundColor: items?.color } as CSSProperties} className='ml-1 text-neutral-950'>{items?.title}</h1>
                                 </div>
                             ))}
                         </div>
@@ -217,7 +250,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                     </button>
                                 </div>
                             ))}
-                            <button type="button" onClick={handleAddList} className='my-2 rounded-md w-80 p-2 border-neutral-950 border-2 flex justify-center items-center'>
+                            <button type="button" onClick={handleAddList} className='bg-neutral-50 my-2 rounded-md w-80 p-2 drop-shadow flex justify-center items-center'>
                                 <h1 className="mr-2">Nova Lista</h1>
                                 <PlusCircleIcon className='w-6 aspect-square' />
                             </button>
@@ -228,8 +261,9 @@ function CreateEditCard(props: CreateEditCardProps) {
                     </div>
                 </form>
                 <div className='w-56 ml-4 flex flex-col items-center justify-start h-[75%]'>
-                    <button type='button' onClick={() => addNewTag()}>
-                        Add New Tag
+                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center' type='button' onClick={() => addNewTag()}>
+                        <PlusCircleIcon className='aspect-square w-6 mr-2' />
+                        <h1 className="w-fit h-fit flex justify-center items-center">New Tag</h1>
                     </button>
                 </div>
                 <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
@@ -836,7 +870,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             setIsEdition={setIsEdition}
                             setTempColumnID={setTempColumnID} />)}
                     </SortableContext>
-                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
+                    <button className='w-64 h-full rounded-md shadow-inner bg-neutral-100 border-neutral-200 border-[1px] flex flex-col justify-center items-center' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
                         <PlusCircleIcon className='w-8 aspect-square' />
                     </button>
