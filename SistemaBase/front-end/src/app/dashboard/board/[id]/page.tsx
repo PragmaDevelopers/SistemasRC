@@ -188,6 +188,27 @@ function CreateEditCard(props: CreateEditCardProps) {
         createCardForm(event, isEdition);
     }
 
+    const [textColor, setTextColor] = useState<string>('');
+    useEffect(() => {
+        const color = tags?.color as string;
+        if (color && color.match(/^#[0-9A-Fa-f]{6}$/)) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            if (r && g && b) {
+                console.log(r, g, b, color)
+                const contrast = (0.299 * (r as unknown as number) + 0.587 * (g as unknown as number) + 0.114 * (b as unknown as number)) / 255;
+
+                if (contrast > 0.5) {
+                    setTextColor('#0a0a0a');
+                } else {
+                    setTextColor('#fafafa');
+                }
+            }
+        }
+    }, [tags]);
+
+
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
             <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center px-8'>
@@ -202,9 +223,9 @@ function CreateEditCard(props: CreateEditCardProps) {
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {tags.map((items: any) => (
-                                <div className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow' style={{ backgroundColor: items?.color } as CSSProperties}>
+                                <div className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
                                     <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-4' /></button>
-                                    <h1 style={{ backgroundColor: items?.color } as CSSProperties} className='ml-1 text-neutral-950'>{items?.title}</h1>
+                                    <h1 style={{ backgroundColor: items?.color, color: textColor } as CSSProperties} className='ml-1'>{items?.title}</h1>
                                 </div>
                             ))}
                         </div>
