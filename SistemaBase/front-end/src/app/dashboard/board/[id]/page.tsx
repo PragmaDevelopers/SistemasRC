@@ -216,7 +216,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
-                            <input className='bg-neutral-50' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
+                            <input className='bg-neutral-50 w-full' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
                         <div className='flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100'>
                             <textarea className='resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
@@ -229,9 +229,9 @@ function CreateEditCard(props: CreateEditCardProps) {
                                 </div>
                             ))}
                         </div>
-                        <div>
+                        <div className='p-1'>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
-                                <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
+                                <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
                                         <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
@@ -249,7 +249,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
                                             />
                                             <input
-                                                className='border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
+                                                className='shadow-inner border-neutral-200 border-[1px] rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
                                                 type="text"
                                                 value={inputValue.name}
                                                 placeholder='Adicionar Tarefa'
