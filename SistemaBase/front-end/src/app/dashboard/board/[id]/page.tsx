@@ -222,7 +222,7 @@ function CreateEditCard(props: CreateEditCardProps) {
 
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50 dark:bg-black/50'}>
-            <div className='relative w-[80%] h-[80%] dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center'>
+            <div className='relative w-[80%] h-[80%] dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center px-8'>
                 <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
@@ -242,9 +242,6 @@ function CreateEditCard(props: CreateEditCardProps) {
                                 </div>
                             ))}
                         </div>
-                        <button type='button' onClick={() => addNewTag()}>
-                            Add New Tag
-                        </button>
                         <div>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2 dark:border-neutral-700'>
@@ -297,6 +294,11 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <button type='submit' className='dark:border-neutral-50 w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
                     </div>
                 </form>
+                <div className='w-56 bg-red-400 ml-4 flex flex-col items-center justify-start h-[75%]'>
+                    <button type='button' onClick={() => addNewTag()}>
+                        Add New Tag
+                    </button>
+                </div>
                 <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
             </div>
         </div>
