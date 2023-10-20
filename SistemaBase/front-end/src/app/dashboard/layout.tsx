@@ -113,13 +113,13 @@ export default function Layout({ children }: any) {
                             </form>
                         </div>
                     </details>
-                    <Link href="/" className="bg-neutral-50 dark:bg-neutral-950 p-2 flex flex-row items-center">
+                    <Link href="/" className="bg-neutral-50 p-2 flex flex-row items-center">
                         <CogIcon className={IconStyles} />
                         <h1>Configurações</h1>
                     </Link>
                 </div>
             </div>
-            <div className="grow w-full h-full p-2 bg-neutral-100 dark:bg-neutral-800 rounded-tl-md">
+            <div className="grow w-full h-full p-2 bg-neutral-100 rounded-tl-md">
                 {children}
             </div>
         </main>

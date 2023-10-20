@@ -1,11 +1,13 @@
 "use client";
 
 import { DndContext, useDroppable, useDraggable, DragEndEvent, DragStartEvent, DragOverlay, useSensors, useSensor, PointerSensor, DragOverEvent } from '@dnd-kit/core';
-import { useEffect, useMemo, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
 import { MinusCircleIcon, PlusCircleIcon, TrashIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+import { HexColorPicker } from "react-colorful";
 
 type CheckList = {
     name: string,
@@ -65,7 +67,7 @@ function CardElement(props: CardElementProps) {
 
     if (isDragging) {
         return (
-            <div className='bg-neutral-300 dark:bg-neutral-700 dark:border-neutral-50 border-neutral-950 rounded-md w-64 h-16 border-2'
+            <div className='bg-neutral-300 border-neutral-950 rounded-md w-64 h-16 border-2'
                 ref={setNodeRef} style={style} />
         );
     }
@@ -78,7 +80,7 @@ function CardElement(props: CardElementProps) {
     }
 
     return (
-        <div className='my-2 dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 border-neutral-950 border-2 rounded-md relative'
+        <div className='my-2 bg-neutral-50 border-neutral-950 border-2 rounded-md relative'
             ref={setNodeRef} style={style} {...attributes} {...listeners}>
             <div className='p-2 w-full h-full' onClick={editCard}>
                 <h1>{card.title}</h1>
@@ -132,7 +134,7 @@ function ColumnContainer(props: ColumnContainerProps) {
 
     if (isDragging) {
         return (
-            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-950 dark:bg-neutral-700 dark:border-neutral-50 content-[" "]'>
+            <div ref={setNodeRef} style={style} className='h-full w-64 bg-neutral-300 rounded-md border-2 border-neutral-950 content-[" "]'>
             </div>
         );
     }
@@ -144,7 +146,7 @@ function ColumnContainer(props: ColumnContainerProps) {
     return (
         <div className='relative w-64 h-full overflow-auto'
             ref={setNodeRef} style={style} {...attributes} {...listeners} >
-            <div className='w-full bg-neutral-50 rounded-md border-2 border-neutral-950 p-2 mb-4 flex flex-row justify-between items-center dark:bg-neutral-950 dark:border-neutral-50'>
+            <div className='w-full bg-neutral-50 rounded-md border-2 border-neutral-950 p-2 mb-4 flex flex-row justify-between items-center'>
                 <div
                     onClick={() => setEditMode(true)}>
                     {editMode ? <input
@@ -157,7 +159,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                         }}
                         value={column.title}
                         onChange={(e: any) => updateColumnTitle(column.id, e.target.value)}
-                        className='w-full bg-neutral-50 dark:bg-neutral-950 outline-none'
+                        className='w-full bg-neutral-50 outline-none'
                     /> :
                         column.title}
 
@@ -173,7 +175,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                     })}
                 </SortableContext>
             </div>
-            <button onClick={handleCreateCard} className=' relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center dark:border-neutral-50'>
+            <button onClick={handleCreateCard} className='relative border-neutral-950 rounded-md border-2 p-2 flex w-full items-center justify-center'>
                 <PlusCircleIcon className='w-8 aspect-square absolute top-1 left-2' />
                 <h1 className='w-full text-center'>Add Card</h1>
             </button>
@@ -221,32 +223,32 @@ function CreateEditCard(props: CreateEditCardProps) {
     }
 
     return (
-        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50 dark:bg-black/50'}>
-            <div className='relative w-[80%] h-[80%] dark:bg-neutral-950 dark:border-neutral-50 bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center px-8'>
+        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
+            <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center px-8'>
                 <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
                             <label htmlFor='CardTitle' className='mr-2'>Titulo:</label>
-                            <input className='bg-neutral-50 dark:bg-neutral-950' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
+                            <input className='bg-neutral-50' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
-                        <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none dark:border-neutral-50'>
+                        <div className='flex flex-col my-2 border-2 rounded-md border-neutral-950 p-2 outline-none'>
                             <label htmlFor='CardDescription' className='mb-2'>Descrição</label>
-                            <textarea className='resize-none w-full h-32 bg-neutral-50 dark:bg-neutral-950' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                            <textarea className='resize-none w-full h-32 bg-neutral-50' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div className='grid'>
                             {tags.map((items: any) => (
-                                <div className='flex'>
-                                    <button onClick={() => removeCurrentTag(items?.id)}>X</button>
-                                    <input className='bg-neutral-50 dark:bg-neutral-950 text-neutral-950 dark:text-neutral-50' defaultValue={items?.title} />
+                                <div className='flex w-fit p-2' style={{ backgroundColor: items?.color } as CSSProperties}>
+                                    <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-6' /></button>
+                                    <input className='bg-neutral-50 text-neutral-950' defaultValue={items?.title} />
                                 </div>
                             ))}
                         </div>
                         <div>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
-                                <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2 dark:border-neutral-700'>
+                                <div key={listIndex} className='rounded-md border-2 border-neutral-200 p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64 dark:bg-neutral-950' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -262,7 +264,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
                                             />
                                             <input
-                                                className='dark:bg-neutral-900 border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
+                                                className='border-2 rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
                                                 type="text"
                                                 value={inputValue.name}
                                                 placeholder='Adicionar Tarefa'
@@ -284,17 +286,17 @@ function CreateEditCard(props: CreateEditCardProps) {
                                     </button>
                                 </div>
                             ))}
-                            <button type="button" onClick={handleAddList} className='my-2 rounded-md w-80 p-2 border-neutral-950 dark:border-neutral-50 border-2 flex justify-center items-center'>
+                            <button type="button" onClick={handleAddList} className='my-2 rounded-md w-80 p-2 border-neutral-950 border-2 flex justify-center items-center'>
                                 <h1 className="mr-2">Nova Lista</h1>
                                 <PlusCircleIcon className='w-6 aspect-square' />
                             </button>
                         </div>
                     </div>
                     <div className='w-full absolute bottom-0 flex justify-center items-center'>
-                        <button type='submit' className='dark:border-neutral-50 w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
+                        <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
                     </div>
                 </form>
-                <div className='w-56 bg-red-400 ml-4 flex flex-col items-center justify-start h-[75%]'>
+                <div className='w-56 ml-4 flex flex-col items-center justify-start h-[75%]'>
                     <button type='button' onClick={() => addNewTag()}>
                         Add New Tag
                     </button>
@@ -322,7 +324,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
-    const [tags, setTags] = useState([{ title: 'New Tag', color: '#000000', id: generateRandomString() }]);
+    const [tags, setTags] = useState([{ title: 'New Tag', color: '#9a90d1', id: generateRandomString() }]);
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -340,7 +342,7 @@ export default function Page({ params }: { params: { id: string } }) {
         setTags((prevTag) => {
             const newTag = {
                 title: 'New Tag',
-                color: '#f0f0f0',
+                color: '#9a90d1',
                 id: generateRandomString(),
             }
             return [...prevTag, newTag];
@@ -903,7 +905,7 @@ export default function Page({ params }: { params: { id: string } }) {
                             setIsEdition={setIsEdition}
                             setTempColumnID={setTempColumnID} />)}
                     </SortableContext>
-                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center dark:border-neutral-50' onClick={createNewColumn}>
+                    <button className='w-64 h-full rounded-md border-2 border-neutral-950 flex flex-col justify-center items-center' onClick={createNewColumn}>
                         <h1 className='mb-2'>Add Column</h1>
                         <PlusCircleIcon className='w-8 aspect-square' />
                     </button>
