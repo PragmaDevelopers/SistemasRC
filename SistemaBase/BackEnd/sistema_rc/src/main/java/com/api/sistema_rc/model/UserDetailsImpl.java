@@ -1,6 +1,7 @@
 package com.api.sistema_rc.model;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
@@ -17,9 +18,11 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<Role> roles = new ArrayList<>();
-        roles.add(user.getRole());
-        return roles;
+        String role = user.getRole().getName().toString();
+        return List.of(new SimpleGrantedAuthority(role));
+    }
+    public String getLogin(){
+        return user.getId().toString();
     }
 
     @Override

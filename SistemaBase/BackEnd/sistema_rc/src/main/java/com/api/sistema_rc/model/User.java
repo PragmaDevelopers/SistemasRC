@@ -14,16 +14,14 @@ public class User{
     @ManyToOne
     @JoinColumn(nullable = false,name = "role_id")
     private Role role;
-    @Column(nullable = false)
-    private Integer role_level;
-    @Column(length = 100,nullable = false)
+    @Column(length = 255,nullable = false)
     private String name;
     @Column(length = 20,unique = true)
     private String nickname;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate registration_date;
-    @Column(length = 50,nullable = false,unique = true)
+    @Column(length = 255,nullable = false,unique = true)
     private String email;
     @Column(nullable = false)
     private String password;
@@ -49,14 +47,6 @@ public class User{
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public Integer getRole_level() {
-        return role_level;
-    }
-
-    public void setRole_level(Integer role_level) {
-        this.role_level = role_level;
     }
 
     public String getName() {
@@ -121,5 +111,21 @@ public class User{
 
     public void setDate_of_birth(LocalDate date_of_birth) {
         this.date_of_birth = date_of_birth;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", role=" + role +
+                ", name='" + name + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", registration_date=" + registration_date +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", nationality='" + nationality + '\'' +
+                ", gender='" + gender + '\'' +
+                ", date_of_birth=" + date_of_birth +
+                '}';
     }
 }

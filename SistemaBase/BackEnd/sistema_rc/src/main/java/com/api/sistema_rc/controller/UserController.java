@@ -1,16 +1,25 @@
 package com.api.sistema_rc.controller;
 
 import com.api.sistema_rc.enums.RoleName;
+import com.api.sistema_rc.exception.EmailAlreadyExistsException;
 import com.api.sistema_rc.model.Role;
 import com.api.sistema_rc.model.User;
+import com.api.sistema_rc.model.UserDetailsImpl;
 import com.api.sistema_rc.repository.UserRepository;
 import com.api.sistema_rc.util.PasswordEncoderUtils;
+import com.api.sistema_rc.util.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Array;
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -18,97 +27,46 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private TokenService tokenService;
 
-    @PostMapping(path = "/p/signup")
+    @PostMapping(path = "/public/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public void signup(@RequestBody User user){
-        user.setDate_of_birth(LocalDate.now());
-        if(Objects.equals(user.getNickname(), "")){
-            user.setNickname(null);
+        Optional<User> dbUser = userRepository.findByEmail(user.getEmail());
+        if (dbUser.isPresent()) {
+            throw new EmailAlreadyExistsException("O email já existe!");
         }
+        // Se o email não existe, continue com o registro do usuário.
+        user.setRegistration_date(LocalDate.now());
         String encryptedPassword = PasswordEncoderUtils.encode(user.getPassword());
         user.setPassword(encryptedPassword);
 
         Role role = new Role();
         role.setId(2);
-        role.setName(RoleName.CLIENT);
+        role.setName(RoleName.PROFESSIONAL);
         user.setRole(role);
-//
-//        Usuario usuarioDb = usuarioRepository.saveAndFlush(usuario);
-//
-//        ProfilePicture picture_default = profilePictureRepository.findByNome("default");
-//        ProfilePicture picture_book = profilePictureRepository.findByNome("book");
-//
-//        UsuarioProfilePicture usuarioProfilePicture_1 = new UsuarioProfilePicture();
-//        usuarioProfilePicture_1.setActive(true);
-//        usuarioProfilePicture_1.setProfilePicture(picture_default);
-//        usuarioProfilePicture_1.setUsuario(usuarioDb);
-//
-//        UsuarioProfilePicture usuarioProfilePicture_2 = new UsuarioProfilePicture();
-//        usuarioProfilePicture_2.setActive(false);
-//        usuarioProfilePicture_2.setProfilePicture(picture_book);
-//        usuarioProfilePicture_2.setUsuario(usuarioDb);
-//
-//        List<UsuarioProfilePicture> usuarioProfilePictureList = new ArrayList<>();
-//        usuarioProfilePictureList.add(usuarioProfilePicture_1);
-//        usuarioProfilePictureList.add(usuarioProfilePicture_2);
-//
-//        usuarioprofilePictureRepository.saveAll(usuarioProfilePictureList);
 
+        userRepository.save(user);
     }
 
-//    @GetMapping("/edit/{id}")
-//    public String edit(Model model, @PathVariable Integer id){
-//        Optional<User> usuario = userRepository.findById(id);
-//        usuario.ifPresent(value -> model.addAttribute("usuario", value));
-//        return "admin/interface/editar-usuario";
-//    }
-//
-//    @GetMapping("/delete/{id}")
-//    public String delete(@PathVariable Integer id){
-//        userRepository.deleteById(id);
-//        return "redirect:/admin/usuario/select";
-//    }
-//
-//    @PostMapping("/insert")
-//    public String insert(@ModelAttribute Usuario usuario,@RequestParam("cargo") Integer id_cargo,@RequestParam("genero") String genero){
-//        usuario.setData_cadastro(LocalDate.now());
-//        if(Objects.equals(usuario.getApelido(), "")){
-//            usuario.setApelido(null);
-//        }
-//        String senhaEncriptada = PasswordEncoderUtils.encode(usuario.getSenha());
-//        usuario.setSenha(senhaEncriptada);
-//
-//        Cargo cargo = new Cargo();
-//        cargo.setId(id_cargo);
-//        if(id_cargo == 1){
-//            cargo.setNome(RoleName.ROLE_ADMIN);
-//        }else{
-//            cargo.setNome(RoleName.ROLE_USER);
-//        }
-//        usuario.setCargo(cargo);
-//        usuario.setGenero(genero);
-//        userRepository.save(usuario);
-//        return "redirect:/admin/usuario/select";
-//    }
-//
-//    @PostMapping("/update")
-//    public String update(@ModelAttribute Usuario usuario,@RequestParam("cargo") Integer id_cargo){
-//        if(Objects.equals(usuario.getApelido(), "")){
-//            usuario.setApelido(null);
-//        }
-//        String senhaEncriptada = PasswordEncoderUtils.encode(usuario.getSenha());
-//        usuario.setSenha(senhaEncriptada);
-//
-//        Cargo cargo = new Cargo();
-//        cargo.setId(id_cargo);
-//        if(id_cargo == 1){
-//            cargo.setNome(RoleName.ROLE_ADMIN);
-//        }else{
-//            cargo.setNome(RoleName.ROLE_USER);
-//        }
-//        usuario.setCargo(cargo);
-//        userRepository.save(usuario);
-//        return "redirect:/admin/usuario/select";
-//    }
+    @PostMapping(path = "/public/login")
+    @ResponseStatus(HttpStatus.OK)
+    public String login(@RequestBody User user){
+        var usernamePassword = new UsernamePasswordAuthenticationToken(user.getEmail(),user.getPassword());
+        try {
+            var auth = authenticationManager.authenticate(usernamePassword);
+            String token = tokenService.generateToken((UserDetailsImpl) auth.getPrincipal());
+            return token;
+        } catch (AuthenticationException e) {
+            return "Falha na autenticação: " + e.getMessage();
+        }
+    }
+
+    @GetMapping(path = "/private/get/clients")
+    public List<User> getClients(){
+        return userRepository.findAll();
+    }
 }
