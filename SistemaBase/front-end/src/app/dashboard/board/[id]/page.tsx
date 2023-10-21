@@ -36,7 +36,8 @@ import { HexColorPicker } from "react-colorful";
 import {
     CardElementProps,
     ColumnContainerProps,
-    CreateEditCardProps
+    CreateEditCardProps,
+    RichEditorProps
 } from '@/app/interfaces/KanbanInterfaces';
 import {
     Card,
@@ -48,14 +49,55 @@ import {
 import { generateRandomString } from '@/app/utils/generators';
 import '@mdxeditor/editor/style.css';
 import dynamic from 'next/dynamic';
+import { toolbarPlugin } from '@mdxeditor/editor/plugins/toolbar';
+import {
+    headingsPlugin,
+    listsPlugin,
+    quotePlugin,
+    thematicBreakPlugin,
+    linkPlugin,
+    linkDialogPlugin,
+    imagePlugin,
+    tablePlugin,
+    markdownShortcutPlugin,
+    UndoRedo,
+    BoldItalicUnderlineToggles,
+    BlockTypeSelect,
+    InsertImage,
+    InsertTable,
+    ListsToggle,
+    CreateLink,
+} from "@mdxeditor/editor";
+
 
 const MDXEditor = dynamic(
     () => import('@mdxeditor/editor/MDXEditor').then((mod) => mod.MDXEditor),
     { ssr: false }
 );
 
-function RichEditor() {
-    return
+function RichEditor(props: RichEditorProps) {
+    return (
+        <MDXEditor
+            className="MDXEditor"
+            ref={editorRef}
+            markdown={markdown}
+            plugins={[
+                headingsPlugin(),
+                listsPlugin(),
+                quotePlugin(),
+                thematicBreakPlugin(),
+                linkPlugin(),
+                linkDialogPlugin(),
+                imagePlugin(),
+                tablePlugin(),
+                markdownShortcutPlugin(),
+                toolbarPlugin({
+                    toolbarContents: () => (<> <UndoRedo /><BlockTypeSelect /><BoldItalicUnderlineToggles /><InsertImage /><InsertTable /><ListsToggle /><CreateLink /></>)
+                }),
+            ]}
+
+        />
+    );
 }
 
 function CardElement(props: CardElementProps) {

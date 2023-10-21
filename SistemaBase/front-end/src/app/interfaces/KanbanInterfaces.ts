@@ -1,4 +1,6 @@
 import { Card, Column } from "../types/KanbanTypes";
+import { MDXEditorMethods } from "@mdxeditor/editor";
+
 
 export interface CardElementProps {
     card: Card,
@@ -38,3 +40,11 @@ export interface CreateEditCardProps {
     addNewTag: any;
     removeCurrentTag: any;
 }
+
+export interface RichEditorProps {
+    markdown: string
+    editorRef?: React.MutableRefObject<MDXEditorMethods | null>
+    removeCurrentEditor?: any;
+    wrapperKey: any;
+}
+
