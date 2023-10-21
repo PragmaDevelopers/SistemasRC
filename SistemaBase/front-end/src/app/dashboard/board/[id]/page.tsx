@@ -46,7 +46,17 @@ import {
     KanbanData
 } from '@/app/types/KanbanTypes';
 import { generateRandomString } from '@/app/utils/generators';
+import '@mdxeditor/editor/style.css';
+import dynamic from 'next/dynamic';
 
+const MDXEditor = dynamic(
+    () => import('@mdxeditor/editor/MDXEditor').then((mod) => mod.MDXEditor),
+    { ssr: false }
+);
+
+function RichEditor() {
+    return
+}
 
 function CardElement(props: CardElementProps) {
     const { card, deleteCard, setShowCreateCardForm, setTempCard, setIsEdition, setTempColumnID } = props;

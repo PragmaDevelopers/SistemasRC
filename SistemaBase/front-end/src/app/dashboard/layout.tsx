@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { BuildingOffice2Icon } from "@heroicons/react/24/solid";
 import { throws } from "assert";
 import { generateRandomString } from "../utils/generators";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 interface BoardMenuEntryProps {
     href: string;
@@ -108,9 +109,9 @@ export default function Layout({ children }: any) {
                         </div>
                         <div>
 
-                            <form onSubmit={addDashBoard}>
-                                <input className="w-full" name="boardname" placeholder="Board Name" type="text" />
-                                <button type="submit">Create New Board</button>
+                            <form onSubmit={addDashBoard} className="flex flex-row justify-center items-center">
+                                <input className="w-full mr-1 bg-neutral-50" name="boardname" placeholder="Adicionar nova area" type="text" />
+                                <button type="submit" className="ml-1"><PlusCircleIcon className="aspect-square w-6" /></button>
                             </form>
                         </div>
                     </details>
