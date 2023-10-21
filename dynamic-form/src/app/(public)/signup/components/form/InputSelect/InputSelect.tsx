@@ -12,6 +12,13 @@ type ISimpleSelection = {
     className: string
 }
 
+type IIntermediateSelection = {
+    register: UseFormRegister<InputsInterface>,
+    setValue: UseFormSetValue<InputsInterface>,
+    watch: UseFormWatch<InputsInterface>,
+    className: string
+}
+
 type IAdvancedSelection = {
     register: UseFormRegister<InputsInterface>,
     setValue: UseFormSetValue<InputsInterface>,
@@ -20,17 +27,37 @@ type IAdvancedSelection = {
     className: string
 }
 
-export function PowerOfAttorney({register,className}:ISimpleSelection){
+export function PowerOfAttorney({register,watch,setValue,className}:IIntermediateSelection){
+    const [selectedArr,setSelectedArr] = useState<string[]>([]);
+    function addItem(item:string){
+        if(!selectedArr.includes(item)){
+            setSelectedArr([item,...watch().power_of_attorney]);
+            setValue("power_of_attorney",[item,...selectedArr]);
+        }
+    }
+
+    function removeItem(item:string){
+        const selectedFilter = selectedArr.filter(value=>value !== item);
+        setSelectedArr(selectedFilter);
+        setValue("power_of_attorney",selectedFilter);
+    }
+
     return (
         <div className={className}>
             <label htmlFor="input-power-attorney">Procuração: </label>
-            <select className="w-full" defaultValue="default" id="input-power-attorney" {...register("power_of_attorney",{required:true})}>
+            <select onChange={(e)=>{addItem(e.target.value)}} defaultValue="default" className="w-full" id="input-power-attorney">
                 <option disabled value="default">-- Escolha um tipo de procuração --</option>
                 <option value="previdenciario">Previdenciário</option>
                 <option value="trabalhista">Trabalhista</option>
                 <option value="administrativo">Administrativo</option>
                 <option value="civel">Cível</option>
             </select>
+            <input type="hidden" {...register("power_of_attorney",{required:true})} />
+            <div className="flex gap-2 pt-2 flex-wrap">
+                {selectedArr.map(value=>{
+                    return <span onClick={()=>removeItem(value)} key={value} className="bg-slate-300 inline-block py-1 px-2 cursor-pointer">{value}</span>
+                })}
+            </div>
         </div>
     )
 }

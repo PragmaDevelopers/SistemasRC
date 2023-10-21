@@ -3,8 +3,13 @@ import states from "../../api/states/states";
 import issuingBodies from "../../api/issuingBodies/issuingBodies";
 
 const signUpSchema = z.object({
-    power_of_attorney: z.string().refine((value) => {
-        return ["previdenciario","trabalhista","administrativo","civel"].includes(value);
+    power_of_attorney: z.array(z.string()).refine((value) => {
+        return (
+            value.includes("previdenciario") || 
+            value.includes("civel") || 
+            value.includes("administrativo") ||
+            value.includes("trabalhista")
+        );
     },{
         message: "Seleção inválida!"
     }),

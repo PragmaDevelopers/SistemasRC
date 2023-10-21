@@ -43,6 +43,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen =
 export default function UserForm() {
   const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<InputsInterface>({
     defaultValues: {
+      power_of_attorney: [],
       cepNotFound: false,
     },
     resolver: zodResolver(signUpSchema)
@@ -60,24 +61,24 @@ export default function UserForm() {
 
   useEffect(()=>{
     //QUANDO TROCAR O TIPO DE PROCURAÇÃO LIMPAR OS CAMPOS NECESSÁRIOS
-    if(["previdenciario","civel","administrativo"].includes(watch().power_of_attorney)){
+    if(!watch().power_of_attorney?.includes("trabalhista")){
       setValue("ctps_n",undefined)
       setValue("ctps_serie",undefined)
       setValue("uf_for_ctps_id",undefined)
-      if(["administrativo"].includes(watch().power_of_attorney)){
+    }
+    if(!watch().power_of_attorney?.includes("previdenciario") && 
+      !watch().power_of_attorney?.includes("civel") && 
+      !watch().power_of_attorney?.includes("administrativo")){
+        setValue("cep",undefined)
+        setValue("cepNotFound",false)
+        setValue("state_for_address",undefined)
+        setValue("city",undefined)
+        setValue("neighborhood",undefined)
+        setValue("address_name",undefined)
+      if(!watch().power_of_attorney?.includes("administrativo")){
         setValue("address_complement_type",undefined)
         setValue("address_complement_name",undefined)
       }
-    }
-    if(["trabalhista"].includes(watch().power_of_attorney)){
-      setValue("cep",undefined)
-      setValue("cepNotFound",false)
-      setValue("state_for_address",undefined)
-      setValue("city",undefined)
-      setValue("neighborhood",undefined)
-      setValue("address_name",undefined)
-      setValue("address_complement_type",undefined)
-      setValue("address_complement_name",undefined)
     }
     console.log(watch())
   },[watch().power_of_attorney])
@@ -93,7 +94,7 @@ export default function UserForm() {
     <form className="bg-white mx-auto w-full max-w-lg my-3" onSubmit={handleSubmit(onSubmit)}>
       <div className="bg-gray-200 p-5 border-b-2 border-gray-400">
         <AccordionItem title="Campos gerais" isOpen={true}>
-          <PowerOfAttorney className={"mb-3"} register={register} />
+          <PowerOfAttorney className={"mb-3"} register={register} watch={watch} setValue={setValue} />
           {errors.power_of_attorney && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.power_of_attorney.message}</p>}
           <FullName className={"mb-3"} register={register} />
           {errors.full_name && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.full_name.message}</p>}
@@ -124,7 +125,11 @@ export default function UserForm() {
         </AccordionItem>
       </div>
       {
-          ["previdenciario","civel","administrativo"].includes(watch().power_of_attorney) && (
+          (
+            watch().power_of_attorney?.includes("previdenciario") || 
+            watch().power_of_attorney?.includes("civel") || 
+            watch().power_of_attorney?.includes("administrativo")
+          ) && (
           <div className="bg-gray-200 p-5 border-b-2 border-gray-400">
             <AccordionItem title="Campos extras">
               <CEP className={"mb-3"} register={register} setValue={setValue} />
@@ -147,7 +152,11 @@ export default function UserForm() {
               }
               <AddressName className={""} register={register} watch={watch} setValue={setValue} apiInfo={cepData.logradouro} />
               {errors.address_name && <p className="text-red-500 mt-3 border-b-2 border-red-500">{errors.address_name.message}</p>}
-              {["previdenciario","civel"].includes(watch().power_of_attorney) && (
+              {
+                (
+                  watch().power_of_attorney?.includes("previdenciario") || 
+                  watch().power_of_attorney?.includes("civel")
+                ) && (
                 <>
                   <AddressComplement className={"mt-3"} register={register} watch={watch} setValue={setValue} />
                   {errors.address_complement_type && <p className="text-red-500 mt-3 border-b-2 border-red-500">{errors.address_complement_type.message}</p>}
@@ -159,7 +168,7 @@ export default function UserForm() {
         )
       }
       {
-          ["trabalhista"].includes(watch().power_of_attorney) && (
+          watch().power_of_attorney?.includes("trabalhista") && (
             <div className="bg-gray-200 p-5 border-b-2 border-gray-400">
                 <AccordionItem title="Campos extras">
                   <CTPSn className={"mb-3"} register={register} setValue={setValue} />
