@@ -8,12 +8,12 @@ export default function Page() {
     return (
         <main className="bg-neutral-50 text-neutral-950 flex flex-row justify-center items-center w-screen h-screen transition-all">
             <div className="h-[90%] w-[60%] relative flex justify-center items-center">
-                <div className="w-max absolute top-0 z-10">
-                    <h1>Bem-Vindo(a)!</h1>
-                    <h2>Insira suas credenciais para acessar o sistema.</h2>
-                    <div className="flex flex-row justify-start items-center">
-                        <InformationCircleIcon className="aspect-square w-6 mr-2" />
-                        <h3>Caso não esteja cadastrado, ultilize o botão <span className="bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2">Cadastrar-se</span></h3>
+                <div className="w-max absolute top-0 z-10 select-none">
+                    <h1 className="text-2xl font-semibold text-neutral-950">Bem-Vindo(a)!</h1>
+                    <h2 className="text-lg text-neutral-500">Insira suas credenciais para acessar o sistema.</h2>
+                    <div className="fill-blue-300 flex flex-row justify-start items-center mt-2">
+                        <InformationCircleIcon className="stroke-blue-400 fill-blue-50 aspect-square w-6 mr-2" />
+                        <h3>Caso não esteja cadastrado, ultilize o botão <span className="bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 text-neutral-950">Cadastrar-se</span></h3>
                     </div>
                 </div>
                 <form className="flex flex-col items-center mb-4 h-48">
@@ -37,7 +37,7 @@ export default function Page() {
                         </div>
                     )}
                     <div className="w-96 flex flex-row justify-between items-center mt-4">
-                        <button className="border-neutral-200 border-[1px] text-neutral-950 bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 hover:bg-neutral-100 hover:text-neutral-950 hover:scale-110 transition-all" type="submit">Entrar</button>
+                        <button className="border-neutral-200 border-[1px] text-neutral-950 bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 hover:bg-neutral-100 hover:text-neutral-950 hover:scale-110 transition-all" type="submit">{cadastrarSe ? 'Finalizar Cadastro' : 'Entrar'}</button>
                         <button className="border-neutral-200 border-[1px] text-neutral-950 bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 hover:bg-neutral-100 hover:text-neutral-950 hover:scale-110 transition-all" type="button" onClick={switchCadastrarSe}>{cadastrarSe ? 'Voltar' : 'Cadastrar-se'}</button>
                     </div>
                 </form>
