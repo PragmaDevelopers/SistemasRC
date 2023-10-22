@@ -16,6 +16,8 @@ export type Card = {
     columnID: string,
     description: string,
     checklists: CheckList[],
+    tags: Tag[],
+    members: Member[],
 }
 
 export type Column = {
@@ -28,4 +30,15 @@ export type Column = {
 export type KanbanData = {
     columns: Column[],
     kanbanId: string,
+}
+
+export type Tag = {
+    title: string,
+    color: string,
+    id: string,
+}
+
+export type Member = {
+    name: string,
+    id: string,
 }

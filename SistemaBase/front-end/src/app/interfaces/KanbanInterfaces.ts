@@ -39,6 +39,8 @@ export interface CreateEditCardProps {
     tags: any;
     addNewTag: any;
     removeCurrentTag: any;
+    viewAddTag: any;
+    setViewAddTag: any;
 }
 
 export interface RichEditorProps {
