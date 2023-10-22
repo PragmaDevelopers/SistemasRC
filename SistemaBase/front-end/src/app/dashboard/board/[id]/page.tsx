@@ -79,8 +79,8 @@ function RichEditor(props: RichEditorProps) {
     return (
         <MDXEditor
             className="MDXEditor"
-            ref={editorRef}
-            markdown={markdown}
+            ref={props?.editorRef}
+            markdown={props.markdown}
             plugins={[
                 headingsPlugin(),
                 listsPlugin(),
