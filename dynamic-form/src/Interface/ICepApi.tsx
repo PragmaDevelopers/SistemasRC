@@ -1,4 +1,4 @@
-export default interface CepDataInterface {
+export default interface ICepApi {
     uf: string[],
     localidade: string[],
     bairro: string[],

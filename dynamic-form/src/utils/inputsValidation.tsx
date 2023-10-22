@@ -31,29 +31,25 @@ const signUpSchema = z.object({
         message: "Mínimo de 5 caracteres!"
     }),
     marital_status: z.string().refine((value) => {
-        return ["single","married","divorced","widowed"].includes(value);
+        return ["solteiro","casado","divorciado","viúvo"].includes(value);
     },{
         message: "Seleção inválida!"
     }),
-    common_law_marriage: z.coerce.string().refine((value) => {
+    common_law_marriage: z.string().refine((value) => {
         return ["true","false"].includes(value);
     },{
         message: "Seleção inválida!"
     }),
-    rg: z.string().regex(/^(\d{1,2})(\d{3})(\d{3})(\d{1})$/,{
+    rg: z.string().regex(/^(\d{1,2}).(\d{3}).(\d{3})-(\d{1})$/,{
         message: "Formato do RG informado está incorreto!"
     }),
-    uf_for_RG_id: z.coerce.number().refine((value) => {
-        return states.some((state)=>state.id == value);
-    },{
+    uf_for_RG: z.undefined().or(z.string().regex(/^[A-Z]{2}$/,{
         message: "Estado informado não existe em nosso banco de dados!"
-    }),
-    issuing_body_id: z.coerce.number().refine((value) => {
-        return issuingBodies.some((issuingBody)=>issuingBody.id == value);
-    },{
+    })),
+    issuing_body: z.undefined().or(z.string().regex(/^[A-Z]{1,7}$/,{
         message: "Orgão emissor informado não existe em nosso banco de dados!"
-    }),
-    cpf: z.string().regex(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,{
+    })),
+    cpf: z.string().regex(/^(\d{3}).(\d{3}).(\d{3})-(\d{2})$/,{
         message: "Formato do CPF informado está incorreto!"
     }),
     email: z.string().email({
@@ -70,7 +66,7 @@ const signUpSchema = z.object({
         },{
         message: "Nome e sobrenome é necessário!"
     }),
-    cep: z.undefined().or(z.string().regex(/^(\d{5})(\d{3})$/,{
+    cep: z.undefined().or(z.string().regex(/^(\d{5})-(\d{3})$/,{
         message: "Formato do CEP informado está incorreto!"
     })),
     cepNotFound: z.undefined().or(z.coerce.boolean().refine((value) => {
@@ -121,10 +117,10 @@ const signUpSchema = z.object({
         message: "Seleção inválida!"
     })),
     address_complement_name: z.undefined().or(z.string().refine((value) => {
-        if(!value.split(":")[1]?.match(/^[\D]*$/) && value.split(":")[0] == "Number"){
+        if(!value.substring(3)?.match(/^[\D]*$/) && value.substring(0,2) == "nº"){
             return true;
         }
-        if(value.split(":")[1]?.match(/^Quadra \d+ Lote \d+$/) && value.split(":")[0] == "Qd/Lt"){
+        if(value.match(/^Quadra \d+ Lote \d+$/)){
             return true;
         }
         return false;

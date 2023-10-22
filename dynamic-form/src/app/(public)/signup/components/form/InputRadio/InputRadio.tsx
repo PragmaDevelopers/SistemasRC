@@ -1,16 +1,16 @@
 import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
-import InputsInterface from "../Interface/InputsInterface";
+import { IFormSignUpInputs } from "../../../../../../Interface/IFormInputs";
 import { useState,useEffect } from "react";
  
 type ISimpleSelection = {
-    register: UseFormRegister<InputsInterface>,
+    register: UseFormRegister<IFormSignUpInputs>,
     className: string
 }
 
 type IAdvancedSelection = {
-  register: UseFormRegister<InputsInterface>,
-  watch: UseFormWatch<InputsInterface>,
-  setValue: UseFormSetValue<InputsInterface>,
+  register: UseFormRegister<IFormSignUpInputs>,
+  watch: UseFormWatch<IFormSignUpInputs>,
+  setValue: UseFormSetValue<IFormSignUpInputs>,
   className: string
 }
 
@@ -35,13 +35,13 @@ export function AddressComplement({register,watch,setValue,className}:IAdvancedS
   function formattedAddressComplement(addressComplement:string){
     if(watch().address_complement_type === "number"){
       addressComplement = addressComplement.replace(/\D/g,""); //Substituí o que não é dígito por "", /g é [Global][1]
-      setValue("address_complement_name","Number:"+addressComplement);
+      setValue("address_complement_name","nº "+addressComplement);
       setAddressComplementValue(addressComplement)
     }
     if(watch().address_complement_type === "qd-lt"){
       addressComplement = addressComplement.replace(/^\D+$/g,"");
       addressComplement = addressComplement.replace(/^(\d+) (\d+)$/g,"Quadra $1 Lote $2"); //Substituí o que não é dígito por "", /g é [Global][1]
-      setValue("address_complement_name","Qd/Lt:"+addressComplement);
+      setValue("address_complement_name",addressComplement);
       setAddressComplementValue(addressComplement)
     }
   }

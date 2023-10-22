@@ -1,8 +1,8 @@
-"use client";
 import React, { ReactNode, useState, useEffect } from "react";
-import InputsInterface from "./Interface/InputsInterface";
-import CepDataInterface from "./Interface/CepData";
+import { IFormSignUpInputs } from "../../../../../Interface/IFormInputs";
+import ICepApi from "../../../../../Interface/ICepApi";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import {
   PowerOfAttorney,
   Ocuppation,
@@ -41,7 +41,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen =
 };
 
 export default function UserForm() {
-  const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<InputsInterface>({
+  const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<IFormSignUpInputs>({
     defaultValues: {
       power_of_attorney: [],
       cepNotFound: false,
@@ -49,7 +49,18 @@ export default function UserForm() {
     resolver: zodResolver(signUpSchema)
   });
 
-  const onSubmit: SubmitHandler<InputsInterface> = (data) => console.log(data);
+  const [cepData,setCepData] = useState<ICepApi>({
+    uf: [""],
+    localidade: [""],
+    bairro: [""],
+    logradouro: [""]
+  });
+
+  const router = useRouter();
+  const onSubmit: SubmitHandler<IFormSignUpInputs> = (data) => {
+    sessionStorage.setItem("registration_form",JSON.stringify(data));
+    router.push("/pdf_page")
+  };
   
   useEffect(()=>{
     async function awaitFunction(){
@@ -80,18 +91,10 @@ export default function UserForm() {
         setValue("address_complement_name",undefined)
       }
     }
-    console.log(watch())
   },[watch().power_of_attorney])
 
-  const [cepData,setCepData] = useState<CepDataInterface>({
-    uf: [""],
-    localidade: [""],
-    bairro: [""],
-    logradouro: [""]
-  });
-
   return (
-    <form className="bg-white mx-auto w-full max-w-lg my-3" onSubmit={handleSubmit(onSubmit)}>
+    <form className="mx-auto w-full max-w-lg my-3" onSubmit={handleSubmit(onSubmit)}>
       <div className="bg-gray-200 p-5 border-b-2 border-gray-400">
         <AccordionItem title="Campos gerais" isOpen={true}>
           <PowerOfAttorney className={"mb-3"} register={register} watch={watch} setValue={setValue} />
@@ -115,9 +118,9 @@ export default function UserForm() {
           <RG className={"mb-3"} register={register} setValue={setValue} />
           {errors.rg && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.rg.message}</p>}
           <UfForRG className={"mb-3"} register={register} />
-          {errors.uf_for_RG_id && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.uf_for_RG_id.message}</p>}
+          {errors.uf_for_RG && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.uf_for_RG.message}</p>}
           <IssuingBody className={"mb-3"} register={register} />
-          {errors.issuing_body_id && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.issuing_body_id.message}</p>}
+          {errors.issuing_body && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.issuing_body.message}</p>}
           <CPF className={"mb-3"} register={register} setValue={setValue} />
           {errors.cpf && <p className="text-red-500 mb-3 border-b-2 border-red-500">{errors.cpf.message}</p>}
           <MotherName className={""} register={register} />

@@ -1,28 +1,25 @@
 import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
-import InputsInterface from "../Interface/InputsInterface";
+import { IFormSignUpInputs } from "../../../../../../Interface/IFormInputs";
 import issuingBodies from "../../../../../../../api/issuingBodies/issuingBodies";
 import states from "../../../../../../../api/states/states";
-import cities from "../../../../../../../api/cities/cities";
-import neighborhoods from "../../../../../../../api/neighborhoods/neighborhoods";
-import addressTypes from "../../../../../../../api/addressType/addressType";
 import { useEffect,useState } from "react";
 
 type ISimpleSelection = {
-    register: UseFormRegister<InputsInterface>,
+    register: UseFormRegister<IFormSignUpInputs>,
     className: string
 }
 
 type IIntermediateSelection = {
-    register: UseFormRegister<InputsInterface>,
-    setValue: UseFormSetValue<InputsInterface>,
-    watch: UseFormWatch<InputsInterface>,
+    register: UseFormRegister<IFormSignUpInputs>,
+    setValue: UseFormSetValue<IFormSignUpInputs>,
+    watch: UseFormWatch<IFormSignUpInputs>,
     className: string
 }
 
 type IAdvancedSelection = {
-    register: UseFormRegister<InputsInterface>,
-    setValue: UseFormSetValue<InputsInterface>,
-    watch: UseFormWatch<InputsInterface>,
+    register: UseFormRegister<IFormSignUpInputs>,
+    setValue: UseFormSetValue<IFormSignUpInputs>,
+    watch: UseFormWatch<IFormSignUpInputs>,
     apiInfo: string[]
     className: string
 }
@@ -79,8 +76,8 @@ export function Nationality({register,className}:ISimpleSelection){
             <label htmlFor="input-nationality">Nacionalidade: </label>
             <select className="w-full" defaultValue="default" id="input-nationality" {...register("nationality",{required:true})}>
                 <option disabled value="default">-- Escolha uma Nacionalidade --</option>
-                <option value="brazilian-male">Brasileiro</option>
-                <option value="brazilian-female">Brasileira</option>
+                <option value="brasileiro">Brasileiro</option>
+                <option value="Brasileira">Brasileira</option>
             </select>
             {/* 
                 //SEGUNDA FORMA DE SELECIONAR OS DADOS. MENOS FLEXIVEL
@@ -101,10 +98,10 @@ export function MaritalStatus({register,className}:ISimpleSelection){
             <label htmlFor="input-marital-status">Estado Civil: </label>
             <select className="w-full" defaultValue="default" id="input-marital-status" {...register("marital_status",{required:true})}>
                 <option disabled value="default">-- Escolha um Estado Civil --</option>
-                <option value="single">Solteiro (a)</option>
-                <option value="married">Casado (a)</option>
-                <option value="divorced">Divorciado (a)</option>
-                <option value="widowed">Viúvo (a)</option>
+                <option value="solteiro">Solteiro (a)</option>
+                <option value="casado">Casado (a)</option>
+                <option value="divorciado">Divorciado (a)</option>
+                <option value="viúvo">Viúvo (a)</option>
             </select>
         </div>
     )
@@ -115,10 +112,10 @@ export function UfForRG({register,className}:ISimpleSelection){
     return (
         <div className={className}>
             <label htmlFor="input-UF">UF: </label>
-            <select className="w-full" defaultValue="default" id="input-UF" {...register("uf_for_RG_id",{required:true})}>
+            <select className="w-full" defaultValue="default" id="input-UF" {...register("uf_for_RG",{required:true})}>
                 <option disabled value="default">-- Escolha um Estado --</option>
                 {states.map(state=>{
-                    return <option key={state.id} value={state.id}>{state.abbreviation} - {state.name}</option>   
+                    return <option key={state.id} value={state.abbreviation}>{state.abbreviation} - {state.name}</option>   
                 })}
             </select>
         </div>
@@ -129,11 +126,11 @@ export function IssuingBody({register,className}:ISimpleSelection){
     return (
         <div className={className}>
             <label htmlFor="input-issuing-body">Órgão Emissor: </label>
-            <select className="w-full" defaultValue="default" id="input-issuing-body" {...register("issuing_body_id",{required:true})}>
+            <select className="w-full" defaultValue="default" id="input-issuing-body" {...register("issuing_body",{required:true})}>
                 <option disabled value="default">-- Escolha um Órgão Emissor --</option>
                 {issuingBodies.map((issuingBody) => {
                 return (
-                    <option key={issuingBody.id} value={issuingBody.id}>
+                    <option key={issuingBody.id} value={issuingBody.abbreviation}>
                     {issuingBody.abbreviation} - {issuingBody.name}
                     </option>
                 );

@@ -1,15 +1,15 @@
 import { UseFormRegister, UseFormSetValue } from "react-hook-form";
-import InputsInterface from "../Interface/InputsInterface";
+import { IFormSignUpInputs } from "../../../../../../Interface/IFormInputs";
 import { useState } from "react";
 
 type ISimpleSelection = {
-    register: UseFormRegister<InputsInterface>,
+    register: UseFormRegister<IFormSignUpInputs>,
     className: string,
 }
 
 type IAdvancedSelection = {
-    register: UseFormRegister<InputsInterface>,
-    setValue: UseFormSetValue<InputsInterface>,
+    register: UseFormRegister<IFormSignUpInputs>,
+    setValue: UseFormSetValue<IFormSignUpInputs>,
     className: string,
 }
 
@@ -35,8 +35,8 @@ export function RG({register,setValue,className}:IAdvancedSelection){
     const [rgValue,setRgValue] = useState("");
     function formattedRg(rg:string){
         rg = rg.replace(/\D/g,""); //Substituí o que não é dígito por "", /g é [Global][1]
-        setValue("rg",rg);
         rg = rg.replace(/^(\d{1,2})(\d{3})(\d{3})(\d{1})$/g,"$1.$2.$3-$4");
+        setValue("rg",rg);
         setRgValue(rg)
     }
     return (
@@ -52,8 +52,8 @@ export function CPF({register,setValue,className}:IAdvancedSelection){
     const [cpfValue,setCpfValue] = useState("");
     function formattedCpf(cpf:string){
         cpf = cpf.replace(/\D/g,""); //Substituí o que não é dígito por "", /g é [Global][1]
-        setValue("cpf",cpf);
         cpf = cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/g,"$1.$2.$3-$4");
+        setValue("cpf",cpf);
         setCpfValue(cpf)
     }
     return (
@@ -78,8 +78,8 @@ export function CEP({register,setValue,className}:IAdvancedSelection){
     const [cepValue,setCepValue] = useState("");
     function formattedCep(cep:string){
         cep = cep.replace(/\D/g,""); //Substituí o que não é dígito por "", /g é [Global][1]
-        setValue("cep",cep);
         cep = cep.replace(/^(\d{5})(\d{3})$/g,"$1-$2");
+        setValue("cep",cep);
         setCepValue(cep)
     }
     return (
