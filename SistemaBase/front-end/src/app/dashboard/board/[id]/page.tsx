@@ -292,6 +292,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 type="checkbox"
                                                 checked={inputValue.completed}
                                                 onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
+                                                className="bg-blue-100 border-blue-200 rounded-full focus:ring-blue-300"
                                             />
                                             <input
                                                 className='shadow-inner border-neutral-200 border-[1px] rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
