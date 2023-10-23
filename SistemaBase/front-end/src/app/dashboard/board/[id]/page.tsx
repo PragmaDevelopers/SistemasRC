@@ -194,7 +194,7 @@ function ColumnContainer(props: ColumnContainerProps) {
                         }}
                         value={column.title}
                         onChange={(e: any) => updateColumnTitle(column.id, e.target.value)}
-                        className='w-full bg-neutral-50 outline-none'
+                        className='form-input w-full bg-neutral-50 outline-none'
                     /> :
                         column.title}
 
@@ -261,10 +261,10 @@ function CreateEditCard(props: CreateEditCardProps) {
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
-                            <input className='bg-neutral-50 w-full' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
+                            <input className='form-input bg-neutral-50 w-full' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
                         <div className='flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100'>
-                            <textarea className='resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                            <textarea className='form-textarea resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
@@ -278,7 +278,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='form-input shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -295,7 +295,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 className="bg-blue-100 border-blue-200 rounded-full focus:ring-blue-300 form-checkbox"
                                             />
                                             <input
-                                                className='shadow-inner border-neutral-200 border-[1px] rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
+                                                className='form-input shadow-inner border-neutral-200 border-[1px] rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
                                                 type="text"
                                                 value={inputValue.name}
                                                 placeholder='Adicionar Tarefa'
@@ -335,7 +335,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                     </button>
                     <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={createNewTag}>
-                            <input type='text' name='title' placeholder='Nome da Etiqueta' className='bg-neutral-100 w-48 border-[1px] border-neutral-200 rounded-md p-1 shadow-inner my-2' />
+                            <input type='text' name='title' placeholder='Nome da Etiqueta' className='form-input bg-neutral-100 w-48 border-[1px] border-neutral-200 rounded-md p-1 shadow-inner my-2' />
                             <HexColorPicker color={color} onChange={setColor} className='my-2' />
                             <button type='submit' className="bg-neutral-50 p-2 drop-shadow rounded-md my-2">Criar</button>
                         </form>

@@ -20,20 +20,20 @@ export default function Page() {
                     {cadastrarSe ? (
                         <div className="h-fit bg-neutral-50 drop-shadow-md rounded-md p-2 border-neutral-200 border-[1px]">
                             <div className="flex flex-col">
-                                <input type="text" placeholder="Insira seu nome" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
-                                <input type="email" placeholder="Insira seu email" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
-                                <input type="text" placeholder="Insira sua nacionalidade" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
-                                <input type="text" placeholder="Insira seu genero" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
+                                <input type="text" placeholder="Insira seu nome" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
+                                <input type="email" placeholder="Insira seu email" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
+                                <input type="text" placeholder="Insira sua nacionalidade" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
+                                <input type="text" placeholder="Insira seu genero" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
                             </div>
                             <div className="flex flex-row justify-between items-center">
-                                <input type="text" placeholder="Insira sua senha" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1 mr-1" />
-                                <input type="text" placeholder="Re-insira sua senha" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1 ml-1" />
+                                <input type="text" placeholder="Insira sua senha" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1 mr-1" />
+                                <input type="text" placeholder="Re-insira sua senha" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1 ml-1" />
                             </div>
                         </div>
                     ) : (
                         <div className="w-96 flex flex-col bg-neutral-50 drop-shadow-md rounded-md p-2 border-neutral-200 border-[1px]">
-                            <input type="email" placeholder="Insira seu email" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
-                            <input type="password" placeholder="Insira sua senha" className="bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
+                            <input type="email" placeholder="Insira seu email" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
+                            <input type="password" placeholder="Insira sua senha" className="form-input bg-neutral-100 shadow-inner my-1 border-[1px] border-neutral-200 rounded-md p-1" />
                         </div>
                     )}
                     <div className="w-96 flex flex-row justify-between items-center mt-4">
