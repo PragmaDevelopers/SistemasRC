@@ -255,8 +255,8 @@ function CreateEditCard(props: CreateEditCardProps) {
     }
 
     return (
-        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
-            <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center px-8'>
+        <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/25'}>
+            <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg flex justify-center items-center px-8 drop-shadow-lg'>
                 <h1 className='absolute top-2 w-full text-center'>Card Creation</h1>
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
@@ -278,7 +278,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' value={list.name} onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -842,7 +842,7 @@ export default function Page({ params }: { params: { id: string } }) {
             checklists: [
                 ...prevCard.checklists,
                 {
-                    name: 'New Checklist',
+                    name: '',
                     items: [{ name: '', completed: false, checklistId: checklistId }],
                     id: checklistId,
                 },
