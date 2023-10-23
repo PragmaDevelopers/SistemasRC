@@ -36,7 +36,6 @@ export interface CreateEditCardProps {
     handleInputChange: any;
     handleToggleCheckbox: any;
     isEdition: boolean;
-    tags: any;
     addNewTag: any;
     removeCurrentTag: any;
     viewAddTag: any;

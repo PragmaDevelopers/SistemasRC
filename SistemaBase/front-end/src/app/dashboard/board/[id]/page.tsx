@@ -44,7 +44,8 @@ import {
     CheckList,
     CheckListItem,
     Column,
-    KanbanData
+    KanbanData,
+    Tag
 } from '@/app/types/KanbanTypes';
 import { generateRandomString } from '@/app/utils/generators';
 import '@mdxeditor/editor/style.css';
@@ -232,34 +233,15 @@ function CreateEditCard(props: CreateEditCardProps) {
         handleInputChange,
         handleToggleCheckbox,
         isEdition,
-        tags,
         addNewTag,
-        removeCurrentTag } = props;
+        removeCurrentTag,
+        viewAddTag,
+        setViewAddTag
+    } = props;
 
     const handleCreateCardForm = (event: any) => {
         createCardForm(event, isEdition);
     }
-
-    const [textColor, setTextColor] = useState<string>('');
-    useEffect(() => {
-        const color = tags?.color as string;
-        if (color && color.match(/^#[0-9A-Fa-f]{6}$/)) {
-            const r = parseInt(color.slice(1, 3), 16);
-            const g = parseInt(color.slice(3, 5), 16);
-            const b = parseInt(color.slice(5, 7), 16);
-            if (r && g && b) {
-                console.log(r, g, b, color)
-                const contrast = (0.299 * (r as unknown as number) + 0.587 * (g as unknown as number) + 0.114 * (b as unknown as number)) / 255;
-
-                if (contrast > 0.5) {
-                    setTextColor('#0a0a0a');
-                } else {
-                    setTextColor('#fafafa');
-                }
-            }
-        }
-    }, [tags]);
-
 
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
@@ -274,10 +256,10 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <textarea className='resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
-                            {tags.map((items: any) => (
+                            {card.tags.map((items: any) => (
                                 <div className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
                                     <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-4' /></button>
-                                    <h1 style={{ backgroundColor: items?.color, color: textColor } as CSSProperties} className='ml-1'>{items?.title}</h1>
+                                    <h1 style={{ backgroundColor: items?.color } as CSSProperties} className='ml-1'>{items?.title}</h1>
                                 </div>
                             ))}
                         </div>
@@ -362,30 +344,14 @@ export default function Page({ params }: { params: { id: string } }) {
     const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
-    const [tags, setTags] = useState([{ title: 'New Tag', color: '#9a90d1', id: generateRandomString() }]);
+    const [viewAddTag, setViewAddTag] = useState<boolean>(false);
+
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
             distance: 2,  // 2px
         }
     }));
-
-    const removeCurrentTag = (tagID: string) => {
-        setTags((prevTags) => {
-            return prevTags.filter(item => item.id != tagID);
-        });
-    };
-
-    const addNewTag = () => {
-        setTags((prevTag) => {
-            const newTag = {
-                title: 'New Tag',
-                color: '#9a90d1',
-                id: generateRandomString(),
-            }
-            return [...prevTag, newTag];
-        });
-    }
 
     useEffect(() => {
         fetch(`http://localhost:8080/api/dashboard/column/getall/${params.id}`).then(response => response.json()).then(data => {
@@ -719,6 +685,8 @@ export default function Page({ params }: { params: { id: string } }) {
             columnID: columnID,
             description: "",
             checklists: [],
+            tags: [],
+            members: [],
         } as Card);
         setIsEdition(false);
         setShowCreateCardForm(true);
@@ -788,6 +756,8 @@ export default function Page({ params }: { params: { id: string } }) {
             columnID: "",
             description: "",
             checklists: [],
+            tags: [],
+            members: [],
         } as Card);
         setShowCreateCardForm(false);
     };
@@ -906,6 +876,27 @@ export default function Page({ params }: { params: { id: string } }) {
         });
     };
 
+    const handleAddTag = (tagTitle: string, tagColor: string) => {
+        setTempCard((prevCard: Card) => {
+            const newTag: Tag = { title: tagTitle, color: tagColor, id: generateRandomString() };
+            const newTagsList: Tag[] = [...prevCard.tags, newTag];
+            return {
+                ...prevCard,
+                tags: newTagsList,
+            } as Card;
+        });
+    }
+
+    const removeCurrentTag = (tagID: string) => {
+        setTempCard((prevCard: Card) => {
+            const newTagsList: Tag[] = prevCard.tags.filter((tag: Tag) => tag.id != tagID);
+            return {
+                ...prevCard,
+                tags: newTagsList,
+            } as Card;
+        });
+    }
+
     return (
         <main className="w-full h-full overflow-x-auto overflow-y-hidden shrink-0">
             <CreateEditCard
@@ -921,9 +912,10 @@ export default function Page({ params }: { params: { id: string } }) {
                 handleRemoveInput={handleRemoveInput}
                 handleToggleCheckbox={handleToggleCheckbox}
                 isEdition={isEdition}
-                tags={tags}
-                addNewTag={addNewTag}
+                addNewTag={handleAddTag}
                 removeCurrentTag={removeCurrentTag}
+                viewAddTag={viewAddTag}
+                setViewAddTag={setViewAddTag}
             />
             <div className="">
                 <h1>{params.id}</h1>
