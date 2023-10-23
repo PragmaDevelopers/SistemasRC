@@ -267,7 +267,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <textarea className='resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
-                            {card.tags.map((items: Tag) => (
+                            {card.tags?.map((items: Tag) => (
                                 <div className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
                                     <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-4' /></button>
                                     <h1 style={{ backgroundColor: items?.color } as CSSProperties} className='ml-1'>{items?.title}</h1>
@@ -331,11 +331,11 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <PlusCircleIcon className='aspect-square w-6 mr-2' />
                         <h1 className="w-fit h-fit flex justify-center items-center">New Tag</h1>
                     </button>
-                    <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-0 bg-neutral-50 p-2 drop-shadow-md rounded-md'}>
+                    <div className={(viewAddTag ? 'w-max h-max' : 'w-0 h-0') + ' absolute overflow-hidden transition-all top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={createNewTag}>
-                            <input type='text' name='title' placeholder='Nome da Etiqueta' className='bg-neutral-50' />
-                            <HexColorPicker color={color} onChange={setColor} />;
-                            <button type='submit' className="bg-neutral-50 p-2 drop-shadow rounded-md">Criar</button>
+                            <input type='text' name='title' placeholder='Nome da Etiqueta' className='bg-neutral-100 w-48 border-[1px] border-neutral-200 rounded-md p-1 shadow-inner my-2' />
+                            <HexColorPicker color={color} onChange={setColor} className='my-2' />
+                            <button type='submit' className="bg-neutral-50 p-2 drop-shadow rounded-md my-2">Criar</button>
                         </form>
                     </div>
                 </div>
