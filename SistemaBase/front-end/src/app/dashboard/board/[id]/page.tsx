@@ -292,7 +292,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 type="checkbox"
                                                 checked={inputValue.completed}
                                                 onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
-                                                className="bg-blue-100 border-blue-200 rounded-full focus:ring-blue-300"
+                                                className="bg-blue-100 border-blue-200 rounded-full focus:ring-blue-300 form-checkbox"
                                             />
                                             <input
                                                 className='shadow-inner border-neutral-200 border-[1px] rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
@@ -328,11 +328,12 @@ function CreateEditCard(props: CreateEditCardProps) {
                     </div>
                 </form>
                 <div className='w-56 ml-4 flex flex-col items-center justify-start h-[75%] relative'>
-                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center' type='button' onClick={() => setViewAddTag(true)}>
+                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center' type='button'
+                        onClick={() => setViewAddTag(!viewAddTag)}>
                         <PlusCircleIcon className='aspect-square w-6 mr-2' />
                         <h1 className="w-fit h-fit flex justify-center items-center">New Tag</h1>
                     </button>
-                    <div className={(viewAddTag ? 'w-max h-max' : 'w-0 h-0') + ' absolute overflow-hidden transition-all top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={createNewTag}>
                             <input type='text' name='title' placeholder='Nome da Etiqueta' className='bg-neutral-100 w-48 border-[1px] border-neutral-200 rounded-md p-1 shadow-inner my-2' />
                             <HexColorPicker color={color} onChange={setColor} className='my-2' />
