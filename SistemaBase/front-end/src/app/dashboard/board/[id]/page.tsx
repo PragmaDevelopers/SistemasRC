@@ -245,6 +245,15 @@ function CreateEditCard(props: CreateEditCardProps) {
         createCardForm(event, isEdition);
     }
 
+    const createNewTag = (event: any) => {
+        event.preventDefault();
+        const tagTitle: string = event?.target?.title?.value;
+        addNewTag(tagTitle, color);
+        event.target.reset();
+        setViewAddTag(false);
+        setColor("#aabbcc");
+    }
+
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/50'}>
             <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg border-neutral-950 border-2 flex justify-center items-center px-8'>
@@ -322,8 +331,12 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <PlusCircleIcon className='aspect-square w-6 mr-2' />
                         <h1 className="w-fit h-fit flex justify-center items-center">New Tag</h1>
                     </button>
-                    <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-0 bg-neutral-50 p-2 drop-shadow-md'}>
-                        <HexColorPicker
+                    <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-0 bg-neutral-50 p-2 drop-shadow-md rounded-md'}>
+                        <form onSubmit={createNewTag}>
+                            <input type='text' name='title' placeholder='Nome da Etiqueta' className='bg-neutral-50' />
+                            <HexColorPicker color={color} onChange={setColor} />;
+                            <button type='submit' className="bg-neutral-50 p-2 drop-shadow rounded-md">Criar</button>
+                        </form>
                     </div>
                 </div>
                 <button onClick={() => setShowCreateCardForm(false)}><XCircleIcon className='w-8 aspect-square absolute top-2 right-2' /></button>
