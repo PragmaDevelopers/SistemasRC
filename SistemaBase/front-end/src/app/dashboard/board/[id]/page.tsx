@@ -44,6 +44,7 @@ import {
     CheckList,
     CheckListItem,
     Column,
+    DateValue,
     KanbanData,
     Tag
 } from '@/app/types/KanbanTypes';
@@ -69,6 +70,7 @@ import {
     ListsToggle,
     CreateLink,
 } from "@mdxeditor/editor";
+import Calendar from 'react-calendar';
 
 
 const MDXEditor = dynamic(
@@ -243,6 +245,8 @@ function CreateEditCard(props: CreateEditCardProps) {
         isEdition,
         addNewTag,
         removeCurrentTag,
+        cardDate,
+        setCardDate,
     } = props;
 
     const [color, setColor] = useState<string>("#aabbcc");
@@ -362,7 +366,7 @@ function CreateEditCard(props: CreateEditCardProps) {
 
                     <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-32 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form>
-                            <input type='text' placeholder='dummy' />
+                            <Calendar value={cardDate} onChange={setCardDate} />
                         </form>
                     </div>
 
@@ -397,7 +401,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
-
+    const [cardDate, setCardDate] = useState<DateValue>(new Date());
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -966,6 +970,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 isEdition={isEdition}
                 addNewTag={handleAddTag}
                 removeCurrentTag={removeCurrentTag}
+                cardDate={cardDate}
+                setCardDate={setCardDate}
             />
             <div className="">
                 <h1>{params.id}</h1>

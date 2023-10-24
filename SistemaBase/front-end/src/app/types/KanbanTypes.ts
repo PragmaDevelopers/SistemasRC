@@ -42,3 +42,6 @@ export type Member = {
     name: string,
     id: string,
 }
+
+export type DateValuePiece = Date | null;
+export type DateValue = DateValuePiece | [DateValuePiece, DateValuePiece];

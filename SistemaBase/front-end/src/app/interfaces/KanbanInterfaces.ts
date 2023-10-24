@@ -38,6 +38,8 @@ export interface CreateEditCardProps {
     isEdition: boolean;
     addNewTag: any;
     removeCurrentTag: any;
+    cardDate: any;
+    setCardDate: any;
 }
 
 export interface RichEditorProps {
