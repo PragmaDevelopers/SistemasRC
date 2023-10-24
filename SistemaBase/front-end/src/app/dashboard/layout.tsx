@@ -77,9 +77,6 @@ export default function Layout({ children }: any) {
     return (
         <main className="w-full h-full flex flex-row items-start justify-between">
             <div className="grow relative w-56 h-full flex flex-col justify-start items-start shrink-0">
-                <form className="hidden">
-                    <input type="text" placeholder="Pesquisar Card" />
-                </form>
                 <details className="p-2">
                     <summary>Seções</summary>
                     <div className="">
@@ -110,7 +107,7 @@ export default function Layout({ children }: any) {
                         <div>
 
                             <form onSubmit={addDashBoard} className="flex flex-row justify-center items-center">
-                                <input className="w-full mr-1 bg-neutral-50" name="boardname" placeholder="Adicionar nova area" type="text" />
+                                <input className="form-input border-none outline-none p-1 w-full mr-1 bg-neutral-50" name="boardname" placeholder="Adicionar nova area" type="text" />
                                 <button type="submit" className="ml-1"><PlusCircleIcon className="aspect-square w-6" /></button>
                             </form>
                         </div>
