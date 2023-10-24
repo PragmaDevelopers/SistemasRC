@@ -93,7 +93,15 @@ function RichEditor(props: RichEditorProps) {
                 tablePlugin(),
                 markdownShortcutPlugin(),
                 toolbarPlugin({
-                    toolbarContents: () => (<> <UndoRedo /><BlockTypeSelect /><BoldItalicUnderlineToggles /><InsertImage /><InsertTable /><ListsToggle /><CreateLink /></>)
+                    toolbarContents: () => (<>
+                        <UndoRedo />
+                        <BlockTypeSelect />
+                        <BoldItalicUnderlineToggles />
+                        <InsertImage />
+                        <InsertTable />
+                        <ListsToggle />
+                        <CreateLink /></>
+                    )
                 }),
             ]}
 
@@ -328,11 +336,22 @@ function CreateEditCard(props: CreateEditCardProps) {
                     </div>
                 </form>
                 <div className='w-56 ml-4 flex flex-col items-center justify-start h-[75%] relative'>
-                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center' type='button'
+                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center my-2 w-32' type='button'
                         onClick={() => setViewAddTag(!viewAddTag)}>
                         <PlusCircleIcon className='aspect-square w-6 mr-2' />
-                        <h1 className="w-fit h-fit flex justify-center items-center">New Tag</h1>
+                        <h1 className="w-fit h-fit flex justify-center items-center">Add Tag</h1>
                     </button>
+                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center my-2 w-32' type='button'
+                        onClick={() => setViewAddTag(!viewAddTag)}>
+                        <PlusCircleIcon className='aspect-square w-6 mr-2' />
+                        <h1 className="w-fit h-fit flex justify-center items-center">Add Member</h1>
+                    </button>
+                    <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center my-2 w-32' type='button'
+                        onClick={() => setViewAddTag(!viewAddTag)}>
+                        <PlusCircleIcon className='aspect-square w-6 mr-2' />
+                        <h1 className="w-fit h-fit flex justify-center items-center">Add Date</h1>
+                    </button>
+
                     <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={createNewTag}>
                             <input type='text' name='title' placeholder='Nome da Etiqueta' className='form-input bg-neutral-100 w-48 border-[1px] border-neutral-200 rounded-md p-1 shadow-inner my-2' />
