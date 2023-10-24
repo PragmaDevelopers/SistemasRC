@@ -243,11 +243,13 @@ function CreateEditCard(props: CreateEditCardProps) {
         isEdition,
         addNewTag,
         removeCurrentTag,
-        viewAddTag,
-        setViewAddTag
     } = props;
 
     const [color, setColor] = useState<string>("#aabbcc");
+    const [viewAddTag, setViewAddTag] = useState<boolean>(false);
+    const [viewAddMember, setViewAddMember] = useState<boolean>(false);
+    const [viewAddDate, setViewAddDate] = useState<boolean>(false);
+
 
     const handleCreateCardForm = (event: any) => {
         createCardForm(event, isEdition);
@@ -342,15 +344,27 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <h1 className="w-fit h-fit flex justify-center items-center">Add Tag</h1>
                     </button>
                     <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center my-2 w-48' type='button'
-                        onClick={() => setViewAddTag(!viewAddTag)}>
+                        onClick={() => setViewAddMember(!viewAddMember)}>
                         <PlusCircleIcon className='aspect-square w-6 mr-2' />
                         <h1 className="w-fit h-fit flex justify-center items-center">Add Member</h1>
                     </button>
                     <button className='hover:scale-110 transition-all drop-shadow rounded-md p-2 bg-neutral-50 flex justify-center items-center my-2 w-48' type='button'
-                        onClick={() => setViewAddTag(!viewAddTag)}>
+                        onClick={() => setViewAddDate(!viewAddDate)}>
                         <PlusCircleIcon className='aspect-square w-6 mr-2' />
                         <h1 className="w-fit h-fit flex justify-center items-center">Add Date</h1>
                     </button>
+
+                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-24 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                        <form>
+                            <input type='text' placeholder='dummy' />
+                        </form>
+                    </div>
+
+                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-32 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                        <form>
+                            <input type='text' placeholder='dummy' />
+                        </form>
+                    </div>
 
                     <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={createNewTag}>
@@ -383,7 +397,6 @@ export default function Page({ params }: { params: { id: string } }) {
     const [lists, setLists] = useState([{ title: 'New List', inputs: [{ name: '', checked: false }], id: generateRandomString() }]);
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
-    const [viewAddTag, setViewAddTag] = useState<boolean>(false);
 
 
     const sensors = useSensors(useSensor(PointerSensor, {
@@ -953,8 +966,6 @@ export default function Page({ params }: { params: { id: string } }) {
                 isEdition={isEdition}
                 addNewTag={handleAddTag}
                 removeCurrentTag={removeCurrentTag}
-                viewAddTag={viewAddTag}
-                setViewAddTag={setViewAddTag}
             />
             <div className="">
                 <h1>{params.id}</h1>
