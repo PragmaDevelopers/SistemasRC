@@ -275,10 +275,10 @@ function CreateEditCard(props: CreateEditCardProps) {
                 <form onSubmit={handleCreateCardForm} className='w-[80%] h-[85%] mt-[5%] relative'>
                     <div className='w-full h-[85%] overflow-y-auto pb-4'>
                         <div className='flex my-2'>
-                            <input className='form-input bg-neutral-50 w-full' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
+                            <input className='form-input bg-neutral-50 w-full border-none outline-none p-1' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
                         <div className='flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100'>
-                            <textarea className='form-textarea resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                            <textarea className='form-textarea border-none outline-none p-1 resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
@@ -292,7 +292,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-80 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='form-input shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='form-input border-none outline-none p-1 shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -306,7 +306,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 type="checkbox"
                                                 checked={inputValue.completed}
                                                 onChange={() => handleToggleCheckbox(listIndex, inputIndex)}
-                                                className="bg-blue-100 border-blue-200 rounded-full focus:ring-blue-300 form-checkbox"
+                                                className="bg-blue-100 border-blue-200 rounded-full focus:ring-blue-300 form-checkbox mr-2"
                                             />
                                             <input
                                                 className='form-input shadow-inner border-neutral-200 border-[1px] rounded-md bg-neutral-100 mr-2 p-0.5 w-64'
@@ -358,21 +358,21 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <h1 className="w-fit h-fit flex justify-center items-center">Add Date</h1>
                     </button>
 
-                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-32 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-36 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={() => setViewAddMember(false)}>
                             <input type='text' placeholder='dummy' />
                             <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
                         </form>
                     </div>
 
-                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-56 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-48 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={() => setViewAddDate(false)}>
                             <Calendar value={cardDate} onChange={setCardDate} />
                             <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
                         </form>
                     </div>
 
-                    <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-12 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddTag ? 'flex' : 'hidden') + ' absolute top-14 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={createNewTag}>
                             <input type='text' name='title' placeholder='Nome da Etiqueta' className='form-input bg-neutral-100 w-48 border-[1px] border-neutral-200 rounded-md p-1 shadow-inner my-2' />
                             <HexColorPicker color={color} onChange={setColor} className='my-2' />
