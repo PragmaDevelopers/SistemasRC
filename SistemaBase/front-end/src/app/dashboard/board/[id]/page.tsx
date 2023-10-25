@@ -358,15 +358,17 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <h1 className="w-fit h-fit flex justify-center items-center">Add Date</h1>
                     </button>
 
-                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-24 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
-                        <form>
+                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-32 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                        <form onSubmit={() => setViewAddMember(false)}>
                             <input type='text' placeholder='dummy' />
+                            <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
                         </form>
                     </div>
 
-                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-32 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
-                        <form>
+                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-56 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                        <form onSubmit={() => setViewAddDate(false)}>
                             <Calendar value={cardDate} onChange={setCardDate} />
+                            <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
                         </form>
                     </div>
 
