@@ -102,7 +102,7 @@ export default function Layout({ children }: any) {
                     <details className="p-2 overflow-x-hidden overflow-y-auto">
                         <summary>Areas de Trabalho</summary>
                         <div className="">
-                            {dashboards?.map((element) => <BoardMenuEntry href={`/dashboard/board/${element.kanbanId}`} name={element.name} />)}
+                            {dashboards?.map((element, index) => <BoardMenuEntry key={index} href={`/dashboard/board/${element.kanbanId}`} name={element.name} />)}
                         </div>
                         <div>
 

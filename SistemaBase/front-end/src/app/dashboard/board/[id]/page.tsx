@@ -216,7 +216,7 @@ function ColumnContainer(props: ColumnContainerProps) {
             <div>
                 <SortableContext items={cardsIds}>
                     {column.cardsList.map((card: Card) => {
-                        return <CardElement setTempColumnID={setTempColumnID} setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} setIsEdition={setIsEdition} />
+                        return <CardElement setTempColumnID={setTempColumnID} setTempCard={setTempCard} setShowCreateCardForm={setShowCreateCardForm} card={card} deleteCard={deleteCard} setIsEdition={setIsEdition} key={card.id} />
                     })}
                 </SortableContext>
             </div>
@@ -282,7 +282,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
-                                <div className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
+                                <div key={items?.id} className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
                                     <button type='button' onClick={() => removeCurrentTag(items?.id)}><XMarkIcon className='aspect-square w-4' /></button>
                                     <h1 style={{ backgroundColor: items?.color } as CSSProperties} className='ml-1'>{items?.title}</h1>
                                 </div>
