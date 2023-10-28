@@ -22,11 +22,13 @@ import {
     CreateLink,
     ButtonOrDropdownButton,
     directivesPluginHooks,
+    MDXEditorMethods,
 } from "@mdxeditor/editor";
 import {
     RichEditorProps
 } from '@/app/interfaces/KanbanInterfaces';
 import { Bars3Icon } from '@heroicons/react/24/solid';
+import { useRef, useState } from 'react';
 
 const MDXEditor = dynamic(
     () => import('@mdxeditor/editor/MDXEditor').then((mod) => mod.MDXEditor),
@@ -92,10 +94,17 @@ function RichEditor(props: RichEditorProps) {
 }
 
 export default function Page() {
-
+    const editorRef = useRef<MDXEditorMethods>(null);
+    const [mdText, setMdText] = useState<string>("");
     return (
         <main className="w-full h-full bg-neutral-50">
-            <RichEditor markdown={"# MarkDown"} />
+            <RichEditor markdown={mdText} editorRef={editorRef} />
+            <RichEditor markdown={mdText} editorRef={editorRef} />
+            <button className='my-2' onClick={() => { editorRef?.current?.setMarkdown("") }}>Reset Markdown</button>
+            <button className='my-2' onClick={() => { setMdText(editorRef?.current?.getMarkdown() as unknown as string) }}>Get Markdown</button>
+            <div className='p-2 border-[1px] border-neutral-200 bg-neutral-100 my-2 shadow-inner'>
+                <p>{mdText}</p>
+            </div>
         </main>
     );
 }
