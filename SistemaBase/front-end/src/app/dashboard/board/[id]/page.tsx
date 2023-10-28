@@ -30,7 +30,7 @@ import {
     PlusCircleIcon,
     XCircleIcon
 } from '@heroicons/react/24/outline';
-import { XMarkIcon } from '@heroicons/react/24/solid';
+import { CalendarDaysIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { HexColorPicker } from "react-colorful";
 import {
     CardElementProps,
@@ -287,7 +287,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         </div>
                         <div className='p-1'>
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
-                                <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-80 h-fit my-2'>
+                                <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-96 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
                                         <input type='text' className='form-input border-none outline-none p-1 shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
@@ -319,6 +319,9 @@ function CreateEditCard(props: CreateEditCardProps) {
                                                 onClick={() => handleRemoveInput(listIndex, inputIndex)}
                                             >
                                                 <MinusCircleIcon className='w-6 aspect-square' />
+                                            </button>
+                                            <button className='mx-2'>
+                                                <CalendarDaysIcon className='aspect-square w-6' />
                                             </button>
                                         </div>
                                     ))}
