@@ -1,7 +1,6 @@
 "use client";
 
 import '@mdxeditor/editor/style.css';
-import dynamic from 'next/dynamic';
 import { toolbarPlugin } from '@mdxeditor/editor/plugins/toolbar';
 import {
     headingsPlugin,
@@ -23,17 +22,14 @@ import {
     ButtonOrDropdownButton,
     directivesPluginHooks,
     MDXEditorMethods,
+    MDXEditor,
 } from "@mdxeditor/editor";
+
 import {
     RichEditorProps
 } from '@/app/interfaces/KanbanInterfaces';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import { useRef, useState } from 'react';
-
-const MDXEditor = dynamic(
-    () => import('@mdxeditor/editor/MDXEditor').then((mod) => mod.MDXEditor),
-    { ssr: false }
-);
 
 function AlignTextMDXToolbarItem() {
     const insertDirective = directivesPluginHooks.usePublisher('insertDirective');
