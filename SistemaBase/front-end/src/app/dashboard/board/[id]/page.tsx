@@ -289,7 +289,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             {card.checklists?.map((list: CheckList, listIndex: number) => (
                                 <div key={listIndex} className='rounded-md bg-neutral-50 drop-shadow-md p-2 w-96 h-fit my-2'>
                                     <div className='flex items-center mb-4'>
-                                        <input type='text' className='form-input border-none outline-none p-1 shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-64' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
+                                        <input type='text' className='form-input border-none outline-none p-1 shrink-0 mr-2 p-0.5 bg-neutral-50 outline-none w-80' placeholder='Digite um nome' onChange={(e) => updateListTitle(listIndex, e.target.value)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveList(listIndex)}
@@ -331,7 +331,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                                     </button>
                                 </div>
                             ))}
-                            <button type="button" onClick={handleAddList} className='bg-neutral-50 my-2 rounded-md w-80 p-2 drop-shadow flex justify-center items-center'>
+                            <button type="button" onClick={handleAddList} className='bg-neutral-50 my-2 rounded-md w-96 p-2 drop-shadow flex justify-center items-center'>
                                 <h1 className="mr-2">Nova Lista</h1>
                                 <PlusCircleIcon className='w-6 aspect-square' />
                             </button>
@@ -358,14 +358,14 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <h1 className="w-fit h-fit flex justify-center items-center">Add Date</h1>
                     </button>
 
-                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-24 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddMember ? 'flex' : 'hidden') + ' absolute top-28 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={() => setViewAddMember(false)}>
                             <input type='text' placeholder='dummy' />
                             <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
                         </form>
                     </div>
 
-                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-32 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-40 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={() => setViewAddDate(false)}>
                             <Calendar value={cardDate} onChange={setCardDate} />
                             <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
