@@ -58,60 +58,66 @@ function AlignTextMDXToolbarItem() {
     );
 }
 
-function RichEditor(props: RichEditorProps) {
-    return (
-        <MDXEditor
-            onChange={console.log}
-            className="MDXEditor"
-            ref={props?.editorRef}
-            markdown={props.markdown != undefined ? props?.markdown : ""}
-            plugins={[
-                headingsPlugin(),
-                listsPlugin(),
-                quotePlugin(),
-                thematicBreakPlugin(),
-                linkPlugin(),
-                linkDialogPlugin(),
-                imagePlugin(),
-                tablePlugin(),
-                markdownShortcutPlugin(),
-                toolbarPlugin({
-                    toolbarContents: () => (<>
-                        <UndoRedo />
-                        <BlockTypeSelect />
-                        <BoldItalicUnderlineToggles />
-                        <InsertImage />
-                        <InsertTable />
-                        <ListsToggle />
-                        <CreateLink />
-                        <AlignTextMDXToolbarItem />
-                    </>
-                    )
-                }),
-            ]}
-
-        />
-    );
+interface TestProps extends RichEditorProps {
+    setMdText: any;
 }
 
-export default function Page() {
+function RichEditor(props: TestProps) {
     const editorRef = useRef<MDXEditorMethods>(null);
-    const [mdText, setMdText] = useState<any>("");
     const getMd = () => {
         console.log("GETTING MD");
         const md = editorRef.current?.getMarkdown();
         console.log(md);
-        setMdText(md);
+        props.setMdText(md);
     }
     const resetMd = () => {
         console.log("RESETTING MD");
         editorRef.current?.setMarkdown("");
     }
     return (
-        <main className="w-full h-full bg-neutral-50">
-            <RichEditor markdown={mdText} editorRef={editorRef} />
+        <div>
             <button className='my-2' onClick={resetMd}>Reset Markdown</button>
             <button className='my-2' onClick={getMd}>Get Markdown</button>
+            <MDXEditor
+                onChange={console.log}
+                className="MDXEditor"
+                ref={props?.editorRef}
+                markdown={props.markdown != undefined ? props?.markdown : ""}
+                plugins={[
+                    headingsPlugin(),
+                    listsPlugin(),
+                    quotePlugin(),
+                    thematicBreakPlugin(),
+                    linkPlugin(),
+                    linkDialogPlugin(),
+                    imagePlugin(),
+                    tablePlugin(),
+                    markdownShortcutPlugin(),
+                    toolbarPlugin({
+                        toolbarContents: () => (<>
+                            <UndoRedo />
+                            <BlockTypeSelect />
+                            <BoldItalicUnderlineToggles />
+                            <InsertImage />
+                            <InsertTable />
+                            <ListsToggle />
+                            <CreateLink />
+                            <AlignTextMDXToolbarItem />
+                        </>
+                        )
+                    }),
+                ]}
+
+            />
+        </div>
+    );
+}
+
+export default function Page() {
+    const [mdText, setMdText] = useState<any>("");
+    return (
+        <main className="w-full h-full bg-neutral-50">
+            <RichEditor markdown={mdText} setMdText={setMdText} />
             <div className='p-2 border-[1px] border-neutral-200 bg-neutral-100 my-2 shadow-inner'>
                 <p>{mdText}</p>
             </div>
