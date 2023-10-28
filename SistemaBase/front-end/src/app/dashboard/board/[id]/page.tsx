@@ -762,8 +762,7 @@ export default function Page({ params }: { params: { id: string } }) {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         //const cardDescription: string = event.target.description.value;
-        const cardDescription: string = editorRef?.current?.getMarkdown() != null || editorRef?.current?.getMarkdown() != undefined ? editorRef?.current?.getMarkdown() : event.target.description.value;
-
+        const cardDescription: string | undefined = editorRef?.current?.getMarkdown();
         console.log(cardDescription);
 
         // Check if the card title is not empty before creating the card
