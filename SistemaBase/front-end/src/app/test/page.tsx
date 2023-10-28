@@ -1,3 +1,5 @@
+"use client";
+
 import '@mdxeditor/editor/style.css';
 import dynamic from 'next/dynamic';
 import { toolbarPlugin } from '@mdxeditor/editor/plugins/toolbar';
