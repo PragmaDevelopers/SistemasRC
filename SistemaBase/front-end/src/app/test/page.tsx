@@ -77,7 +77,7 @@ function RichEditor(props: TestProps) {
             <MDXEditor
                 onChange={console.log}
                 className="MDXEditor"
-                ref={props?.editorRef}
+                ref={editorRef}
                 markdown={props.markdown != undefined ? props?.markdown : ""}
                 plugins={[
                     headingsPlugin(),
