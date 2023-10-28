@@ -41,11 +41,12 @@ export interface CreateEditCardProps {
     removeCurrentTag: any;
     cardDate: any;
     setCardDate: any;
+    editorRef: React.MutableRefObject<MDXEditorMethods | null>;
 }
 
 export interface RichEditorProps {
     markdown?: string
-    editorRef?: React.MutableRefObject<MDXEditorMethods | null>
+    editorRef?: React.MutableRefObject<MDXEditorMethods | null>;
     removeCurrentEditor?: any;
 }
 

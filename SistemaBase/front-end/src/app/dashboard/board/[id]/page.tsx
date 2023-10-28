@@ -246,13 +246,13 @@ function CreateEditCard(props: CreateEditCardProps) {
         removeCurrentTag,
         cardDate,
         setCardDate,
+        editorRef,
     } = props;
 
     const [color, setColor] = useState<string>("#aabbcc");
     const [viewAddTag, setViewAddTag] = useState<boolean>(false);
     const [viewAddMember, setViewAddMember] = useState<boolean>(false);
     const [viewAddDate, setViewAddDate] = useState<boolean>(false);
-    const editorRef = useRef<MDXEditorMethods>(null);
 
     const handleCreateCardForm = (event: any) => {
         createCardForm(event, isEdition, editorRef);
@@ -404,6 +404,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
     const [cardDate, setCardDate] = useState<DateValue>(new Date());
+    const editorRef = useRef<MDXEditorMethods>(null);
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -747,6 +748,7 @@ export default function Page({ params }: { params: { id: string } }) {
             members: [],
         } as Card);
         setIsEdition(false);
+        editorRef?.current?.setMarkdown("");
         setShowCreateCardForm(true);
     };
 
@@ -975,6 +977,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 removeCurrentTag={removeCurrentTag}
                 cardDate={cardDate}
                 setCardDate={setCardDate}
+                editorRef={editorRef}
             />
             <div className="">
                 <h1>{params.id}</h1>
