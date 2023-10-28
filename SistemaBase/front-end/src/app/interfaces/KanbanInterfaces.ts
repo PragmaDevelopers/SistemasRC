@@ -43,9 +43,8 @@ export interface CreateEditCardProps {
 }
 
 export interface RichEditorProps {
-    markdown: string
+    markdown?: string
     editorRef?: React.MutableRefObject<MDXEditorMethods | null>
     removeCurrentEditor?: any;
-    wrapperKey: any;
 }
 

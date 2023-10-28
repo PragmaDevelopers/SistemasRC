@@ -2,8 +2,6 @@
 
 import {
     DndContext,
-    useDroppable,
-    useDraggable,
     DragEndEvent,
     DragStartEvent,
     DragOverlay,
@@ -28,7 +26,6 @@ import { createPortal } from 'react-dom';
 import {
     MinusCircleIcon,
     PlusCircleIcon,
-    TrashIcon,
     XCircleIcon
 } from '@heroicons/react/24/outline';
 import { XMarkIcon } from '@heroicons/react/24/solid';
@@ -83,7 +80,7 @@ function RichEditor(props: RichEditorProps) {
         <MDXEditor
             className="MDXEditor"
             ref={props?.editorRef}
-            markdown={props.markdown}
+            markdown={props.markdown != undefined ? props?.markdown : ""}
             plugins={[
                 headingsPlugin(),
                 listsPlugin(),
@@ -278,7 +275,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <input className='form-input bg-neutral-50 w-full border-none outline-none p-1 m-1 rounded-md' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
                         <div className='flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100'>
-                            <textarea className='form-textarea border-none outline-none p-1 resize-none w-full h-32 bg-neutral-100' id="CardDescription" defaultValue={card.description} name='description' placeholder='Digite uma descrição'></textarea>
+                            <RichEditor markdown={card?.description} />
                         </div>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
