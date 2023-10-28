@@ -61,6 +61,7 @@ function AlignTextMDXToolbarItem() {
 function RichEditor(props: RichEditorProps) {
     return (
         <MDXEditor
+            onChange={console.log}
             className="MDXEditor"
             ref={props?.editorRef}
             markdown={props.markdown != undefined ? props?.markdown : ""}
@@ -100,8 +101,8 @@ export default function Page() {
         <main className="w-full h-full bg-neutral-50">
             <RichEditor markdown={mdText} editorRef={editorRef} />
             <RichEditor markdown={mdText} editorRef={editorRef} />
-            <button className='my-2' onClick={() => { editorRef?.current?.setMarkdown("") }}>Reset Markdown</button>
-            <button className='my-2' onClick={() => { setMdText(editorRef?.current?.getMarkdown() as unknown as string) }}>Get Markdown</button>
+            <button className='my-2' onClick={() => { editorRef.current?.setMarkdown("") }}>Reset Markdown</button>
+            <button className='my-2' onClick={() => { setMdText(editorRef.current?.getMarkdown() as unknown as string) }}>Get Markdown</button>
             <div className='p-2 border-[1px] border-neutral-200 bg-neutral-100 my-2 shadow-inner'>
                 <p>{mdText}</p>
             </div>
