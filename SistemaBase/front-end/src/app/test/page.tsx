@@ -97,11 +97,21 @@ function RichEditor(props: RichEditorProps) {
 export default function Page() {
     const editorRef = useRef<MDXEditorMethods>(null);
     const [mdText, setMdText] = useState<any>("");
+    const getMd = () => {
+        console.log("GETTING MD");
+        const md = editorRef.current?.getMarkdown();
+        console.log(md);
+        setMdText(md);
+    }
+    const resetMd = () => {
+        console.log("RESETTING MD");
+        editorRef.current?.setMarkdown("");
+    }
     return (
         <main className="w-full h-full bg-neutral-50">
             <RichEditor markdown={mdText} editorRef={editorRef} />
-            <button className='my-2' onClick={() => editorRef.current?.setMarkdown("")}>Reset Markdown</button>
-            <button className='my-2' onClick={() => setMdText(editorRef.current?.getMarkdown())}>Get Markdown</button>
+            <button className='my-2' onClick={resetMd}>Reset Markdown</button>
+            <button className='my-2' onClick={getMd}>Get Markdown</button>
             <div className='p-2 border-[1px] border-neutral-200 bg-neutral-100 my-2 shadow-inner'>
                 <p>{mdText}</p>
             </div>
