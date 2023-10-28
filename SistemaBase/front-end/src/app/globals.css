@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100 */
+
 .MDXEditor { @apply p-2 border-2 border-neutral-200 rounded-md w-full h-fit my-2 font-poppins relative }
 .MDXEditor h1 { @apply font-black text-3xl }
 .MDXEditor h2 { @apply font-black text-2xl }

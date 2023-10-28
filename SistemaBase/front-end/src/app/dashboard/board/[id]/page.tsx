@@ -274,9 +274,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <div className='flex my-2'>
                             <input className='form-input bg-neutral-50 w-full border-none outline-none p-1 m-1 rounded-md' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
-                        <div className='flex flex-col my-2 border-[1px] rounded-md border-neutral-200 p-2 outline-none shadow-inner bg-neutral-100'>
-                            <RichEditor markdown={card?.description} />
-                        </div>
+                        <RichEditor markdown={card?.description} />
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
                                 <div key={items?.id} className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
