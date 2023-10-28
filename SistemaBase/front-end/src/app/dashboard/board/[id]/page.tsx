@@ -267,6 +267,10 @@ function CreateEditCard(props: CreateEditCardProps) {
         setColor("#aabbcc");
     }
 
+    useEffect(() => {
+        console.log(card.description);
+    }, [card]);
+
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/25'}>
             <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg flex justify-center items-center px-8 drop-shadow-lg'>
