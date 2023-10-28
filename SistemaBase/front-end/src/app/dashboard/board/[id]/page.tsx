@@ -271,6 +271,8 @@ function CreateEditCard(props: CreateEditCardProps) {
         console.log(card.description);
     }, [card]);
 
+    editorRef?.current?.setMarkdown(card.description);
+
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/25'}>
             <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg flex justify-center items-center px-8 drop-shadow-lg'>
@@ -742,6 +744,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const createCard = (columnID: string) => {
         setTempColumnID(columnID);
+        editorRef?.current?.setMarkdown("");
         setTempCard({
             id: generateRandomString(),
             title: "",
@@ -752,7 +755,6 @@ export default function Page({ params }: { params: { id: string } }) {
             members: [],
         } as Card);
         setIsEdition(false);
-        editorRef?.current?.setMarkdown("");
         setShowCreateCardForm(true);
     };
 
@@ -760,7 +762,9 @@ export default function Page({ params }: { params: { id: string } }) {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         //const cardDescription: string = event.target.description.value;
-        const cardDescription: string = editorRef?.current?.getMarkdown() as unknown as string;
+        const cardDescription: string = editorRef?.current?.getMarkdown() != null || editorRef?.current?.getMarkdown() != undefined ? editorRef?.current?.getMarkdown() : event.target.description.value;
+
+        console.log(cardDescription);
 
         // Check if the card title is not empty before creating the card
         if (cardTitle.trim() !== "") {
