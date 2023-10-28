@@ -12,8 +12,10 @@ import {
 } from '@dnd-kit/core';
 import {
     CSSProperties,
+    MutableRefObject,
     useEffect,
     useMemo,
+    useRef,
     useState
 } from 'react';
 import { CSS } from '@dnd-kit/utilities';
@@ -66,6 +68,7 @@ import {
     InsertTable,
     ListsToggle,
     CreateLink,
+    MDXEditorMethods,
 } from "@mdxeditor/editor";
 import Calendar from 'react-calendar';
 
@@ -249,10 +252,10 @@ function CreateEditCard(props: CreateEditCardProps) {
     const [viewAddTag, setViewAddTag] = useState<boolean>(false);
     const [viewAddMember, setViewAddMember] = useState<boolean>(false);
     const [viewAddDate, setViewAddDate] = useState<boolean>(false);
-
+    const editorRef = useRef<MDXEditorMethods>(null);
 
     const handleCreateCardForm = (event: any) => {
-        createCardForm(event, isEdition);
+        createCardForm(event, isEdition, editorRef);
     }
 
     const createNewTag = (event: any) => {
@@ -273,7 +276,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <div className='flex my-2'>
                             <input className='form-input bg-neutral-50 w-full border-none outline-none p-1 m-1 rounded-md' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
-                        <RichEditor markdown={card?.description} />
+                        <RichEditor markdown={card?.description} editorRef={editorRef} />
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
                                 <div key={items?.id} className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
@@ -744,10 +747,11 @@ export default function Page({ params }: { params: { id: string } }) {
         setShowCreateCardForm(true);
     };
 
-    const createCardForm = (event: any, isEdition: boolean) => {
+    const createCardForm = (event: any, isEdition: boolean, editorRef: MutableRefObject<MDXEditorMethods | null>) => {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
-        const cardDescription: string = event.target.description.value;
+        //const cardDescription: string = event.target.description.value;
+        const cardDescription: string = editorRef?.current?.getMarkdown() as unknown as string;
 
         // Check if the card title is not empty before creating the card
         if (cardTitle.trim() !== "") {

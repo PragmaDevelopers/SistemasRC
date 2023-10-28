@@ -1,3 +1,4 @@
+import { MutableRefObject } from "react";
 import { Card, Column } from "../types/KanbanTypes";
 import { MDXEditorMethods } from "@mdxeditor/editor";
 
@@ -25,7 +26,7 @@ export interface ColumnContainerProps {
 
 export interface CreateEditCardProps {
     showCreateCardForm: boolean;
-    createCardForm: (event: any, isEdition: boolean) => void;
+    createCardForm: (event: any, isEdition: boolean, MDXEditorRef: MutableRefObject<MDXEditorMethods | null>) => void;
     card: Card;
     updateListTitle: any;
     handleRemoveInput: any;
