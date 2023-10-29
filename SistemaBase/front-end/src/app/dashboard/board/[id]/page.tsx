@@ -273,7 +273,6 @@ function CreateEditCard(props: CreateEditCardProps) {
                             <input className='form-input bg-neutral-50 w-full border-none outline-none p-1 m-1 rounded-md' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
                         <RichEditor markdown={card?.description} onChange={setEditorText} />
-                        <button type='button' onClick={() => console.log(editorText)}>Log Text</button>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
                                 <div key={items?.id} className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
@@ -335,7 +334,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         </div>
                     </div>
                     <div className='w-full absolute bottom-0 flex justify-center items-center'>
-                        <button type='submit' className='w-fit p-2 border-2 border-neutral-950 rounded-md'>Create Card</button>
+                        <button type='submit' className='w-fit p-2 rounded-md bg-neutral-50 drop-shadow'>Create Card</button>
                     </div>
                 </form>
                 <div className='w-56 ml-4 flex flex-col items-center justify-start h-[75%] relative'>
@@ -753,7 +752,7 @@ export default function Page({ params }: { params: { id: string } }) {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         //const cardDescription: string = event.target.description.value;
-        const cardDescription: string = editorText;
+        //const cardDescription: string = editorText;
         console.log(cardDescription);
 
         // Check if the card title is not empty before creating the card
@@ -762,7 +761,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 const newCard: Card = {
                     ...tempCard,
                     title: cardTitle,
-                    description: cardDescription,
+                    //description: cardDescription,
+                    description: editorText,
                 }
                 const targetColumn = prevData.columns.find((column) => column.id === tempColumnID);
                 if (!targetColumn) {
