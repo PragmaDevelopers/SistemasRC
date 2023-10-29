@@ -49,7 +49,6 @@ import {
 } from '@/app/types/KanbanTypes';
 import { generateRandomString } from '@/app/utils/generators';
 import '@mdxeditor/editor/style.css';
-import dynamic from 'next/dynamic';
 import { toolbarPlugin } from '@mdxeditor/editor/plugins/toolbar';
 import {
     headingsPlugin,
@@ -69,20 +68,16 @@ import {
     ListsToggle,
     CreateLink,
     MDXEditorMethods,
+    MDXEditor,
 } from "@mdxeditor/editor";
 import Calendar from 'react-calendar';
 
-
-const MDXEditor = dynamic(
-    () => import('@mdxeditor/editor/MDXEditor').then((mod) => mod.MDXEditor),
-    { ssr: false }
-);
-
 function RichEditor(props: RichEditorProps) {
+
     return (
         <MDXEditor
             className="MDXEditor"
-            ref={props?.editorRef}
+            onChange={props.onChange}
             markdown={props.markdown != undefined ? props?.markdown : ""}
             plugins={[
                 headingsPlugin(),
@@ -246,7 +241,8 @@ function CreateEditCard(props: CreateEditCardProps) {
         removeCurrentTag,
         cardDate,
         setCardDate,
-        editorRef,
+        editorText,
+        setEditorText,
     } = props;
 
     const [color, setColor] = useState<string>("#aabbcc");
@@ -255,7 +251,7 @@ function CreateEditCard(props: CreateEditCardProps) {
     const [viewAddDate, setViewAddDate] = useState<boolean>(false);
 
     const handleCreateCardForm = (event: any) => {
-        createCardForm(event, isEdition, editorRef);
+        createCardForm(event, isEdition, editorText);
     }
 
     const createNewTag = (event: any) => {
@@ -267,12 +263,6 @@ function CreateEditCard(props: CreateEditCardProps) {
         setColor("#aabbcc");
     }
 
-    useEffect(() => {
-        console.log(card.description);
-    }, [card]);
-
-    editorRef?.current?.setMarkdown(card.description);
-
     return (
         <div className={(showCreateCardForm ? 'flex ' : 'hidden ') + 'absolute top-0 left-0 w-full h-full z-20 justify-center items-center bg-neutral-950/25'}>
             <div className='relative w-[80%] h-[80%] bg-neutral-50 rounded-lg flex justify-center items-center px-8 drop-shadow-lg'>
@@ -282,7 +272,8 @@ function CreateEditCard(props: CreateEditCardProps) {
                         <div className='flex my-2'>
                             <input className='form-input bg-neutral-50 w-full border-none outline-none p-1 m-1 rounded-md' id="CardTitle" type='text' defaultValue={card.title} name='title' placeholder='Digite um titulo' />
                         </div>
-                        <RichEditor markdown={card?.description} editorRef={editorRef} />
+                        <RichEditor markdown={card?.description} onChange={setEditorText} />
+                        <button type='button' onClick={() => console.log(editorText)}>Log Text</button>
                         <div className='grid p-2 grid-cols-6 auto-rows-auto gap-2 overflow-auto h-20'>
                             {card.tags?.map((items: Tag) => (
                                 <div key={items?.id} className='flex w-fit h-fit py-1 pr-2 pl-1 rounded-md flex justify-center items-center drop-shadow-md transition-all' style={{ backgroundColor: items?.color } as CSSProperties}>
@@ -410,7 +401,7 @@ export default function Page({ params }: { params: { id: string } }) {
     const [tempCard, setTempCard] = useState<any>({});
     const [isEdition, setIsEdition] = useState<boolean>(false);
     const [cardDate, setCardDate] = useState<DateValue>(new Date());
-    const editorRef = useRef<MDXEditorMethods>(null);
+    const [editorText, setEditorText] = useState<string>("");
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
@@ -744,7 +735,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const createCard = (columnID: string) => {
         setTempColumnID(columnID);
-        editorRef?.current?.setMarkdown("");
+        setEditorText("");
         setTempCard({
             id: generateRandomString(),
             title: "",
@@ -762,7 +753,7 @@ export default function Page({ params }: { params: { id: string } }) {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         //const cardDescription: string = event.target.description.value;
-        const cardDescription: string | undefined = editorRef?.current?.getMarkdown();
+        const cardDescription: string = editorText;
         console.log(cardDescription);
 
         // Check if the card title is not empty before creating the card
@@ -817,6 +808,7 @@ export default function Page({ params }: { params: { id: string } }) {
             });
         }
         event.target.reset();
+        setEditorText("");
         setTempColumnID("");
         setTempCard({
             id: generateRandomString(),
@@ -984,7 +976,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 removeCurrentTag={removeCurrentTag}
                 cardDate={cardDate}
                 setCardDate={setCardDate}
-                editorRef={editorRef}
+                editorText={editorText}
+                setEditorText={setEditorText}
             />
             <div className="">
                 <h1>{params.id}</h1>
