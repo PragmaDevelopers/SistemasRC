@@ -748,11 +748,11 @@ export default function Page({ params }: { params: { id: string } }) {
         setShowCreateCardForm(true);
     };
 
-    const createCardForm = (event: any, isEdition: boolean, editorRef: MutableRefObject<MDXEditorMethods | null>) => {
+    const createCardForm = (event: any, isEdition: boolean, textEditor: string) => {
         event.preventDefault();
         const cardTitle: string = event.target.title.value;
         //const cardDescription: string = event.target.description.value;
-        //const cardDescription: string = editorText;
+        const cardDescription: string = textEditor;
         console.log(cardDescription);
 
         // Check if the card title is not empty before creating the card
@@ -761,8 +761,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 const newCard: Card = {
                     ...tempCard,
                     title: cardTitle,
-                    //description: cardDescription,
-                    description: editorText,
+                    description: cardDescription,
                 }
                 const targetColumn = prevData.columns.find((column) => column.id === tempColumnID);
                 if (!targetColumn) {
