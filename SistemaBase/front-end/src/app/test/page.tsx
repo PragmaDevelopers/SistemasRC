@@ -110,9 +110,10 @@ function RichEditor(props: TestProps) {
 }
 
 export default function Page() {
-    const [mdText, setMdText] = useState<any>("");
+    const [mdText, setMdText] = useState<any>("# Markdown Editor");
     return (
         <main className="w-full h-full bg-neutral-50">
+            <RichEditor markdown={mdText} setMdText={setMdText} />
             <RichEditor markdown={mdText} setMdText={setMdText} />
             <div className='p-2 border-[1px] border-neutral-200 bg-neutral-100 my-2 shadow-inner'>
                 <p>{mdText}</p>
