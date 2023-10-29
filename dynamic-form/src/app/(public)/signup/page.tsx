@@ -17,29 +17,13 @@ import {
   Neighborhood,
   AddressName,
   UfForCTPS
-} from "./components/form/InputSelect/InputSelect";
-import { FullName, Email, RG,CPF,MotherName,CEP,CTPSn,CTPSserie } from "./components/form/InputText/InputText";
-import { CommonLawMarriage,AddressComplement } from "./components/form/InputRadio/InputRadio";
+} from "@/components/form/InputSelect/InputSelect";
+import { FullName, Email, RG,CPF,MotherName,CEP,CTPSn,CTPSserie } from "@/components/form/InputText/InputText";
+import { CommonLawMarriage,AddressComplement } from "@/components/form/InputRadio/InputRadio";
 import { getAddressManually, tryGetAddressByCep } from "@/utils/handleError";
 import signUpSchema from "@/utils/inputsValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-interface AccordionItemProps {
-  title: string;
-  children: ReactNode;
-  isOpen?: boolean; // Adicione a propriedade isOpen para controlar o estado inicial do accordion
-}
-
-const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, isOpen = true }) => {
-  const [isAccordionOpen, setIsAccordionOpen] = useState(isOpen);
-
-  return (
-    <div>
-      <button className="text-xl font-bold mb-3" type="button" onClick={() => setIsAccordionOpen(!isAccordionOpen)}>{title}</button>
-      {isAccordionOpen && <div>{children}</div>}
-    </div>
-  );
-};
+import { AccordionItem } from "@/components/AccordionItem";
 
 export default function SignUpPage() {
   const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<IFormSignUpInputs>({
@@ -60,7 +44,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const onSubmit: SubmitHandler<IFormSignUpInputs> = (data) => {
     sessionStorage.setItem("registration_form",JSON.stringify(data));
-    router.push("/pdf_page")
+    router.push("/pdf_page/edit")
   };
   
   useEffect(()=>{

@@ -1,5 +1,5 @@
 import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
-import { IFormSignUpInputs } from "../../../../../../Interface/IFormInputs";
+import { IFormSignUpInputs } from "@/Interface/IFormInputs";
 import { useState,useEffect } from "react";
  
 type ISimpleSelection = {

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import states from "../../api/states/states";
-import issuingBodies from "../../api/issuingBodies/issuingBodies";
+import states from "@/api/states/states";
+import issuingBodies from "@/api/issuingBodies/issuingBodies";
 
 const signUpSchema = z.object({
     power_of_attorney: z.array(z.string()).refine((value) => {
