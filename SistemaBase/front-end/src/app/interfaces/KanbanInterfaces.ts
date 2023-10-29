@@ -26,7 +26,7 @@ export interface ColumnContainerProps {
 
 export interface CreateEditCardProps {
     showCreateCardForm: boolean;
-    createCardForm: (event: any, isEdition: boolean, MDXEditorRef: MutableRefObject<MDXEditorMethods | null>) => void;
+    createCardForm: (event: any, isEdition: boolean, editorText: string) => void;
     card: Card;
     updateListTitle: any;
     handleRemoveInput: any;
@@ -48,6 +48,5 @@ export interface CreateEditCardProps {
 export interface RichEditorProps {
     markdown?: string;
     onChange?: any;
-    //editorRef?: React.MutableRefObject<MDXEditorMethods | null>;
 }
 
