@@ -67,7 +67,6 @@ import {
     InsertTable,
     ListsToggle,
     CreateLink,
-    MDXEditorMethods,
     MDXEditor,
 } from "@mdxeditor/editor";
 import Calendar from 'react-calendar';

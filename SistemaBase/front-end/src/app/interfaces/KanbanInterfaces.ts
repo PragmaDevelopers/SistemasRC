@@ -48,5 +48,6 @@ export interface CreateEditCardProps {
 export interface RichEditorProps {
     markdown?: string;
     onChange?: any;
+    getMarkdown?: any;
 }
 
