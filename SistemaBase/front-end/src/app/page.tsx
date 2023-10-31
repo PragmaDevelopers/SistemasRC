@@ -3,6 +3,7 @@ import { ExclamationCircleIcon, InformationCircleIcon } from "@heroicons/react/2
 import { useState } from "react";
 import { hashString } from "./utils/security";
 import { redirect } from "next/navigation";
+import { RedirectType } from "next/dist/client/components/redirect";
 
 
 interface InfoScreenProps {
@@ -82,7 +83,7 @@ export default function Page() {
         if (emailcheck && passwcheck) {
             console.log("entrando");
             setUserCanLogin(true);
-            redirect("/dashboard");
+            redirect('/dashboard');
         }
 
         e.target.reset();
