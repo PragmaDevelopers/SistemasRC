@@ -70,6 +70,7 @@ import {
     MDXEditor,
 } from "@mdxeditor/editor";
 import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 function RichEditor(props: RichEditorProps) {
 
@@ -360,7 +361,7 @@ function CreateEditCard(props: CreateEditCardProps) {
                         </form>
                     </div>
 
-                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-40 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
+                    <div className={(viewAddDate ? 'flex' : 'hidden') + ' absolute top-44 bg-neutral-50 p-2 drop-shadow-md rounded-md flex-col items-center'}>
                         <form onSubmit={() => setViewAddDate(false)}>
                             <Calendar value={cardDate} onChange={setCardDate} />
                             <button type='submit' className='bg-neutral-50 p-2 drop-shadow rounded-md my-2'>Close</button>
