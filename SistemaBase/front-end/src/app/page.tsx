@@ -18,7 +18,7 @@ function InfoScreen(props: InfoScreenProps) {
             <div className={baseStyle}>
                 <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
                 <h2 className="text-lg text-neutral-500">Algo de ruim aconteceu.</h2>
-                <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50">
+                <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50 border-l-2 border-red-300">
                     <ExclamationCircleIcon className="stroke-red-400 fill-red-100 aspect-square w-6 mr-2" />
                     <h3>Sua senha está incorreta.</h3>
                 </div>
@@ -31,7 +31,7 @@ function InfoScreen(props: InfoScreenProps) {
             <div className={baseStyle}>
                 <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
                 <h2 className="text-lg text-neutral-500">Algo de ruim aconteceu.</h2>
-                <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50">
+                <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50 border-l-2 border-red-300">
                     <ExclamationCircleIcon className="stroke-red-400 fill-red-100 aspect-square w-6 mr-2" />
                     <h3>Seu email está incorreto.</h3>
                 </div>
@@ -43,7 +43,7 @@ function InfoScreen(props: InfoScreenProps) {
         <div className={baseStyle}>
             <h1 className="text-2xl font-semibold text-neutral-950">Bem-Vindo(a)!</h1>
             <h2 className="text-lg text-neutral-500">Insira suas credenciais para acessar o sistema.</h2>
-            <div className="fill-blue-300 flex flex-row justify-start items-center mt-2 bg-blue-50">
+            <div className="fill-blue-300 flex flex-row justify-start items-center mt-2 bg-blue-50 border-l-2 border-blue-300">
                 <InformationCircleIcon className="stroke-blue-400 fill-blue-100 aspect-square w-6 mr-2" />
                 <h3>Caso não esteja cadastrado, ultilize o botão <span className="bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 text-neutral-950">Cadastrar-se</span></h3>
             </div>
@@ -64,10 +64,21 @@ export default function Page() {
         const userpassword: string = hashString(e?.target?.userpassword?.value);
         console.log("EMAIL", useremail, e?.target?.useremail?.value);
         console.log("PASSWORD", userpassword, e?.target?.userpassword?.value);
-        setEmailCheck(useremail === "1e23d461552b906fea005f95e067816dc68124b4e9966d9898765a09b327e0ca");
-        setPasswordCheck(userpassword === "c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646");
-        setUserCanLogin(emailCheck && passwordCheck);
-        if (userCanLogin) { redirect("/dashboard"); }
+        if (useremail === "1e23d461552b906fea005f95e067816dc68124b4e9966d9898765a09b327e0ca") {
+            console.log("email correto");
+            setEmailCheck(true);
+        }
+        if (userpassword === "c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646") {
+            console.log("senha correta");
+            setPasswordCheck(true);
+        }
+
+        if (emailCheck && passwordCheck) {
+            console.log("entrando");
+            setUserCanLogin(true);
+            redirect("/dashboard");
+        }
+
         e.target.reset();
     }
 
