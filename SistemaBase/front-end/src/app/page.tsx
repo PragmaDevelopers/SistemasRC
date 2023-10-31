@@ -88,8 +88,7 @@ export default function Page() {
 
     if (userCanLogin) {
         useRouter().push("/dashboard");
-    } else {
-        useRouter().push("/");
+        return;
     }
 
     return (
