@@ -7,7 +7,6 @@ const Mustache = require('mustache');
 
 import '@mdxeditor/editor/style.css'
 import { jsxPlugin,MDXEditor,quotePlugin,headingsPlugin,tablePlugin,InsertTable,MDXEditorMethods,BlockTypeSelect,UndoRedo,BoldItalicUnderlineToggles,toolbarPlugin } from "@mdxeditor/editor";
-import { InsertMyLeaf,jsxComponentDescriptors } from "@/components/mdxEditor/paragraphAlign";
 
 function PDFPageEdit() {
 
@@ -73,27 +72,18 @@ function PDFPageEdit() {
         replacement = variable;
       }
       lines.splice(Number(lineIndex),1,replacement);
-      const formattedLines = lines.map((line)=>{
-        if(line === ""){
-          return "&#x20;"
-        }else{
-          return line;
-        }
-      })
+      const formattedLines = spaceVerification(lines);
       ref.current?.setMarkdown(formattedLines.join("\n\n"));
     }
   }
 
-
   function spaceVerification(arr:string[]){
     const newArr:string[] = [];
-        arr.forEach((line,index,arr)=>{
-          if(["","> &#x20;"].includes(line) && arr[index - 1] === "" && arr[index + 1] === ""){
-            newArr.push("> &#x20;\n");
+        arr.forEach((line)=>{
+          if(line === ""){
+            newArr.push("&#x20;");
           }else{
-            if(line !== ""){
-              newArr.push(line);
-            }
+            newArr.push(line);
           }
         });
       return newArr;
@@ -102,11 +92,11 @@ function PDFPageEdit() {
   function formSubmit(){
     // const router = useRouter();
     let textToPdf = ref.current?.getMarkdown().replace(/\\/g,"") || "";
-    const filterTextToPdf = spaceVerification(textToPdf.split("\n"));
-    if(filterTextToPdf[0] !== "> &#x20;"){
-      filterTextToPdf.unshift("> &#x20;\n");
+    const filterTextToPdf = spaceVerification(textToPdf.split("\n\n"));
+    if(filterTextToPdf[0] !== "&#x20;"){
+      filterTextToPdf.unshift("&#x20;");
     }
-    var output = Mustache.render(filterTextToPdf.join("\n"),signUpData);
+    var output = Mustache.render(filterTextToPdf.join("\n\n"),signUpData);
     console.log(output)
     sessionStorage.setItem("pdf_info",JSON.stringify(output));
     // router.push("./view");

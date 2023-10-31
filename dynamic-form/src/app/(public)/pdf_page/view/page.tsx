@@ -1,27 +1,32 @@
-"use client";
-
-import { PDFViewer } from "@react-pdf/renderer";
-import PdfGenerator from "@/components/PdfGenerator";
-import { useEffect, useState } from "react";
-import { IFormSignUpInputs } from "@/Interface/IFormInputs";
-
+"use client"
+import React, { useEffect, useRef, useState } from 'react';
+import PdfGenerator from '@/components/PdfGenerator';
+import { pdf } from "@react-pdf/renderer";
 function PDFPage() {
-  const [height,setHeight] = useState(600);
-  const [pdfInfo,setPdfInfo] = useState<string>();
-  useEffect(()=>{
-    setHeight(window.innerHeight)
-    const pdfInfoDataSession = sessionStorage.getItem("pdf_info");
-    if(pdfInfoDataSession){
-      setPdfInfo(JSON.parse(pdfInfoDataSession))
+  const ref = useRef<HTMLIFrameElement>(null);
+  const [height,setHeight] = useState(700);
+  useEffect(() => {
+    async function getPdf(){
+      const pdfInfoDataSession = sessionStorage.getItem("pdf_info");
+      if(pdfInfoDataSession){
+        const data = JSON.parse(pdfInfoDataSession).split("\n\n")
+        console.log(data)
+
+        const blob = await pdf(PdfGenerator({data})).toBlob();
+        const blobUrl = URL.createObjectURL(blob);
+        const iframe = ref.current;
+        if(iframe){
+          iframe.src = blobUrl;
+          setHeight(window.innerHeight)
+        }
     }
-  },[])
+
+    }
+    getPdf();
+  }, []);
+
   return (
-    pdfInfo ? 
-      <PDFViewer width="100%" height={height}>
-        <PdfGenerator data={pdfInfo} />
-      </PDFViewer> 
-    : 
-    <div>Erro no pdf!</div>
+    <iframe width="100%" height={height} ref={ref}></iframe>
   );
 }
 
