@@ -2,7 +2,7 @@
 import { ExclamationCircleIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { hashString } from "./utils/security";
-
+import { useRouter } from "next/navigation";
 
 interface InfoScreenProps {
     emailState: boolean;
@@ -81,7 +81,7 @@ export default function Page() {
         if (emailcheck && passwcheck) {
             console.log("entrando");
             setUserCanLogin(true);
-            redirect('/dashboard');
+            useRouter().push("/dashboard");
         }
 
         e.target.reset();
