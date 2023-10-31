@@ -64,8 +64,8 @@ export default function Page() {
         const userpassword: string = hashString(e?.target?.userpassword?.value);
         console.log("EMAIL", useremail, e?.target?.useremail?.value);
         console.log("PASSWORD", userpassword, e?.target?.userpassword?.value);
-        setEmailCheck(useremail === "");
-        setPasswordCheck(userpassword === "");
+        setEmailCheck(useremail === "1e23d461552b906fea005f95e067816dc68124b4e9966d9898765a09b327e0ca");
+        setPasswordCheck(userpassword === "c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646");
         setUserCanLogin(emailCheck && passwordCheck);
         if (userCanLogin) { redirect("/dashboard"); }
         e.target.reset();
