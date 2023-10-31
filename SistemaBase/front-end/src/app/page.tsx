@@ -8,12 +8,13 @@ import { redirect } from "next/navigation";
 interface InfoScreenProps {
     emailState: boolean;
     passwordState: boolean;
+    formSubmit: boolean;
 }
 
 function InfoScreen(props: InfoScreenProps) {
     const baseStyle: string = "w-max absolute top-0 z-10 select-none";
 
-    if (props.passwordState) {
+    if (!props.passwordState && props.formSubmit) {
         return (
             <div className={baseStyle}>
                 <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
@@ -24,9 +25,7 @@ function InfoScreen(props: InfoScreenProps) {
                 </div>
             </div>
         );
-    }
-
-    if (props.emailState) {
+    } else if (!props.emailState && props.formSubmit) {
         return (
             <div className={baseStyle}>
                 <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
@@ -37,18 +36,18 @@ function InfoScreen(props: InfoScreenProps) {
                 </div>
             </div>
         );
-    }
-
-    return (
-        <div className={baseStyle}>
-            <h1 className="text-2xl font-semibold text-neutral-950">Bem-Vindo(a)!</h1>
-            <h2 className="text-lg text-neutral-500">Insira suas credenciais para acessar o sistema.</h2>
-            <div className="fill-blue-300 flex flex-row justify-start items-center mt-2 bg-blue-50 border-l-2 border-blue-300">
-                <InformationCircleIcon className="stroke-blue-400 fill-blue-100 aspect-square w-6 mr-2" />
-                <h3>Caso não esteja cadastrado, ultilize o botão <span className="bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 text-neutral-950">Cadastrar-se</span></h3>
+    } else {
+        return (
+            <div className={baseStyle}>
+                <h1 className="text-2xl font-semibold text-neutral-950">Bem-Vindo(a)!</h1>
+                <h2 className="text-lg text-neutral-500">Insira suas credenciais para acessar o sistema.</h2>
+                <div className="fill-blue-300 flex flex-row justify-start items-center mt-2 bg-blue-50 border-l-2 border-blue-300">
+                    <InformationCircleIcon className="stroke-blue-400 fill-blue-100 aspect-square w-6 mr-2" />
+                    <h3>Caso não esteja cadastrado, ultilize o botão <span className="bg-neutral-50 p-2 drop-shadow-md rounded-md ml-2 text-neutral-950">Cadastrar-se</span></h3>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 }
 
 export default function Page() {
@@ -56,10 +55,13 @@ export default function Page() {
     const [passwordCheck, setPasswordCheck] = useState<boolean>(false);
     const [emailCheck, setEmailCheck] = useState<boolean>(false);
     const [userCanLogin, setUserCanLogin] = useState<boolean>(false);
+    const [formFirstSubmit, setFormFirstSubmit] = useState<boolean>(false);
     const switchCadastrarSe = () => setCadastrarSe(!cadastrarSe);
 
     const loginUser = (e: any) => {
         e.preventDefault();
+        setFormFirstSubmit(true);
+
         const useremail: string = hashString(e?.target?.useremail?.value);
         const userpassword: string = hashString(e?.target?.userpassword?.value);
         console.log("EMAIL", useremail, e?.target?.useremail?.value);
@@ -86,7 +88,7 @@ export default function Page() {
     return (
         <main className="bg-neutral-50 text-neutral-950 flex flex-row justify-center items-center w-screen h-screen transition-all">
             <div className="h-[90%] w-[60%] relative flex justify-center items-center">
-                <InfoScreen emailState={emailCheck} passwordState={passwordCheck} />
+                <InfoScreen emailState={emailCheck} passwordState={passwordCheck} formSubmit={formFirstSubmit} />
                 <form className="flex flex-col items-center mb-4 h-48" onSubmit={loginUser}>
                     {cadastrarSe ? (
                         <div className="h-fit bg-neutral-50 drop-shadow-md rounded-md p-2 border-neutral-200 border-[1px]">
