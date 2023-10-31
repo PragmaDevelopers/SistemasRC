@@ -13,28 +13,30 @@ interface InfoScreenProps {
 function InfoScreen(props: InfoScreenProps) {
     const baseStyle: string = "w-max absolute top-0 z-10 select-none";
 
-    if (!props.passwordState && props.formSubmit) {
-        return (
-            <div className={baseStyle}>
-                <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
-                <h2 className="text-lg text-neutral-500">Algo de ruim aconteceu.</h2>
-                <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50 border-l-2 border-red-300">
-                    <ExclamationCircleIcon className="stroke-red-400 fill-red-100 aspect-square w-6 mr-2" />
-                    <h3>Sua senha está incorreta.</h3>
+    if (props.formSubmit) {
+        if (!props.passwordState) {
+            return (
+                <div className={baseStyle}>
+                    <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
+                    <h2 className="text-lg text-neutral-500">Algo de ruim aconteceu.</h2>
+                    <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50 border-l-2 border-red-300">
+                        <ExclamationCircleIcon className="stroke-red-400 fill-red-100 aspect-square w-6 mr-2" />
+                        <h3>Sua senha está incorreta.</h3>
+                    </div>
                 </div>
-            </div>
-        );
-    } else if (!props.emailState && props.formSubmit) {
-        return (
-            <div className={baseStyle}>
-                <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
-                <h2 className="text-lg text-neutral-500">Algo de ruim aconteceu.</h2>
-                <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50 border-l-2 border-red-300">
-                    <ExclamationCircleIcon className="stroke-red-400 fill-red-100 aspect-square w-6 mr-2" />
-                    <h3>Seu email está incorreto.</h3>
+            );
+        } else if (!props.emailState) {
+            return (
+                <div className={baseStyle}>
+                    <h1 className="text-2xl font-semibold text-neutral-950">Ops...</h1>
+                    <h2 className="text-lg text-neutral-500">Algo de ruim aconteceu.</h2>
+                    <div className="fill-red-300 flex flex-row justify-start items-center mt-2 bg-red-50 border-l-2 border-red-300">
+                        <ExclamationCircleIcon className="stroke-red-400 fill-red-100 aspect-square w-6 mr-2" />
+                        <h3>Seu email está incorreto.</h3>
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        }
     } else {
         return (
             <div className={baseStyle}>
