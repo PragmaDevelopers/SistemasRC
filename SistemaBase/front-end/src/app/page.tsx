@@ -56,6 +56,7 @@ export default function Page() {
     const [userCanLogin, setUserCanLogin] = useState<boolean>(false);
     const [formFirstSubmit, setFormFirstSubmit] = useState<boolean>(false);
     const switchCadastrarSe = () => setCadastrarSe(!cadastrarSe);
+    const router = useRouter();
 
     const loginUser = (e: any) => {
         e.preventDefault();
@@ -87,7 +88,7 @@ export default function Page() {
     }
 
     if (userCanLogin) {
-        useRouter().push("/dashboard");
+        router.push("/dashboard");
         return;
     }
 
