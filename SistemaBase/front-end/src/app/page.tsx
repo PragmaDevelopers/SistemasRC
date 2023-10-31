@@ -81,12 +81,16 @@ export default function Page() {
         if (emailcheck && passwcheck) {
             console.log("entrando");
             setUserCanLogin(true);
-            useRouter().push("/dashboard");
         }
 
         e.target.reset();
     }
 
+    if (userCanLogin) {
+        useRouter().push("/dashboard");
+    } else {
+        useRouter().push("/");
+    }
 
     return (
         <main className="bg-neutral-50 text-neutral-950 flex flex-row justify-center items-center w-screen h-screen transition-all">
