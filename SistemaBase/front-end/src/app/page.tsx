@@ -2,8 +2,6 @@
 import { ExclamationCircleIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { hashString } from "./utils/security";
-import { redirect } from "next/navigation";
-import { RedirectType } from "next/dist/client/components/redirect";
 
 
 interface InfoScreenProps {
