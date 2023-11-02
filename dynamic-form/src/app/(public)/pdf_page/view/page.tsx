@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PdfGenerator from '@/components/PdfGenerator';
 import { pdf } from "@react-pdf/renderer";
+
 function PDFPage() {
   const ref = useRef<HTMLIFrameElement>(null);
   const [height,setHeight] = useState(700);

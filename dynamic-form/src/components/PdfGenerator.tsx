@@ -2,21 +2,66 @@ import { renderToString } from 'react-dom/server';
 import { PDFRenderer,pdf, BlobProvider,Document, Page, renderToBuffer,Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { NextResponse,NextRequest } from 'next/server'
 
-function boldItalicUnderLineAlignValidation(regex:RegExp,line:string,index:number,trueValue:string,falseValue:string){
-    let wordSplit = (" "+line).split(regex);
-    const arr = []
-    let isActive = true;
-    for(let i = 2;i < wordSplit.length;i+=2){
-        if(wordSplit[i + 1]){
-          arr.push(<Text key={"word-"+i} style={{fontFamily: isActive ? trueValue : falseValue}}>{wordSplit[i]+wordSplit[i + 1]}</Text>);
-        }
-        if(isActive){
-          isActive = false;
-        }else{
-          isActive = true;
-        }
+
+type IFont = "Times-Roman" | "Times-Bold" | "Times-Italic" | "Times-BoldItalic";
+type ITextDecoration = "line-through" | "underline" | "none" | "line-through underline" | "underline line-through";
+
+
+function boldItalicValidation(regex:RegExp,line:string,index:number){
+  let style: {font:IFont,textDecoration:ITextDecoration,fontSize:string,fontWeigth:IFont} = {
+    font: "Times-Roman",
+    textDecoration: "none",
+    fontSize: "16",
+    fontWeigth: "Times-Roman"
+  }
+  if(line.match(/^[#]{1,6} ([\s\S]*?)/)){
+    if(line.match(/^[#]{1} ([\s\S]*?)/)){
+      style.fontSize = "32";
+      style.fontWeigth = "Times-Bold"
+    }else if(line.match(/^[#]{2} ([\s\S]*?)/)){
+      style.fontSize = "24";
+      style.fontWeigth = "Times-Bold"
+    }else if(line.match(/^[#]{3} ([\s\S]*?)/)){
+      style.fontSize = "18.72";
+      style.fontWeigth = "Times-Bold"
+    }else if(line.match(/^[#]{4} ([\s\S]*?)/)){
+      style.fontSize = "16";
+      style.fontWeigth = "Times-Bold"
+    }else if(line.match(/^[#]{5} ([\s\S]*?)/)){
+      style.fontSize = "13.28";
+      style.fontWeigth = "Times-Bold"
+    }else if(line.match(/^[#]{6} ([\s\S]*?)/)){
+      style.fontSize = "13";
     }
-    return <Text key={"line-"+index} style={{display:"flex"}}>{arr}</Text>;
+    line = line.replace(/^[#]{1,6} ([\s\S]*?)/,"$1")
+  }
+  
+    let wordSplit = line.match(regex);
+    const arr = []
+    if(wordSplit){
+      
+      console.log(wordSplit)
+      for(let i = 0;i < wordSplit.length;i++){
+        let word = wordSplit[i];
+        if (wordSplit[i].match(/\*\*\*([\s\S]*?)\*\*\*/g)) {
+          word = word.replace(/\*\*\*(.*?)\*\*\*/g,"$1");
+          style.font = "Times-BoldItalic";
+        } else if (word.match(/\*\*([\s\S]*?)\*\*/g)) {
+          word = word.replace(/\*\*(.*?)\*\*/g,"$1");
+          style.font = "Times-Bold";
+        } else if (word.match(/\*([^*]+)\*/g)) {
+          word = word.replace(/\*(.*?)\*/g,"$1");
+          style.font = "Times-Italic";
+        }
+
+        if(word.match(/<u>([\s\S]*?)<\/u>/g)){
+          word = word.replace(/<u>(.*?)<\/u>/g,"$1");
+          style.textDecoration = "underline";
+        }
+        arr.push(<Text key={"word-"+i} style={{fontFamily:style.font,textDecoration:style.textDecoration }}>{word}</Text>);
+      }
+    }
+    return <Text key={"line-"+index} style={{fontSize:style.fontSize,fontFamily:style.fontWeigth,display:"flex"}}>{arr}</Text>;
 }
 
 export default function PdfGenerator({data}:{data:string[]}) {
@@ -28,7 +73,8 @@ export default function PdfGenerator({data}:{data:string[]}) {
       section: {
         margin: 10,
         padding: 10,
-        flexGrow: 1
+        flexGrow: 1,
+        gap: 15
       },
       h1: {
         fontSize: 12,
@@ -60,20 +106,16 @@ export default function PdfGenerator({data}:{data:string[]}) {
             <Page size="A4" style={styles.page}>
                 <View style={styles.section}>
                     {data.map((line,index)=>{
-                      let regex = /([^\\])\*\*([^\*]*)([^\\])\*\*/g; //GET BOLD
-                        if((" "+line).match(regex)){
-                          return boldItalicUnderLineAlignValidation(/([^\\])\*\*([^\*]*)([^\\])\*\*/g,line,index,"Times-Bold","Times-Roman");
-                        }
-                        regex = /([^\\])\*([^\*]*)([^\\])\*/g; //GET ITALIC
-                        if((" "+line).match(regex)){
-                          return boldItalicUnderLineAlignValidation(regex,line,index,"Times-Italic","Times-Roman");
-                        }
-                        regex = /([^\\])\*\*\*([^\*]*)([^\\])\*\*\*/g; //GET BOLD AND ITALIC
-                        if((" "+line).match(regex)){
-                          return boldItalicUnderLineAlignValidation(regex,line,index,"Times-BoldItalic","Times-Roman");
-                        }
-                        //IF IS &#x20;
-                        return <Text key={"line-"+index} style={{marginTop: 5,marginBottom:5}}></Text>;
+                      if(line === "&#x20;"){
+                        return
+                      }
+                      if(line.match(/&#x20;/g)){
+                        line = line.replace(/&#x20;/g,"")
+                      }
+                      let regex = /(?:\*\*\*([\s\S]*?)\*\*\*|\*\*([\s\S]*?)\*\*|\*([\s\S]*?)\*|<u>([\s\S]*?)<\/u>|([^*]+))/g; //GET BOLD AND ITALIC
+                      if(line.match(regex)){
+                        return boldItalicValidation(regex,line,index);
+                      }
                     })}
                 </View>
             </Page>

@@ -1,40 +1,39 @@
 "use client";
 
-import { LegacyRef, MutableRefObject, ReactEventHandler, Ref, SyntheticEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IFormSignUpInputs } from "@/Interface/IFormInputs";
 import { useRouter } from "next/navigation";
 const Mustache = require('mustache');
 
 import '@mdxeditor/editor/style.css'
-import { jsxPlugin,MDXEditor,quotePlugin,headingsPlugin,tablePlugin,InsertTable,MDXEditorMethods,BlockTypeSelect,UndoRedo,BoldItalicUnderlineToggles,toolbarPlugin } from "@mdxeditor/editor";
+import { MDXEditor,headingsPlugin,MDXEditorMethods,BlockTypeSelect,UndoRedo,BoldItalicUnderlineToggles,toolbarPlugin, corePluginHooks, InsertTable, tablePlugin } from "@mdxeditor/editor";
+import { AlignCenterButton,AlignRightButton } from "@/components/mdxEditor/AlignButtons";
+import { root } from "postcss";
 
 function PDFPageEdit() {
 
 
   const [signUpData,setSignUpData] = useState<IFormSignUpInputs>();
   const [variable,setVariable] = useState<string>("");
-  const [paragraphNumber,setParagraphNumber] = useState<number>(1);
-  const [textArea,setTextArea] = useState("");
-
-  const [globalSelect,setGlobalSelect] = useState<{
-    selectionText:string,start:number,end:number,
-    targetElement:HTMLElement | null | undefined}>
-    ({
-    selectionText: "",
-    start: 0,
-    end: 0,
-    targetElement: null
-  });
 
   const ref = useRef<MDXEditorMethods>(null)
-
+  
   useEffect(()=>{
     const sessionData = sessionStorage.getItem("registration_form");
     if(sessionData){
       setSignUpData(JSON.parse(sessionData))
     }
-
+    manipulateProseClass({restoreIds:true});
   },[])
+
+  function manipulateProseClass({restoreIds}:{restoreIds?:boolean}){
+    if(restoreIds){
+      const editorWrapper = document.querySelectorAll(".prose p");
+      for(let i = 0;i < editorWrapper.length;i++){
+        editorWrapper[i].id = "line-"+i;
+      }
+    }
+  }
 
   function selectList(list:object | undefined){
     if(list){
@@ -47,40 +46,73 @@ function PDFPageEdit() {
         return [""];
     }
   }
-  
+
   function addVariable(){
-    const lines = ref.current?.getMarkdown().split("\n\n");
-    const lineIndex = globalSelect.targetElement?.id
-    if(lines && lineIndex){
-      const line = lines[Number(lineIndex)];
-      let replacement = ""
-      if(!["","&#x20;",undefined].includes(line)){
-        const filterLine = line.trim().replace(/\\/g,"").replace(/&#x20;/g," ");
-        let spaceEndLine = globalSelect.start - filterLine.split("").length;
-        if(spaceEndLine < 0){
-          spaceEndLine = 0;
-        }
-        replacement = filterLine.split("").map((char,index,arr)=>{
-          if(globalSelect?.end - spaceEndLine === arr.length && index === arr.length - 1){
-              char = char + variable;
-          }else if(index - 1 === globalSelect?.start - 1 && index === globalSelect?.end){
-            char = variable + char;
+    const lines = ref.current?.getMarkdown().split(/\n\n/g);
+    const lineIndex = Number(sessionStorage.getItem("edit_pdf_line_selected")?.split("-")[1]);
+    const wordIndex = Number(sessionStorage.getItem("edit_pdf_word_selected")?.split("-")[1]);
+    const lineChildrenNumber = Number(sessionStorage.getItem(`edit_pdf_line_children_count`));
+    console.log(lineIndex)
+    if(lines){
+      const line = lines[lineIndex];
+      let replacementLine = line;
+      console.log(line)
+
+      if(!line?.match(/^<u>[\s]*<\/u>$/) && !line?.match(/^[ ]*$/)  && ![undefined,"&#x20;","****&#x20;","******&#x20;"]?.includes(line)){
+        if(lineChildrenNumber > 1 || line.split("\n")[0].match(/^\| ([\s\S]*?) \|$/g)){
+          
+          const regexBoldUnderlineItalic = /(?:\*\*\*([\s\S]*?)\*\*\*|\*\*([\s\S]*?)\*\*|\*([\s\S]*?)\*|<u>([\s\S]*?)<\/u>|([^*]+)|<u>([^<]+)<\/u>)/g;
+          const wordArr = line?.match(regexBoldUnderlineItalic);
+          console.log(wordArr)
+          if(wordArr){
+            const replacementWord = specialCharVerification(wordArr,wordIndex);
+            wordArr.splice(wordIndex,1,replacementWord);
+            replacementLine = wordArr.join("");
           }
-          return char;
-        }).join("");
-      }else if(["","&#x20;"].includes(line) || !line){
-        replacement = variable;
+
+        }else{
+          replacementLine = specialCharVerification(lines,lineIndex);
+        }
+      }else{
+        replacementLine = variable;
       }
-      lines.splice(Number(lineIndex),1,replacement);
+      lines.splice(lineIndex,1,replacementLine);
       const formattedLines = spaceVerification(lines);
+      console.log(formattedLines)
       ref.current?.setMarkdown(formattedLines.join("\n\n"));
     }
+  }
+
+  function specialCharVerification(arr:RegExpMatchArray | string[],arrIndex:number){
+    let specialCharNumber = 0; 
+    if(arr[arrIndex].includes("*")){
+      const boldNumber = arr[arrIndex]?.match(/\*/g)?.length;
+      if(boldNumber){
+        specialCharNumber += boldNumber / 2;
+      }
+    }
+    if(arr[arrIndex].includes("<u>")){
+      const underLineNumber = arr[arrIndex]?.match(/<u>|<\/u>/g)?.length;
+      if(underLineNumber){
+        specialCharNumber += underLineNumber + 1; 
+      }
+    }
+    const startIndex = Number(sessionStorage.getItem("edit_pdf_start_index"));
+    const modify = arr[arrIndex].replace(/[\\]/g,"").replace(/&#x20;/g," ").split("").map((char,index,arr)=>{
+      if(startIndex - specialCharNumber === arr.length && index === arr.length - 1){
+        char = char + variable;
+      }else if(index === startIndex + specialCharNumber){
+        char = variable + char;
+      }
+      return char;
+    }).join("");
+    return modify;
   }
 
   function spaceVerification(arr:string[]){
     const newArr:string[] = [];
         arr.forEach((line)=>{
-          if(line === ""){
+          if(line.match(/^[ ]*$/)){
             newArr.push("&#x20;");
           }else{
             newArr.push(line);
@@ -92,15 +124,14 @@ function PDFPageEdit() {
   function formSubmit(){
     // const router = useRouter();
     let textToPdf = ref.current?.getMarkdown().replace(/\\/g,"") || "";
+    console.log(textToPdf.split("\n\n"))
     const filterTextToPdf = spaceVerification(textToPdf.split("\n\n"));
-    if(filterTextToPdf[0] !== "&#x20;"){
-      filterTextToPdf.unshift("&#x20;");
-    }
     var output = Mustache.render(filterTextToPdf.join("\n\n"),signUpData);
     console.log(output)
     sessionStorage.setItem("pdf_info",JSON.stringify(output));
     // router.push("./view");
   }
+
   return (
     <div className="mx-auto w-full max-w-5xl">
         <h1>Editor de pdf:</h1>
@@ -115,37 +146,43 @@ function PDFPageEdit() {
             </div>
             <button onClick={()=>formSubmit()} type="button" className="bg-slate-400 p-2 rounded-md">Criar PDF</button>
         </div>
-        <div onSelect={(e)=>{
-            const getSelection = window.getSelection();
-            if(getSelection){
-              const allElements = e.currentTarget.children[0].children[1].children[0].children;
-              for(let i = 0;i < allElements.length;i++){
-                allElements[i].id = i.toString();
-              }
-              let targetElement:HTMLElement | null | undefined = null;
-              let selectionText = "";
-              let start = 0;
-              let end = 0;
-              if(getSelection.rangeCount){
-                if(getSelection.anchorNode?.nodeName === "#text"){
-                  targetElement = getSelection.anchorNode.parentElement?.parentElement;
+        <div onSelect={()=>{
+            const selection = window.getSelection();
+              if(selection?.rangeCount){
+                manipulateProseClass({restoreIds:true});
+                let selectionText = selection.toString();
+                let start = selection.getRangeAt(0).startOffset;
+                sessionStorage.setItem("edit_pdf_start_index",start.toString())
+
+                let targetElement:HTMLElement | null | undefined = null;
+                let targetElementChild:HTMLElement | null | undefined = null;
+                if(selection.anchorNode?.nodeName === "#text"){
+                  targetElement = selection.anchorNode.parentElement?.parentElement;
+                  targetElementChild = selection.anchorNode.parentElement
                 }else{
-                  targetElement = getSelection.anchorNode as HTMLElement;
+                  targetElement = selection.anchorNode as HTMLElement;
                 }
-                selectionText = getSelection.toString();
-                start = getSelection.getRangeAt(0).startOffset;
-                end = getSelection.getRangeAt(0).endOffset;;
-                setGlobalSelect({
-                  selectionText: selectionText,
-                  targetElement: targetElement,
-                  start: start || 0,
-                  end: end || 0
-                })
+                
+                if(targetElement){
+                  sessionStorage.setItem(`edit_pdf_line_selected`,targetElement.id);
+                  console.log(targetElement.id)
+                  sessionStorage.setItem(`edit_pdf_line_children_count`,targetElement.children.length.toString());
+                }
+                const targetElementChildren = targetElement?.children;
+                if(targetElementChildren){
+                  for(let i = 0;i < targetElementChildren.length;i++){
+                    targetElementChildren[i].id = "word-"+i;
+                  }
+                  if(targetElementChild){
+                    sessionStorage.setItem(`edit_pdf_word_selected`,targetElementChild.id);
+                  }
+                }
+
               }
-            }
           }}>
-          <MDXEditor ref={ref} markdown={""}
-              plugins={[headingsPlugin(),
+          <MDXEditor contentEditableClassName="prose" ref={ref} markdown={""}
+              plugins={[tablePlugin(),
+                headingsPlugin(),
                   toolbarPlugin({
               toolbarContents: () => ( <><UndoRedo /><BlockTypeSelect /><BoldItalicUnderlineToggles /></>)
           })]}
