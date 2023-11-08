@@ -1,16 +1,16 @@
 import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
-import { IFormSignUpInputs } from "@/Interface/IFormInputs";
+import { IFormSignUpAInputs } from "@/Interface/IFormInputs";
 import { useState,useEffect } from "react";
  
 type ISimpleSelection = {
-    register: UseFormRegister<IFormSignUpInputs>,
+    register: UseFormRegister<IFormSignUpAInputs>,
     className: string
 }
 
 type IAdvancedSelection = {
-  register: UseFormRegister<IFormSignUpInputs>,
-  watch: UseFormWatch<IFormSignUpInputs>,
-  setValue: UseFormSetValue<IFormSignUpInputs>,
+  register: UseFormRegister<IFormSignUpAInputs>,
+  watch: UseFormWatch<IFormSignUpAInputs>,
+  setValue: UseFormSetValue<IFormSignUpAInputs>,
   className: string
 }
 
@@ -18,9 +18,9 @@ export function CommonLawMarriage({register,className}:ISimpleSelection){
   return (
       <div className={className}>
           <span>Vive em União Estável: </span>
-          <input type="radio" value="true" id="input-true-common-law-marriage" {...register("common_law_marriage",{required:true})} />
+          <input type="radio" value="true" id="input-true-common-law-marriage" {...register("uniao_estavel",{required:true})} />
           <label className="me-2" htmlFor="input-common-law-marriage"> Sim</label>
-          <input type="radio" value="false" id="input-false-common-law-marriage" {...register("common_law_marriage",{required:true})} />
+          <input type="radio" value="false" id="input-false-common-law-marriage" {...register("uniao_estavel",{required:true})} />
           <label htmlFor="input-common-law-marriage"> Não</label>
       </div>
   )
@@ -29,19 +29,19 @@ export function CommonLawMarriage({register,className}:ISimpleSelection){
 export function AddressComplement({register,watch,setValue,className}:IAdvancedSelection){
   const [addressComplementValue,setAddressComplementValue] = useState("");
   useEffect(()=>{
-    setValue("address_complement_name","");
+    setValue("complemento_do_endereco","");
     setAddressComplementValue("");
-  },[watch().address_complement_type]);
+  },[watch().tipo_de_complemento_do_endereco]);
   function formattedAddressComplement(addressComplement:string){
-    if(watch().address_complement_type === "number"){
+    if(watch().tipo_de_complemento_do_endereco === "number"){
       addressComplement = addressComplement.replace(/\D/g,""); //Substituí o que não é dígito por "", /g é [Global][1]
-      setValue("address_complement_name","nº "+addressComplement);
+      setValue("complemento_do_endereco","nº "+addressComplement);
       setAddressComplementValue(addressComplement)
     }
-    if(watch().address_complement_type === "qd-lt"){
+    if(watch().tipo_de_complemento_do_endereco === "qd-lt"){
       addressComplement = addressComplement.replace(/^\D+$/g,"");
       addressComplement = addressComplement.replace(/^(\d+) (\d+)$/g,"Quadra $1 Lote $2"); //Substituí o que não é dígito por "", /g é [Global][1]
-      setValue("address_complement_name",addressComplement);
+      setValue("complemento_do_endereco",addressComplement);
       setAddressComplementValue(addressComplement)
     }
   }
@@ -53,30 +53,30 @@ export function AddressComplement({register,watch,setValue,className}:IAdvancedS
               type="radio"
               value="number"
               id="input-address-complement-number"
-              {...register("address_complement_type",{required:true})}
+              {...register("tipo_de_complemento_do_endereco",{required:true})}
             />
             <label className="me-2" htmlFor="input-address-complement-number"> Número</label>
             <input
               type="radio"
               value="qd-lt"
               id="input-address-complement-qd-lt"
-              {...register("address_complement_type",{required:true})}
+              {...register("tipo_de_complemento_do_endereco",{required:true})}
             />
             <label htmlFor="input-address-complement-qd-lt"> Qd/Lt </label>
           </div>
           <div>
-            {watch().address_complement_type === "number" ? (
+            {watch().tipo_de_complemento_do_endereco === "number" ? (
               <input className="w-full" onChange={(e)=>formattedAddressComplement(e.target.value)} value={addressComplementValue}
                 placeholder="Adicione o número"
                 type="text"
               />
-            ) : watch().address_complement_type === "qd-lt" && (
+            ) : watch().tipo_de_complemento_do_endereco === "qd-lt" && (
               <input className="w-full" onChange={(e)=>formattedAddressComplement(e.target.value)} value={addressComplementValue}
                 placeholder="Adicione o número da quadra e lote: nn nn"
                 type="text"
               />
             )}
-            <input type="hidden"  {...register("address_complement_name",{required:true})} />
+            <input type="hidden"  {...register("complemento_do_endereco",{required:true})} />
           </div>
       </div>
   )

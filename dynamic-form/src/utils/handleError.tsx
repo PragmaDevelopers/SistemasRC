@@ -1,8 +1,8 @@
 import { UseFormWatch } from "react-hook-form";
-import { IFormSignUpInputs } from "@/Interface/IFormInputs";
+import { IFormSignUpAInputs } from "@/Interface/IFormInputs";
 import CepDataInterface from "@/Interface/ICepApi";
 
-export async function tryGetAddressByCep(watch:UseFormWatch<IFormSignUpInputs>):Promise<CepDataInterface>{
+export async function tryGetAddressByCep(watch:UseFormWatch<IFormSignUpAInputs> | any):Promise<CepDataInterface>{
     if(watch().cep?.replace("-","").length === 8){
         const data = await fetch(`https://viacep.com.br/ws/${watch().cep?.replace("-","")}/json/`).catch(error=>alert(error));
         if(data){
@@ -23,7 +23,7 @@ export async function tryGetAddressByCep(watch:UseFormWatch<IFormSignUpInputs>):
     }
 }
 
-export async function getAddressManually(watch:UseFormWatch<IFormSignUpInputs>):Promise<CepDataInterface>{
+export async function getAddressManually(watch:UseFormWatch<IFormSignUpAInputs> | any):Promise<CepDataInterface>{
     const data = await fetch(`https://viacep.com.br/ws/${watch().state_for_address}/${
       watch().city}/${watch().neighborhood}/json/`).catch(error=>alert(error));
       if(data){

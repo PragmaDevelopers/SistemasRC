@@ -1,15 +1,15 @@
 import { UseFormRegister, UseFormSetValue } from "react-hook-form";
-import { IFormSignUpInputs } from "@/Interface/IFormInputs";
+import { IFormSignUpAInputs } from "@/Interface/IFormInputs";
 import { useState } from "react";
 
 type ISimpleSelection = {
-    register: UseFormRegister<IFormSignUpInputs>,
+    register: UseFormRegister<IFormSignUpAInputs>,
     className: string,
 }
 
 type IAdvancedSelection = {
-    register: UseFormRegister<IFormSignUpInputs>,
-    setValue: UseFormSetValue<IFormSignUpInputs>,
+    register: UseFormRegister<IFormSignUpAInputs>,
+    setValue: UseFormSetValue<IFormSignUpAInputs>,
     className: string,
 }
 
@@ -17,7 +17,7 @@ export function FullName({register,className}:ISimpleSelection){
     return (
         <div className={className}>
             <label htmlFor="input-full-name">Nome Completo: </label>
-            <input className="w-full" type="text" id="input-full-name" {...register("full_name",{required: true})} />
+            <input className="w-full" type="text" id="input-full-name" {...register("nome_completo",{required: true})} />
         </div>
     )
 }
@@ -69,7 +69,7 @@ export function MotherName({register,className}:ISimpleSelection){
     return (
         <div className={className}>
             <label htmlFor="input-mother-name">Nome da mãe: </label>
-            <input className="w-full" type="text" id="input-mother-name" {...register("mother_name",{required:true})} />
+            <input className="w-full" type="text" id="input-mother-name" {...register("nome_da_mae",{required:true})} />
         </div>
     )
 }

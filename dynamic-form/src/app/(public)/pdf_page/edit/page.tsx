@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IFormSignUpInputs } from "@/Interface/IFormInputs";
+import { IFormSignUpAInputs } from "@/Interface/IFormInputs";
 import { useRouter } from "next/navigation";
 const Mustache = require('mustache');
 
@@ -13,7 +13,7 @@ import { root } from "postcss";
 function PDFPageEdit() {
 
 
-  const [signUpData,setSignUpData] = useState<IFormSignUpInputs>();
+  const [signUpData,setSignUpData] = useState<IFormSignUpAInputs>();
   const [variable,setVariable] = useState<string>("");
 
   const ref = useRef<MDXEditorMethods>(null)
