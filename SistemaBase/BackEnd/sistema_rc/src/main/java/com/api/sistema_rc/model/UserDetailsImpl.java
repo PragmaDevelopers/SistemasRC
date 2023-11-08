@@ -1,5 +1,6 @@
 package com.api.sistema_rc.model;
 
+import com.api.sistema_rc.enums.RoleName;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,8 +19,10 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        String role = user.getRole().getName().toString();
-        return List.of(new SimpleGrantedAuthority(role));
+        String role = user.getRole().getName().name();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        return authorities;
     }
     public String getLogin(){
         return user.getId().toString();

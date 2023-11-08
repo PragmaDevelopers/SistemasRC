@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -25,36 +26,21 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
+            .csrf(csrf->csrf.disable())
+            .sessionManagement(sessionManagement ->
+                    sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-                .requestMatchers("/api/public/**").permitAll()
-                    .requestMatchers("/api/private/**").hasAnyRole("PROFESSIONAL","ADMIN")
-                .requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated()
+            .requestMatchers("/api/public/**").permitAll()
+            .requestMatchers("/api/semi_public/**").hasAnyRole("CLIENT","PROFESSIONAL","ADMIN")
+            .requestMatchers("/api/private/**").hasAnyRole("PROFESSIONAL","ADMIN")
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .anyRequest().permitAll()
             )
-            .logout(logout -> logout.disable()
-//                .invalidateHttpSession(true)
-//                .clearAuthentication(true)
-//                .logoutRequestMatcher(new AntPathRequestMatcher("/p/logout"))
-//                .logoutSuccessUrl("/p/login?logout=true")
-//                .permitAll()
-            )
-            .sessionManagement(sessionManagement -> sessionManagement.disable()
-//                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            )
-            .csrf(csrf->csrf.disable());
+            .formLogin(formLogin->formLogin.disable())
+            .addFilterBefore(securityFilterImpl, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
-    }
-
-    @Bean
-    public FilterRegistrationBean<SecurityFilterImpl> securityFilterRegistration(SecurityFilterImpl securityFilter) {
-        FilterRegistrationBean<SecurityFilterImpl> registrationBean = new FilterRegistrationBean<>(securityFilter);
-        registrationBean.setEnabled(false); // Desativar o filtro por padrão
-
-        // Condicionalmente ative o filtro para determinadas rotas
-        // Por exemplo, ative o filtro para a rota /api/secure
-        registrationBean.addUrlPatterns("/api/private/**","/api/admin/**");
-
-        return registrationBean;
     }
 
     @Bean
