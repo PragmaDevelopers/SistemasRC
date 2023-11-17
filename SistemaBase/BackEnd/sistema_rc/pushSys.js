@@ -12,7 +12,7 @@ const imapConfig = {
 
 const listaTRE = ['tre1@example.com', 'tre2@example.com']; ///procurar os emails do tre dps
 
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 8080 }); //padrao q peguei pesquisar dps
 
 const imap = connect(imapConfig);
 
