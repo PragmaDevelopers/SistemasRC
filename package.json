@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.10",
+    "zod": "^3.22.4"
+  }
+}
