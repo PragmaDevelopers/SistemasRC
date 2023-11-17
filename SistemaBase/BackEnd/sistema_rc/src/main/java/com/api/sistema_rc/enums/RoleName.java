@@ -1,7 +1,7 @@
 package com.api.sistema_rc.enums;
 
 public enum RoleName {
-    ADMIN,
-    PROFESSIONAL,
-    CLIENT
+    ROLE_ADMIN,
+    ROLE_PROFESSIONAL,
+    ROLE_CLIENT
 }

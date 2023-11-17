@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,16 +31,17 @@ public class TokenService {
         }
     }
 
-    public String validateToken(String token){
+    public Integer validateToken(String token){
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
-            return JWT.require(algorithm)
+            String user_id = JWT.require(algorithm)
                     .withIssuer("sistema_rc")
                     .build()
-                    .verify(token)
+                    .verify(token.replace("Bearer ", ""))
                     .getSubject();
+            return Integer.parseInt(user_id);
         }catch (JWTVerificationException exception){
-            return "";
+            return -1;
         }
     }
 

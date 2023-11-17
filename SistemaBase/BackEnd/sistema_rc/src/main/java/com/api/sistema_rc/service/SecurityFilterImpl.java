@@ -9,7 +9,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.NonNullApi;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,19 +20,18 @@ import java.io.IOException;
 @Component
 public class SecurityFilterImpl extends OncePerRequestFilter {
     @Autowired
-    TokenService tokenService;
+    private TokenService tokenService;
     @Autowired
-    UserRepository userRepository;
+    private  UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        var token = this.recoverToken(request);
+        var token = request.getHeader("Authorization");
         if(token != null){
-            String user_id = tokenService.validateToken(token);
-            User user = userRepository.findById(Integer.parseInt(user_id))
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado!"));;
+            Integer user_id = tokenService.validateToken(token);
+            User user = userRepository.findById(user_id)
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado!"));
             var authentication = new UsernamePasswordAuthenticationToken(user, null, new UserDetailsImpl(user).getAuthorities());
-            System.out.println(authentication);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

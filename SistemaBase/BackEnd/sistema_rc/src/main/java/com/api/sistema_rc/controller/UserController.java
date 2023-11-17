@@ -46,7 +46,7 @@ public class UserController {
 
         Role role = new Role();
         role.setId(2);
-        role.setName(RoleName.PROFESSIONAL);
+        role.setName(RoleName.ROLE_PROFESSIONAL);
         user.setRole(role);
 
         userRepository.save(user);
@@ -65,7 +65,7 @@ public class UserController {
         }
     }
 
-    @GetMapping(path = "/private/get/clients")
+    @GetMapping(path = "/private/clients")
     public List<User> getClients(){
         return userRepository.findAll();
     }

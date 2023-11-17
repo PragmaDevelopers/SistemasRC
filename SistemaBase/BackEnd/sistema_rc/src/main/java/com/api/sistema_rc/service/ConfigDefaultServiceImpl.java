@@ -20,13 +20,13 @@ public class ConfigDefaultServiceImpl {
     public void saveRoles(){
         if(roleRepository.findAll().isEmpty()){
             Role role_admin = new Role();
-            role_admin.setName(RoleName.ADMIN);
+            role_admin.setName(RoleName.ROLE_ADMIN);
 
             Role role_professional = new Role();
-            role_professional.setName(RoleName.PROFESSIONAL);
+            role_professional.setName(RoleName.ROLE_PROFESSIONAL);
 
             Role role_client = new Role();
-            role_client.setName(RoleName.CLIENT);
+            role_client.setName(RoleName.ROLE_CLIENT);
 
             List<Role> defaultRoles = new ArrayList<>();
             defaultRoles.add(role_admin);
