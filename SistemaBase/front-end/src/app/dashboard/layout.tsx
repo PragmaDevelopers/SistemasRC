@@ -37,7 +37,19 @@ export default function Layout({ children }: any) {
     const IconStyles: string = "w-8 aspect-square mr-2";
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/dashboard/kanban/getall").then(response => response.json()).then(data => setDashboards(data))
+        const headers = {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzaXN0ZW1hX3JjIiwic3ViIjoiMiIsImV4cCI6MTcwMDI3NDEyNX0.o7683dGZMkto_w6KndCJ3vrdY4yQrElwk0ckP6Uo4yg"
+          }
+        fetch("http://localhost:8000/api/private/user/kanban",{method: "get",headers}).then(response => response.json()).then(data => {
+            const newData = data.map((d:any)=>{
+                return {
+                    kanbanId: d.id.toString(),
+                    name: d.title
+                }
+            })
+            console.log(data)
+            setDashboards(newData)
+        })
     }, [setDashboards]);
 
     const addDashBoard = (event: any) => {
@@ -103,7 +115,7 @@ export default function Layout({ children }: any) {
                     <details className="p-2 overflow-x-hidden overflow-y-auto">
                         <summary>Areas de Trabalho</summary>
                         <div className="">
-                            {dashboards?.map((element) => <BoardMenuEntry href={`/dashboard/board/${element.kanbanId}`} name={element.name} />)}
+                            {dashboards?.map((element,index) => <BoardMenuEntry key={index} href={`/dashboard/board/${element.kanbanId}`} name={element.name} />)}
                         </div>
                         <div>
 

@@ -311,8 +311,11 @@ export default function Page({ params }: { params: { id: string } }) {
     }));
 
     useEffect(() => {
-        fetch(`http://localhost:8080/api/dashboard/column/getall/${params.id}`).then(response => response.json()).then(data => {
-
+        const headers = {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzaXN0ZW1hX3JjIiwic3ViIjoiMiIsImV4cCI6MTcwMDI3NDEyNX0.o7683dGZMkto_w6KndCJ3vrdY4yQrElwk0ckP6Uo4yg"
+          }
+        fetch(`http://localhost:8000/api/private/user/kanban/${params.id}/columns?cards=true`,{headers}).then(response => response.json()).then(data => {
+          console.log(data)
         })
     }, []);
 
@@ -341,7 +344,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 }),
             };
 
-            fetch(`http://localhost:8080/api/dashboard/column/create/${params.id}`, requestOptions).then(response => response.json).then(data => console.log(data))
+            fetch(`http://localhost:8000/api/private/user/kanban/column`, requestOptions).then(response => response.json).then(data => console.log(data))
         } else {
             const newColumn = {
                 id: generateRandomString(),
@@ -353,14 +356,12 @@ export default function Page({ params }: { params: { id: string } }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: newColumn.id,
                     title: newColumn.title,
-                    columnType: newColumn.type,
                     kanbanId: params.id,
                 }),
             };
 
-            fetch(`http://localhost:8080/api/dashboard/column/create/${params.id}`, requestOptions).then(response => response.json).then(data => console.log(data))
+            fetch(`http://localhost:8000/api/private/user/kanban/column`, requestOptions).then(response => response.json).then(data => console.log(data))
 
             setKanbanData((prevData: KanbanData) => ({
                 ...prevData,
