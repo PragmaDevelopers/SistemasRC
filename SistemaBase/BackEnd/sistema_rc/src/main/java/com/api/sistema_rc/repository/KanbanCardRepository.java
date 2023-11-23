@@ -1,16 +1,16 @@
 package com.api.sistema_rc.repository;
 
 import com.api.sistema_rc.model.KanbanCard;
-import com.api.sistema_rc.model.KanbanCheckList;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface KanbanCheckListRepository extends JpaRepository<KanbanCheckList,Integer> {
-    @Query(value = "SELECT * FROM kanban_check_list WHERE kanban_card_id = :id",nativeQuery = true)
-    List<KanbanCheckList> findAllByCardId(@Param("id") Integer cardId);
+public interface KanbanCardRepository extends JpaRepository<KanbanCard,Integer> {
+    @Query(value = "SELECT * FROM kanban_cards WHERE kanban_column_id = :id ORDER BY index",nativeQuery = true)
+    List<KanbanCard> findAllByColumnId(@Param("id") Integer columnId);
 }

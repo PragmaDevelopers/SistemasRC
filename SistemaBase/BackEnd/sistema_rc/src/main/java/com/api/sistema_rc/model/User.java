@@ -3,6 +3,7 @@ package com.api.sistema_rc.model;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.sql.Blob;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,22 +19,22 @@ public class User{
     private Role role;
     @Column(length = 255,nullable = false)
     private String name;
-    @Column(length = 20,unique = true)
-    private String nickname;
+    @Lob @Basic(fetch=FetchType.LAZY)
+    @Column
+    protected Blob profilePicture;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate registration_date;
     @Column(length = 255,nullable = false,unique = true)
     private String email;
+    @Column(length = 255,unique = true)
+    private String pushEmail;
     @Column(nullable = false)
     private String password;
     @Column(length = 30,nullable = false)
     private String nationality;
-    @Column(length = 20,nullable = false)
+    @Column(length = 20)
     private String gender;
-    @Column(nullable = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate date_of_birth;
 
     public Integer getId() {
         return id;
@@ -59,12 +60,12 @@ public class User{
         this.name = name;
     }
 
-    public String getNickname() {
-        return nickname;
+    public Blob getProfilePicture() {
+        return profilePicture;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void setProfilePicture(Blob profilePicture) {
+        this.profilePicture = profilePicture;
     }
 
     public LocalDate getRegistration_date() {
@@ -81,6 +82,14 @@ public class User{
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPushEmail() {
+        return pushEmail;
+    }
+
+    public void setPushEmail(String pushEmail) {
+        this.pushEmail = pushEmail;
     }
 
     public String getPassword() {
@@ -105,29 +114,5 @@ public class User{
 
     public void setGender(String gender) {
         this.gender = gender;
-    }
-
-    public LocalDate getDate_of_birth() {
-        return date_of_birth;
-    }
-
-    public void setDate_of_birth(LocalDate date_of_birth) {
-        this.date_of_birth = date_of_birth;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", role=" + role +
-                ", name='" + name + '\'' +
-                ", nickname='" + nickname + '\'' +
-                ", registration_date=" + registration_date +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", nationality='" + nationality + '\'' +
-                ", gender='" + gender + '\'' +
-                ", date_of_birth=" + date_of_birth +
-                '}';
     }
 }

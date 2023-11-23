@@ -3,9 +3,11 @@ package com.api.sistema_rc.model;
 import com.google.gson.JsonObject;
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
-@Table
-public class KanbanColumns {
+@Table(name = "kanban_columns")
+public class KanbanColumn {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -14,6 +16,8 @@ public class KanbanColumns {
     private Kanban kanban;
     @Column(length = 255,nullable = false)
     private String title;
+    @Column(nullable = false)
+    private Integer index;
 
     public Integer getId() {
         return id;
@@ -37,6 +41,14 @@ public class KanbanColumns {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Integer getIndex() {
+        return index;
+    }
+
+    public void setIndex(Integer index) {
+        this.index = index;
     }
 
     public String toJson(JsonObject obj){

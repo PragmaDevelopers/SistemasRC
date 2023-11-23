@@ -14,5 +14,37 @@ public class KanbanCheckListItem {
     @Column(length = 255,nullable = false)
     private String name;
     @Column(nullable = false)
-    private Boolean completed;
+    private boolean completed;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public KanbanCheckList getKanbanCheckList() {
+        return kanbanCheckList;
+    }
+
+    public void setKanbanCheckList(KanbanCheckList kanbanCheckList) {
+        this.kanbanCheckList = kanbanCheckList;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
+    }
 }
