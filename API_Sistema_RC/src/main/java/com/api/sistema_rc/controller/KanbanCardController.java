@@ -13,9 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
@@ -28,9 +27,13 @@ public class KanbanCardController {
     @Autowired
     private KanbanCardRepository kanbanCardRepository;
     @Autowired
-    private KanbanCheckListRepository kanbanCheckListRepository;
+    private KanbanCardTagRepository kanbanCardTagRepository;
     @Autowired
-    private KanbanCheckListItemRepository kanbanCheckListItemRepository;
+    private KanbanCardCommentRepository kanbanCardCommentRepository;
+    @Autowired
+    private KanbanCardChecklistRepository kanbanCardCheckListRepository;
+    @Autowired
+    private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
     @Autowired
     private KanbanUserRepository kanbanUserRepository;
     private final Gson gson = new Gson();
@@ -50,9 +53,9 @@ public class KanbanCardController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
-        KanbanColumn kanbanColumns = kanbanColumnRepository.findById(columnId).get();
+        KanbanColumn kanbanColumn = kanbanColumnRepository.findById(columnId).get();
 
-        Kanban kanban = kanbanColumns.getKanban();
+        Kanban kanban = kanbanColumn.getKanban();
         Integer user_id = tokenService.validateToken(token);
 
         KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
@@ -63,23 +66,21 @@ public class KanbanCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(0) == '0'){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
-            errorMessage.addProperty("status",435);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
-        }
-
-        List<KanbanCard> kanbanCards = kanbanCardRepository.findAllByColumnId(columnId);
+        List<KanbanCard> kanbanCardList = kanbanCardRepository.findAllByColumnId(columnId);
 
         JsonArray cardsArr = new JsonArray();
 
-        kanbanCards.forEach(card->{
+        kanbanCardList.forEach(card->{
             JsonObject cardObj = new JsonObject();
             cardObj.addProperty("id",card.getId());
             cardObj.addProperty("title",card.getTitle());
             cardObj.addProperty("description",card.getDescription());
-            cardObj.addProperty("tags",card.getTags());
             cardObj.addProperty("members",card.getMembers());
+            if(card.getDeadline() == null){
+                cardObj.addProperty("deadline", (String) null);
+            }else{
+                cardObj.addProperty("deadline", String.valueOf(card.getDeadline()));
+            }
             cardObj.addProperty("index",card.getIndex());
             cardsArr.add(cardObj);
         });
@@ -118,8 +119,8 @@ public class KanbanCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(1) == '0'){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
+        if(kanbanUser.getUser().getPermissionLevel().charAt(0) == '0'){
+            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (criar card)!");
             errorMessage.addProperty("status",435);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
@@ -127,27 +128,6 @@ public class KanbanCardController {
         JsonElement cardTitle = jsonObj.get("title");
         if(cardTitle == null){
             errorMessage.addProperty("mensagem","O campo title é necessário!");
-            errorMessage.addProperty("status",430);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
-        }
-
-        JsonElement cardDescription = jsonObj.get("description");
-        if(cardDescription == null){
-            errorMessage.addProperty("mensagem","O campo description é necessário!");
-            errorMessage.addProperty("status",430);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
-        }
-
-        JsonElement cardTags = jsonObj.get("tags");
-        if(cardTags == null){
-            errorMessage.addProperty("mensagem","O campo tags é necessário!");
-            errorMessage.addProperty("status",430);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
-        }
-
-        JsonElement cardMembers = jsonObj.get("members");
-        if(cardMembers == null){
-            errorMessage.addProperty("mensagem","O campo members é necessário!");
             errorMessage.addProperty("status",430);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
@@ -160,34 +140,315 @@ public class KanbanCardController {
 
         kanbanCard.setTitle(cardTitle.getAsString());
         kanbanCard.setKanbanColumn(kanbanColumn);
-        kanbanCard.setDescription(cardDescription.getAsString());
-        kanbanCard.setTags(cardTags.getAsString());
 
-        String[] membersId = cardMembers.getAsString().split(",");
-        if(!Objects.equals(cardMembers.getAsString(), "") && cardMembers.getAsString() != null){
-            Integer kanbanId = kanban.getId();
-            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
+        JsonElement cardDescription = jsonObj.get("description");
+        if(cardDescription != null){
+            kanbanCard.setDescription(cardDescription.getAsString());
+        }
 
-            for (String memberId : membersId) {
-                AtomicBoolean isFound = new AtomicBoolean(false);
-                kanbanUserList.forEach(kanUser ->{
-                    if(kanUser.getUser().getId() == Integer.parseInt(memberId)){
-                        isFound.set(true);
+        JsonElement cardDeadline = jsonObj.get("deadline");
+        if(cardDeadline != null){
+            if(kanbanUser.getUser().getPermissionLevel().charAt(14) == '0'){
+                errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (criar prazo)!");
+                errorMessage.addProperty("status",435);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
+            }
+            LocalDateTime deadline = LocalDateTime.parse(cardDeadline.getAsString());
+            kanbanCard.setDeadline(deadline);
+        }
+
+        JsonElement cardMembers = jsonObj.get("members");
+        if(cardMembers != null){
+            JsonArray membersId = cardMembers.getAsJsonArray();
+            List<String> arrayToStringArr = new ArrayList<>();
+            if(!membersId.isEmpty()){
+                Integer kanbanId = kanban.getId();
+                List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
+
+                for (JsonElement memberId : membersId) {
+                    AtomicBoolean isFound = new AtomicBoolean(false);
+                    kanbanUserList.forEach(kanUser ->{
+                        if(kanUser.getUser().getId() == memberId.getAsInt()){
+                            isFound.set(true);
+                        }
+                    });
+                    if(!isFound.get()){
+                        errorMessage.addProperty("mensagem","Usuário não existente nesse kanban detectado!");
+                        errorMessage.addProperty("status",433);
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
                     }
-                });
-                if(!isFound.get()){
-                    errorMessage.addProperty("mensagem","Usuário não existente nesse kanban detectado!");
-                    errorMessage.addProperty("status",433);
+                    arrayToStringArr.add(String.valueOf(memberId.getAsInt()));
+                }
+            }
+            kanbanCard.setMembers(String.join(",",arrayToStringArr));
+        }
+
+        KanbanCard dbKanbanCard = kanbanCardRepository.saveAndFlush(kanbanCard);
+
+        JsonObject returnIds = new JsonObject();
+        returnIds.addProperty("id",dbKanbanCard.getId());
+
+        JsonElement cardTags = jsonObj.get("tags");
+        if(cardTags != null){
+            if(!cardTags.getAsJsonArray().isEmpty()){
+                try {
+                    List<KanbanCardTag> tagsArr = new ArrayList<>();
+                    cardTags.getAsJsonArray().forEach(tag->{
+                        KanbanCardTag kanbanCardTag = new KanbanCardTag();
+                        kanbanCardTag.setKanbanCard(dbKanbanCard);
+                        if(tag.getAsJsonObject().get("name") == null){
+                            throw new Error("O campo name é necessário!");
+                        }
+                        if(tag.getAsJsonObject().get("color") == null){
+                            throw new Error("O campo color é necessário!");
+                        }
+
+                        kanbanCardTag.setName(tag.getAsJsonObject().get("name").getAsString());
+                        kanbanCardTag.setColor(tag.getAsJsonObject().get("color").getAsString());
+                        tagsArr.add(kanbanCardTag);
+
+                        List<KanbanCardTag> dbKanbanCardTagList = kanbanCardTagRepository.saveAllAndFlush(tagsArr);
+                        dbKanbanCardTagList.forEach(dbTag-> {
+                            JsonObject formattedTag = new JsonObject();
+                            formattedTag.addProperty("id",dbTag.getId());
+                            returnIds.add("tags", formattedTag);
+                        });
+                    });
+                }catch (Error e){
+                    errorMessage.addProperty("mensagem",e.getMessage());
+                    errorMessage.addProperty("status",430);
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
                 }
             }
         }
 
-        kanbanCard.setMembers(cardMembers.getAsString());
+        JsonElement cardChecklists = jsonObj.get("checklists");
+        if(cardChecklists != null){
+            try{
+                cardChecklists.getAsJsonArray().forEach(checklist->{
+                    KanbanCardChecklist kanbanCardCheckList = new KanbanCardChecklist();
+                    if(checklist.getAsJsonObject().get("name") == null){
+                        throw new Error("O campo name é necessário no checklist!");
+                    }
+                    kanbanCardCheckList.setName(checklist.getAsJsonObject().get("name").getAsString());
+                    kanbanCardCheckList.setKanbanCard(dbKanbanCard);
 
-        KanbanCard dbKanbanCard = kanbanCardRepository.saveAndFlush(kanbanCard);
+                    KanbanCardChecklist dbKanbanCardChecklist = kanbanCardCheckListRepository.saveAndFlush(kanbanCardCheckList);
+                    JsonObject checkListObj = new JsonObject();
+                    checkListObj.addProperty("id", dbKanbanCardChecklist.getId());
+                    checkListObj.add("items",new JsonArray());
+                    returnIds.add("checklists", checkListObj);
 
-        return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCard.getId().toString());
+                    checklist.getAsJsonObject().get("items").getAsJsonArray().forEach(item->{
+                        KanbanCardChecklistItem kanbanCardChecklistItem = new KanbanCardChecklistItem();
+                        if(item.getAsJsonObject().get("name") == null){
+                            throw  new Error("O campo name é necessário no checklist item!");
+                        }
+                        kanbanCardChecklistItem.setName(item.getAsJsonObject().get("name").getAsString());
+                        kanbanCardChecklistItem.setCompleted(false);
+                        kanbanCardChecklistItem.setKanbanChecklist(dbKanbanCardChecklist);
+
+                        KanbanCardChecklistItem dbKanbanCheckListItemCard = kanbanCardCheckListItemRepository.saveAndFlush(kanbanCardChecklistItem);
+                        JsonObject checkListItemObj = new JsonObject();
+                        checkListItemObj.addProperty("id", dbKanbanCheckListItemCard.getId());
+                        returnIds.get("checklists").getAsJsonObject().get("items").getAsJsonArray().add(checkListItemObj);
+                    });
+                });
+            }catch (Error e){
+                errorMessage.addProperty("mensagem",e.getMessage());
+                errorMessage.addProperty("status",430);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
+            }
+
+        }
+
+        JsonElement cardComments = jsonObj.get("comments");
+        if(cardComments != null){
+            try{
+                JsonArray commentsId = processComments(cardComments.getAsJsonArray(),dbKanbanCard,kanbanUser,null,new JsonArray());
+                returnIds.add("comments",commentsId);
+            }catch (Error e){
+                errorMessage.addProperty("mensagem",e.getMessage());
+                errorMessage.addProperty("status",430);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+        }
+
+        JsonElement innerCards = jsonObj.get("innerCards");
+        if(innerCards != null){
+            try {
+                JsonArray innerCardsId = processInnerCards(innerCards.getAsJsonArray(),kanbanColumn,dbKanbanCard,new JsonArray());
+                returnIds.add("innerCards",innerCardsId);
+            }catch (Error e){
+                errorMessage.addProperty("mensagem",e.getMessage());
+                errorMessage.addProperty("status",430);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(returnIds.toString());
+    }
+
+    public JsonArray processComments(JsonArray comments, KanbanCard dbKanbanCard, KanbanUser kanbanUser,
+                                     KanbanCardComment commentAnswers, JsonArray arr) {
+        comments.forEach(commentElement->{
+            JsonObject comment = commentElement.getAsJsonObject();
+            KanbanCardComment kanbanCardComment = new KanbanCardComment();
+            if(comment.get("content") == null){
+                throw new Error("O campo content é necessário no comment!");
+            }
+            kanbanCardComment.setContent(comment.get("content").getAsString());
+            kanbanCardComment.setEdited(false);
+            kanbanCardComment.setKanbanCard(dbKanbanCard);
+            kanbanCardComment.setUser(kanbanUser.getUser());
+            kanbanCardComment.setRegistration_date(LocalDateTime.now());
+
+            if (commentAnswers != null) {
+                kanbanCardComment.setKanbanCommentAnswered(commentAnswers);
+            }
+
+            // Salvar o comentário no banco de dados e obter o ID
+            KanbanCardComment dbKanbanCardComment = kanbanCardCommentRepository.saveAndFlush(kanbanCardComment);
+            int commentId = dbKanbanCardComment.getId();
+
+            // Adicionar o ID ao objeto JSON
+            JsonObject obj = new JsonObject();
+            obj.addProperty("id", commentId);
+            obj.add("answers", new JsonArray());
+
+            // Adicionar o objeto ao array de IDs
+            arr.add(obj);
+
+            // Verificar se há respostas e chamar recursivamente
+            if (comment.get("answers") != null && !comment.get("answers").getAsJsonArray().isEmpty()) {
+                processComments(comment.get("answers").getAsJsonArray(), dbKanbanCard, kanbanUser, dbKanbanCardComment, obj.getAsJsonArray("answers"));
+            }
+        });
+
+        return arr;
+    }
+
+    public JsonArray processInnerCards(JsonArray innerCards, KanbanColumn kanbanColumn,KanbanCard parentCard, JsonArray arr) {
+        innerCards.forEach(innerCardElement->{
+            JsonObject innerCard = innerCardElement.getAsJsonObject();
+            KanbanCard kanbanCard = new KanbanCard();
+            kanbanCard.setIndex(arr.size());
+            kanbanCard.setKanbanColumn(kanbanColumn);
+            kanbanCard.setKanbanInnerCard(parentCard);
+
+            if(innerCard.get("title") == null){
+                throw new Error("O campo title é necessário!");
+            }
+            kanbanCard.setTitle(innerCard.get("title").getAsString());
+
+            if(innerCard.get("description") != null){
+                kanbanCard.setDescription(innerCard.get("description").getAsString());
+            }
+            if(innerCard.get("deadline") != null){
+                LocalDateTime deadline = LocalDateTime.parse(innerCard.get("deadline").getAsString());
+                kanbanCard.setDeadline(deadline);
+            }
+            if(innerCard.get("members") != null){
+                JsonArray membersId = innerCard.get("members").getAsJsonArray();
+                if(!membersId.isEmpty()){
+                    List<String> memberCurrencies = new ArrayList<>();
+
+                    membersId.forEach(memberId->memberCurrencies.add(memberId.getAsString()));
+                    List<String> memberParents = Arrays.stream(parentCard.getMembers().split(",")).toList();
+
+                    if(memberCurrencies.stream().anyMatch(elemento -> !memberParents.contains(elemento))){
+                        throw new Error("Membro não foi encontrado no card pai!");
+                    }
+
+                    kanbanCard.setMembers(String.join(",",memberCurrencies));
+                }
+            }
+
+            // Salvar o comentário no banco de dados e obter o ID
+            KanbanCard dbKanbanCard = kanbanCardRepository.saveAndFlush(kanbanCard);
+
+            // Adicionar o ID ao objeto JSON
+            JsonObject obj = new JsonObject();
+            obj.addProperty("id", dbKanbanCard.getId());
+            obj.add("tags", new JsonArray());
+            obj.add("checklists", new JsonArray());
+            obj.add("innerCards", new JsonArray());
+
+            JsonElement cardtags = innerCard.get("tags");
+            if(cardtags != null){
+                if(!cardtags.getAsJsonArray().isEmpty()){
+                    List<KanbanCardTag> tagsArr = new ArrayList<>();
+                    cardtags.getAsJsonArray().forEach(tag->{
+                        KanbanCardTag kanbanCardTag = new KanbanCardTag();
+                        kanbanCardTag.setKanbanCard(dbKanbanCard);
+                        if(tag.getAsJsonObject().get("name").getAsString() == null){
+                            throw new Error("O campo name é necessário!");
+                        }
+                        if(tag.getAsJsonObject().get("color").getAsString() == null){
+                            throw new Error("O campo color é necessário!");
+                        }
+                        kanbanCardTag.setName(tag.getAsJsonObject().get("name").getAsString());
+                        kanbanCardTag.setColor(tag.getAsJsonObject().get("color").getAsString());
+                        tagsArr.add(kanbanCardTag);
+                    });
+
+                    List<KanbanCardTag> dbKanbanCardTagList = kanbanCardTagRepository.saveAllAndFlush(tagsArr);
+                    dbKanbanCardTagList.forEach(tag-> {
+                        JsonObject formattedTag = new JsonObject();
+                        formattedTag.addProperty("id",tag.getId());
+                        obj.get("tags").getAsJsonArray().add(formattedTag);
+                    });
+                }
+            }
+
+            JsonElement cardChecklists = innerCard.get("checklists");
+            if(cardChecklists != null){
+                cardChecklists.getAsJsonArray().forEach(checklist->{
+                    KanbanCardChecklist kanbanCardCheckList = new KanbanCardChecklist();
+                    if(checklist.getAsJsonObject().get("name") == null){
+                        throw new Error("O campo name é necessário no checklist!");
+                    }
+                    kanbanCardCheckList.setName(checklist.getAsJsonObject().get("name").getAsString());
+                    kanbanCardCheckList.setKanbanCard(parentCard);
+
+                    KanbanCardChecklist dbKanbanCardChecklist = kanbanCardCheckListRepository.saveAndFlush(kanbanCardCheckList);
+                    JsonObject checkListObj = new JsonObject();
+                    checkListObj.addProperty("id", dbKanbanCardChecklist.getId());
+                    checkListObj.add("items",new JsonArray());
+
+                    obj.get("checklists").getAsJsonArray().add(checkListObj);
+
+                    if(checklist.getAsJsonObject().get("items") != null && !checklist.getAsJsonObject().get("items").getAsJsonArray().isEmpty()){
+                        checklist.getAsJsonObject().get("items").getAsJsonArray().forEach(item->{
+                            KanbanCardChecklistItem kanbanCardChecklistItem = new KanbanCardChecklistItem();
+                            if(item.getAsJsonObject().get("name") == null){
+                                throw  new Error("O campo name é necessário no checklist item!");
+                            }
+                            kanbanCardChecklistItem.setName(item.getAsJsonObject().get("name").getAsString());
+                            kanbanCardChecklistItem.setCompleted(false);
+                            kanbanCardChecklistItem.setKanbanChecklist(dbKanbanCardChecklist);
+
+                            KanbanCardChecklistItem dbKanbanCheckListItemCard = kanbanCardCheckListItemRepository.saveAndFlush(kanbanCardChecklistItem);
+                            JsonObject checkListItemObj = new JsonObject();
+                            checkListItemObj.addProperty("id", dbKanbanCheckListItemCard.getId());
+                            checkListObj.get("items").getAsJsonArray().add(checkListItemObj);
+
+                            obj.get("checklists").getAsJsonArray().add(checkListObj);
+                        });
+                    }
+                });
+            }
+
+            // Adicionar o objeto ao array de IDs
+            arr.add(obj);
+
+            // Verificar se há respostas e chamar recursivamente
+            if (innerCard.get("innerCards") != null && !innerCard.get("innerCards").getAsJsonArray().isEmpty()) {
+                processInnerCards(innerCard.get("innerCards").getAsJsonArray(), kanbanColumn,dbKanbanCard, obj.getAsJsonArray("innerCards"));
+            }
+        });
+
+        return arr;
     }
 
     @DeleteMapping(path = "/private/user/kanban/column/card/{cardId}")
@@ -213,7 +474,7 @@ public class KanbanCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(4) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(2) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",435);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
@@ -234,12 +495,15 @@ public class KanbanCardController {
             }
         }
 
-        List<KanbanCheckList> kanbanCheckList = kanbanCheckListRepository.findAllByCardId(cardId);
-        kanbanCheckList.forEach(checkList->{
-            List<KanbanCheckListItem> kanbanCheckListItems = kanbanCheckListItemRepository.findAllByCheckListId(checkList.getId());
-            kanbanCheckListItemRepository.deleteAll(kanbanCheckListItems);
+        List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(cardId);
+        kanbanCardCheckList.forEach(checkList->{
+            List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
+            kanbanCardCheckListItemRepository.deleteAll(kanbanCardChecklistItems);
         });
-        kanbanCheckListRepository.deleteAll(kanbanCheckList);
+        kanbanCardCheckListRepository.deleteAll(kanbanCardCheckList);
+
+        List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(cardId);
+        kanbanCardCommentRepository.deleteAll(kanbanCardCommentList);
 
         kanbanCardRepository.deleteById(cardId);
 
@@ -249,7 +513,8 @@ public class KanbanCardController {
     @Transactional
     @PatchMapping(path = "/private/user/kanban/column/card/{cardId}")
     public ResponseEntity<String> patchCard(@RequestBody String body,@RequestHeader("Authorization") String token,
-                                          @PathVariable Integer cardId){
+                                            @PathVariable Integer cardId,
+                                            @RequestParam(required = false,defaultValue = "false") boolean deleteDeadLine){
         JsonObject errorMessage = new JsonObject();
 
         boolean isCard = kanbanCardRepository.findById(cardId).isPresent();
@@ -289,7 +554,7 @@ public class KanbanCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(2) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(3) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",435);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
@@ -313,9 +578,24 @@ public class KanbanCardController {
             selectedCard.setDescription(cardDescription.getAsString());
         }
 
-        JsonElement cardTags = jsonObj.get("tags");
-        if(cardTags != null){
-            selectedCard.setTags(cardTags.getAsString());
+        JsonElement cardDeadline = jsonObj.get("deadline");
+        if(cardDeadline != null){
+            if(kanbanUser.getUser().getPermissionLevel().charAt(16) == '0'){
+                errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (criar prazo)!");
+                errorMessage.addProperty("status",435);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
+            }
+            LocalDateTime deadline = LocalDateTime.parse(cardDeadline.getAsString());
+            selectedCard.setDeadline(deadline);
+        }else{
+            if(deleteDeadLine){
+                if(kanbanUser.getUser().getPermissionLevel().charAt(15) == '0'){
+                    errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (deletar prazo)!");
+                    errorMessage.addProperty("status",435);
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
+                }
+                selectedCard.setDeadline(null);
+            }
         }
 
         JsonElement cardMembers = jsonObj.get("members");
@@ -378,7 +658,7 @@ public class KanbanCardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(3) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(1) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",435);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());

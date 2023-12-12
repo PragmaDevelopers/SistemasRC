@@ -3,8 +3,8 @@ package com.api.sistema_rc.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table
-public class KanbanCheckList {
+@Table(name = "kanban_card_checklists")
+public class KanbanCardChecklist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

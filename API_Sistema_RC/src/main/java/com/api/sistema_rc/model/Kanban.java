@@ -33,10 +33,4 @@ public class Kanban {
     public void setTitle(String title) {
         this.title = title;
     }
-
-    public String toJson(JsonObject obj){
-        obj.addProperty("id",getId());
-        obj.addProperty("title",getTitle());
-        return obj.toString();
-    }
 }

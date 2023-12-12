@@ -50,10 +50,4 @@ public class KanbanColumn {
     public void setIndex(Integer index) {
         this.index = index;
     }
-
-    public String toJson(JsonObject obj){
-        obj.addProperty("id",getId());
-        obj.addProperty("title",getTitle());
-        return obj.toString();
-    }
 }

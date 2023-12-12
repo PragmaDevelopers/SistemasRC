@@ -40,8 +40,7 @@ public class WebSecurityConfig {
             )
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
             .requestMatchers("/api/public/**").permitAll()
-            .requestMatchers("/api/semi_public/**").hasAnyRole("CLIENT","PROFESSIONAL","ADMIN")
-            .requestMatchers("/api/private/**").hasAnyRole("PROFESSIONAL","ADMIN")
+            .requestMatchers("/api/private/**").hasAnyRole("MEMBER","SUPERVISOR","ADMIN")
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
             )

@@ -2,8 +2,8 @@ package com.api.sistema_rc.controller;
 
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.KanbanCardRepository;
-import com.api.sistema_rc.repository.KanbanCheckListItemRepository;
-import com.api.sistema_rc.repository.KanbanCheckListRepository;
+import com.api.sistema_rc.repository.KanbanCardChecklistItemRepository;
+import com.api.sistema_rc.repository.KanbanCardChecklistRepository;
 import com.api.sistema_rc.repository.KanbanUserRepository;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
@@ -20,37 +20,37 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/api")
-public class KanbanCheckListItemController {
+public class KanbanChecklistItemController {
     @Autowired
     private TokenService tokenService;
     @Autowired
     private KanbanCardRepository kanbanCardRepository;
     @Autowired
-    private KanbanCheckListRepository kanbanCheckListRepository;
+    private KanbanCardChecklistRepository kanbanCardChecklistRepository;
     @Autowired
-    private KanbanCheckListItemRepository kanbanCheckListItemRepository;
+    private KanbanCardChecklistItemRepository kanbanCardChecklistItemRepository;
     @Autowired
     private KanbanUserRepository kanbanUserRepository;
     private final Gson gson = new Gson();
-    @GetMapping(path = "/private/user/kanban/column/card/checkList/{checkListId}/checkListItems")
-    public ResponseEntity<String> getCheckListItem(@PathVariable Integer checkListId, @RequestHeader("Authorization") String token) {
+    @GetMapping(path = "/private/user/kanban/column/card/checklist/{checklistId}/checklistItems")
+    public ResponseEntity<String> getChecklistItem(@PathVariable Integer checklistId, @RequestHeader("Authorization") String token) {
         JsonObject errorMessage = new JsonObject();
 
-        if (checkListId == null) {
-            errorMessage.addProperty("mensagem", "O campo checkListId é necessário!");
+        if (checklistId == null) {
+            errorMessage.addProperty("mensagem", "O campo checklistId é necessário!");
             errorMessage.addProperty("status", 450);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
-        boolean isCheckList = kanbanCheckListRepository.findById(checkListId).isPresent();
+        boolean isCheckList = kanbanCardChecklistRepository.findById(checklistId).isPresent();
         if (!isCheckList) {
             errorMessage.addProperty("mensagem", "CheckList não foi encontrado!");
             errorMessage.addProperty("status", 454);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
-        KanbanCheckList kanbanCheckList = kanbanCheckListRepository.findById(checkListId).get();
+        KanbanCardChecklist kanbanCardCheckList = kanbanCardChecklistRepository.findById(checklistId).get();
 
-        Kanban kanban = kanbanCheckList.getKanbanCard().getKanbanColumn().getKanban();
+        Kanban kanban = kanbanCardCheckList.getKanbanCard().getKanbanColumn().getKanban();
         Integer user_id = tokenService.validateToken(token);
 
         KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(), user_id);
@@ -61,49 +61,43 @@ public class KanbanCheckListItemController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if (kanbanUser.getPermissionLevel().charAt(0) == '0') {
-            errorMessage.addProperty("mensagem", "Você não tem autorização para essa ação!");
-            errorMessage.addProperty("status", 455);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
-        }
+        List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardChecklistItemRepository.findAllByChecklistId(checklistId);
 
-        List<KanbanCheckListItem> kanbanCheckListItems = kanbanCheckListItemRepository.findAllByCheckListId(checkListId);
+        JsonArray checklistItemArr = new JsonArray();
 
-        JsonArray checkListItemArr = new JsonArray();
-
-        kanbanCheckListItems.forEach(checkListItem -> {
+        kanbanCardChecklistItems.forEach(checkListItem -> {
             JsonObject cardObj = new JsonObject();
             cardObj.addProperty("id", checkListItem.getId());
             cardObj.addProperty("name", checkListItem.getName());
             cardObj.addProperty("completed", checkListItem.isCompleted());
-            checkListItemArr.add(cardObj);
+            checklistItemArr.add(cardObj);
         });
 
-        return ResponseEntity.status(HttpStatus.OK).body(checkListItemArr.toString());
+        return ResponseEntity.status(HttpStatus.OK).body(checklistItemArr.toString());
     }
 
-    @PostMapping(path = "/private/user/kanban/column/card/checkList/checkListItem")
-    public ResponseEntity<String> postCheckListItem(@RequestBody String body,@RequestHeader("Authorization") String token){
+    @PostMapping(path = "/private/user/kanban/column/card/checklist/checklistItem")
+    public ResponseEntity<String> postChecklistItem(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         JsonObject errorMessage = new JsonObject();
 
-        JsonElement checkListId = jsonObj.get("checkListId");
-        if(checkListId == null){
-            errorMessage.addProperty("mensagem","O campo checkListId é necessário!");
+        JsonElement checklistId = jsonObj.get("checklistId");
+        if(checklistId == null){
+            errorMessage.addProperty("mensagem","O campo checklistId é necessário!");
             errorMessage.addProperty("status",450);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
-        boolean isCheckList = kanbanCheckListRepository.findById(checkListId.getAsInt()).isPresent();
-        if(!isCheckList){
-            errorMessage.addProperty("mensagem","CheckList não foi encontrado!");
+        boolean isChecklist = kanbanCardChecklistRepository.findById(checklistId.getAsInt()).isPresent();
+        if(!isChecklist){
+            errorMessage.addProperty("mensagem","Checklist não foi encontrado!");
             errorMessage.addProperty("status",454);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
-        KanbanCheckList kanbanCheckList = kanbanCheckListRepository.findById(checkListId.getAsInt()).get();
+        KanbanCardChecklist kanbanCardChecklist = kanbanCardChecklistRepository.findById(checklistId.getAsInt()).get();
 
-        Kanban kanban = kanbanCheckList.getKanbanCard().getKanbanColumn().getKanban();
+        Kanban kanban = kanbanCardChecklist.getKanbanCard().getKanbanColumn().getKanban();
         Integer user_id = tokenService.validateToken(token);
 
         KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
@@ -114,38 +108,38 @@ public class KanbanCheckListItemController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(1) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(11) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",455);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        JsonElement checkListName = jsonObj.get("name");
-        if(checkListName == null){
+        JsonElement checklistName = jsonObj.get("name");
+        if(checklistName == null){
             errorMessage.addProperty("mensagem","O campo name é necessário!");
             errorMessage.addProperty("status",450);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        KanbanCheckListItem kanbanCheckListItem = new KanbanCheckListItem();
+        KanbanCardChecklistItem kanbanCardChecklistItem = new KanbanCardChecklistItem();
 
-        kanbanCheckListItem.setName(checkListName.getAsString());
-        kanbanCheckListItem.setCompleted(false);
-        kanbanCheckListItem.setKanbanCheckList(kanbanCheckList);
+        kanbanCardChecklistItem.setName(checklistName.getAsString());
+        kanbanCardChecklistItem.setCompleted(false);
+        kanbanCardChecklistItem.setKanbanChecklist(kanbanCardChecklist);
 
-        KanbanCheckListItem dbKanbanCheckListItem = kanbanCheckListItemRepository.saveAndFlush(kanbanCheckListItem);
+        KanbanCardChecklistItem dbKanbanCardChecklistItem = kanbanCardChecklistItemRepository.saveAndFlush(kanbanCardChecklistItem);
 
-        return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCheckListItem.getId().toString());
+        return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCardChecklistItem.getId().toString());
     }
     @Transactional
-    @PatchMapping(path = "/private/user/kanban/column/card/checkList/checkListItem/{checkListItemId}")
-    public ResponseEntity<String> patchCheckListItem(@RequestBody String body,@RequestHeader("Authorization") String token,
-                                            @PathVariable Integer checkListItemId){
+    @PatchMapping(path = "/private/user/kanban/column/card/checklist/checklistItem/{checklistItemId}")
+    public ResponseEntity<String> patchChecklistItem(@RequestBody String body,@RequestHeader("Authorization") String token,
+                                            @PathVariable Integer checklistItemId){
         JsonObject errorMessage = new JsonObject();
 
-        boolean isCheckListItem = kanbanCheckListItemRepository.findById(checkListItemId).isPresent();
-        if(!isCheckListItem){
-            errorMessage.addProperty("mensagem","CheckListItem não foi encontrado!");
+        boolean isChecklistItem = kanbanCardChecklistItemRepository.findById(checklistItemId).isPresent();
+        if(!isChecklistItem){
+            errorMessage.addProperty("mensagem","ChecklistItem não foi encontrado!");
             errorMessage.addProperty("status",454);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
@@ -153,9 +147,9 @@ public class KanbanCheckListItemController {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         Integer user_id = tokenService.validateToken(token);
-        KanbanCheckListItem selectedCheckListItem = kanbanCheckListItemRepository.findById(checkListItemId).get();
+        KanbanCardChecklistItem selectedChecklistItem = kanbanCardChecklistItemRepository.findById(checklistItemId).get();
 
-        Kanban kanban = selectedCheckListItem.getKanbanCheckList().getKanbanCard().getKanbanColumn().getKanban();
+        Kanban kanban = selectedChecklistItem.getKanbanChecklist().getKanbanCard().getKanbanColumn().getKanban();
 
         KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
 
@@ -165,37 +159,37 @@ public class KanbanCheckListItemController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(2) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(13) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",455);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        JsonElement checkListName = jsonObj.get("name");
-        if(checkListName != null){
-            selectedCheckListItem.setName(checkListName.getAsString());
+        JsonElement checklistName = jsonObj.get("name");
+        if(checklistName != null){
+            selectedChecklistItem.setName(checklistName.getAsString());
         }
 
-        JsonElement checkListCompleted = jsonObj.get("completed");
-        if(checkListCompleted != null){
-            selectedCheckListItem.setCompleted(checkListCompleted.getAsBoolean());
+        JsonElement checklistCompleted = jsonObj.get("completed");
+        if(checklistCompleted != null){
+            selectedChecklistItem.setCompleted(checklistCompleted.getAsBoolean());
         }
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-    @DeleteMapping(path = "/private/user/kanban/column/card/checkList/checkListItem/{checkListItemId}")
-    public ResponseEntity<String> deleteCheckListItem(@PathVariable Integer checkListItemId,@RequestHeader("Authorization") String token){
+    @DeleteMapping(path = "/private/user/kanban/column/card/checklist/checklistItem/{checklistItemId}")
+    public ResponseEntity<String> deleteChecklistItem(@PathVariable Integer checklistItemId,@RequestHeader("Authorization") String token){
         JsonObject errorMessage = new JsonObject();
-        boolean isCheckListItem = kanbanCheckListItemRepository.findById(checkListItemId).isPresent();
-        if(!isCheckListItem){
-            errorMessage.addProperty("mensagem","CheckListItem não foi encontrado!");
+        boolean isChecklistItem = kanbanCardChecklistItemRepository.findById(checklistItemId).isPresent();
+        if(!isChecklistItem){
+            errorMessage.addProperty("mensagem","ChecklistItem não foi encontrado!");
             errorMessage.addProperty("status",454);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
-        KanbanCheckListItem selectedCheckListItem = kanbanCheckListItemRepository.findById(checkListItemId).get();
+        KanbanCardChecklistItem selectedChecklistItem = kanbanCardChecklistItemRepository.findById(checklistItemId).get();
 
-        Kanban kanban = selectedCheckListItem.getKanbanCheckList().getKanbanCard().getKanbanColumn().getKanban();
+        Kanban kanban = selectedChecklistItem.getKanbanChecklist().getKanbanCard().getKanbanColumn().getKanban();
         Integer user_id = tokenService.validateToken(token);
 
         KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
@@ -206,13 +200,13 @@ public class KanbanCheckListItemController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(4) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(12) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",455);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        kanbanCheckListItemRepository.deleteById(checkListItemId);
+        kanbanCardChecklistItemRepository.deleteById(checklistItemId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

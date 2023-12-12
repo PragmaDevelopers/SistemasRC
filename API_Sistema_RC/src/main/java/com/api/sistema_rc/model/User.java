@@ -21,7 +21,7 @@ public class User{
     private String name;
     @Lob @Basic(fetch=FetchType.LAZY)
     @Column
-    protected Blob profilePicture;
+    private Blob profilePicture;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate registration_date;
@@ -35,6 +35,8 @@ public class User{
     private String nationality;
     @Column(length = 20)
     private String gender;
+    @Column(length = 255,nullable = false)
+    private String permissionLevel;
 
     public Integer getId() {
         return id;
@@ -114,5 +116,13 @@ public class User{
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public String getPermissionLevel() {
+        return permissionLevel;
+    }
+
+    public void setPermissionLevel(String permissionLevel) {
+        this.permissionLevel = permissionLevel;
     }
 }

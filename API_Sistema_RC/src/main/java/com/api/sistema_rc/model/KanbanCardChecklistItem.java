@@ -3,14 +3,14 @@ package com.api.sistema_rc.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table
-public class KanbanCheckListItem {
+@Table(name = "kanban_card_checklist_items")
+public class KanbanCardChecklistItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @ManyToOne
-    @JoinColumn(nullable = false,name = "kanban_check_list_id")
-    private KanbanCheckList kanbanCheckList;
+    @JoinColumn(nullable = false,name = "kanban_card_checklist_id")
+    private KanbanCardChecklist kanbanCardChecklist;
     @Column(length = 255,nullable = false)
     private String name;
     @Column(nullable = false)
@@ -24,12 +24,12 @@ public class KanbanCheckListItem {
         this.id = id;
     }
 
-    public KanbanCheckList getKanbanCheckList() {
-        return kanbanCheckList;
+    public KanbanCardChecklist getKanbanChecklist() {
+        return kanbanCardChecklist;
     }
 
-    public void setKanbanCheckList(KanbanCheckList kanbanCheckList) {
-        this.kanbanCheckList = kanbanCheckList;
+    public void setKanbanChecklist(KanbanCardChecklist kanbanCardChecklist) {
+        this.kanbanCardChecklist = kanbanCardChecklist;
     }
 
     public String getName() {

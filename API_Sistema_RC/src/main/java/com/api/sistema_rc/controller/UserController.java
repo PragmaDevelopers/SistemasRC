@@ -22,11 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.sql.rowset.serial.SerialBlob;
-import java.lang.reflect.Array;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -100,10 +98,11 @@ public class UserController {
 
         user.setNationality(nationality.getAsString());
         user.setRegistration_date(LocalDate.now());
+        user.setPermissionLevel("00000000000000000000000000");
 
         Role role = new Role();
-        role.setId(2);
-        role.setName(RoleName.ROLE_PROFESSIONAL);
+        role.setId(3);
+        role.setName(RoleName.ROLE_MEMBER);
 
         user.setRole(role);
 
@@ -143,6 +142,93 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
     }
+
+    @Transactional
+    @PatchMapping(path = "/private/user/{userId}/config")
+    public ResponseEntity<String> configUserPermission(@PathVariable Integer userId,@RequestBody String body,@RequestHeader("Authorization") String token) {
+        JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
+
+        Integer yourUserId = tokenService.validateToken(token);
+        User yourUser = userRepository.findById(yourUserId).get();
+
+        JsonObject errorMessage = new JsonObject();
+
+        if(yourUserId.equals(userId)){
+            errorMessage.addProperty("mensagem","Você não pode modificar o seu próprio perfil!");
+            errorMessage.addProperty("status",405);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        boolean isTargetUser = userRepository.findById(userId).isPresent();
+        if(!isTargetUser){
+            errorMessage.addProperty("mensagem","Usuário não encontrado!");
+            errorMessage.addProperty("status",414);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        User targetUser = userRepository.findById(userId).get();
+
+        String yourRole = yourUser.getRole().getName().name();
+        String targetRole = targetUser.getRole().getName().name();
+
+        if(yourRole.equals("ROLE_MEMBER")){
+            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (definir as permissões)!");
+            errorMessage.addProperty("status",405);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        if(yourRole.equals("ROLE_SUPERVISOR")){
+            if(targetRole.equals("ROLE_SUPERVISOR")){
+                errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (Mudar as permissões de outro supervisor)!");
+                errorMessage.addProperty("status",405);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+            if(targetRole.equals("ROLE_ADMIN")){
+                errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (Mudar as permissões de um admin)!");
+                errorMessage.addProperty("status",405);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+        }
+
+        if(yourRole.equals("ROLE_ADMIN") && targetRole.equals("ROLE_ADMIN")){
+            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (Mudar as permissões de outro admin)!");
+            errorMessage.addProperty("status",405);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        JsonElement isSupervisor = jsonObj.get("isSupervisor");
+        if(isSupervisor != null){
+            if(!yourUser.getRole().getName().name().equals("ROLE_ADMIN")){
+                errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (mudar o cargo de alguém)!");
+                errorMessage.addProperty("status",405);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+            if(isSupervisor.getAsBoolean()){
+                Role role = new Role();
+                role.setId(2);
+                role.setName(RoleName.ROLE_SUPERVISOR);
+                targetUser.setRole(role);
+            }else{
+                Role role = new Role();
+                role.setId(3);
+                role.setName(RoleName.ROLE_MEMBER);
+                targetUser.setRole(role);
+            }
+        }
+
+        JsonElement permissionLevel = jsonObj.get("permissionLevel");
+        if(permissionLevel != null){
+            if(permissionLevel.getAsString().split("").length != 26){
+                errorMessage.addProperty("mensagem","O permissionLevel precisa ter 26 caracteres!");
+                errorMessage.addProperty("status",400);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+            targetUser.setPermissionLevel(permissionLevel.getAsString());
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
 
     @Transactional
     @PatchMapping(path = "/private/user/profile")
@@ -202,7 +288,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @Transactional
     @GetMapping(path = "/private/user/profile")
     public ResponseEntity<String> getUser(@RequestHeader("Authorization") String token){
         Integer user_id = tokenService.validateToken(token);
@@ -223,7 +308,7 @@ public class UserController {
         formattedUser.addProperty("nationality",user.getNationality());
         formattedUser.addProperty("gender",user.getGender());
         formattedUser.addProperty("role",user.getRole().getName().name());
-
+        formattedUser.addProperty("permission_level",user.getPermissionLevel());
         if(user.getProfilePicture() == null){
             formattedUser.addProperty("profilePicture",(String) null);
         }else{
@@ -262,7 +347,7 @@ public class UserController {
             formattedUser.addProperty("nationality",user.getNationality());
             formattedUser.addProperty("gender",user.getGender());
             formattedUser.addProperty("role",user.getRole().getName().name());
-
+            formattedUser.addProperty("permission_level",user.getPermissionLevel());
             if(user.getProfilePicture() == null){
                 formattedUser.addProperty("profilePicture",(String) null);
             }else{

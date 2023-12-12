@@ -13,9 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -29,11 +27,19 @@ public class KanbanColumnController {
     @Autowired
     private KanbanCardRepository kanbanCardRepository;
     @Autowired
+    private KanbanCardCommentRepository kanbanCardCommentRepository;
+    @Autowired
     private KanbanUserRepository kanbanUserRepository;
     @Autowired
-    private KanbanCheckListRepository kanbanCheckListRepository;
+    private UserRepository userRepository;
     @Autowired
-    private KanbanCheckListItemRepository kanbanCheckListItemRepository;
+    private KanbanNotificationRepository kanbanNotificationRepository;
+    @Autowired
+    private KanbanCardTagRepository kanbanCardTagRepository;
+    @Autowired
+    private KanbanCardChecklistRepository kanbanCardCheckListRepository;
+    @Autowired
+    private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
     private final Gson gson = new Gson();
 
     @GetMapping(path = "/private/user/kanban/{kanbanId}/columns")
@@ -63,12 +69,6 @@ public class KanbanColumnController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(0) == '0'){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
-            errorMessage.addProperty("status",435);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
-        }
-
         List<KanbanColumn> kanbanColumns = kanbanColumnRepository.findAllByKanbanId(kanbanId);
 
         JsonArray columnsArr = new JsonArray();
@@ -80,46 +80,117 @@ public class KanbanColumnController {
             columnObj.addProperty("index",column.getIndex());
             if(isCards){
                 List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnId(column.getId());
-                JsonArray cardsArr = new JsonArray();
+                JsonArray cardArr = new JsonArray();
                 for(KanbanCard card : kanbanCardsList){
                     JsonObject cardObj = new JsonObject();
                     cardObj.addProperty("id",card.getId());
                     cardObj.addProperty("title",card.getTitle());
-                    cardObj.addProperty("tags",card.getTags());
                     cardObj.addProperty("members",card.getMembers());
                     cardObj.addProperty("description",card.getDescription());
+                    if(card.getDeadline() == null){
+                        cardObj.addProperty("deadline", (String) null);
+                    }else{
+                        cardObj.addProperty("deadline", String.valueOf(card.getDeadline()));
+                    }
                     cardObj.addProperty("index",card.getIndex());
-
-                    List<KanbanCheckList> kanbanCheckList = kanbanCheckListRepository.findAllByCardId(card.getId());
+                    List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(card.getId());
                     JsonArray checkListArr = new JsonArray();
-                    for (KanbanCheckList checkList : kanbanCheckList) {
+                    for (KanbanCardChecklist checkList : kanbanCardCheckList) {
                         JsonObject checkListObj = new JsonObject();
                         checkListObj.addProperty("id",checkList.getId());
                         checkListObj.addProperty("name",checkList.getName());
 
-                        List<KanbanCheckListItem> kanbanCheckListItems = kanbanCheckListItemRepository.findAllByCheckListId(checkList.getId());
+                        List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
                         JsonArray checkListItemArr = new JsonArray();
-                        for (KanbanCheckListItem kanbanCheckListItem : kanbanCheckListItems) {
+                        for (KanbanCardChecklistItem checkListItem : kanbanCardChecklistItems) {
                             JsonObject checkListItemObj = new JsonObject();
-                            checkListItemObj.addProperty("id",kanbanCheckListItem.getId());
-                            checkListItemObj.addProperty("name",kanbanCheckListItem.getName());
-                            checkListItemObj.addProperty("completed",kanbanCheckListItem.isCompleted());
+                            checkListItemObj.addProperty("id",checkListItem.getId());
+                            checkListItemObj.addProperty("name",checkListItem.getName());
+                            checkListItemObj.addProperty("completed",checkListItem.isCompleted());
                             checkListItemArr.add(checkListItemObj);
                         }
-
                         checkListObj.add("items",checkListItemArr);
                         checkListArr.add(checkListObj);
                     }
-
                     cardObj.add("checkList",checkListArr);
-                    cardsArr.add(cardObj);
+                    
+                    List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
+                    JsonArray tagArr = new JsonArray();
+                    for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
+                        JsonObject tagObj = new JsonObject();
+                        tagObj.addProperty("id",kanbanCardTag.getId());
+                        tagObj.addProperty("name",kanbanCardTag.getName());
+                        tagObj.addProperty("color",kanbanCardTag.getColor());
+                        tagArr.add(tagObj);
+                    }
+                    cardObj.add("tags",tagArr);
+
+                    List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(card.getId());
+                    JsonArray commentArr = processComments(kanbanCardCommentList,new JsonArray());
+                    cardObj.add("comments",commentArr);
+
+                    cardArr.add(cardObj);
                 }
-                columnObj.add("cards",cardsArr);
+                columnObj.add("cards",cardArr);
             }
 
             columnsArr.add(columnObj);
         });
         return ResponseEntity.status(HttpStatus.OK).body(columnsArr.toString());
+    }
+
+    public JsonArray processComments(List<KanbanCardComment> comments, JsonArray arr) {
+        Map<Integer, JsonObject> commentMap = new HashMap<>();
+
+        comments.forEach(comment -> {
+            // Processar o comentário atual
+            JsonObject commentObj = new JsonObject();
+            commentObj.addProperty("id", comment.getId());
+            commentObj.addProperty("content", comment.getContent());
+            commentObj.addProperty("edited", comment.isEdited());
+
+            if (comment.getRegistration_date() == null) {
+                commentObj.addProperty("registration_date", (String) null);
+            } else {
+                commentObj.addProperty("registration_date", String.valueOf(comment.getRegistration_date()));
+            }
+
+            JsonObject userObj = new JsonObject();
+            userObj.addProperty("id", comment.getUser().getId());
+            userObj.addProperty("name", comment.getUser().getName());
+            userObj.addProperty("email", comment.getUser().getEmail());
+            commentObj.add("user", userObj);
+
+            // Verificar se há respostas e chamar recursivamente
+            List<KanbanCardComment> kanbanCardCommentAnsweredList = kanbanCardCommentRepository.findAllByCommentAnsweredId(comment.getId());
+
+            if (!kanbanCardCommentAnsweredList.isEmpty()) {
+                JsonArray answerArr = new JsonArray();
+                processComments(kanbanCardCommentAnsweredList, answerArr);
+                commentObj.add("answers", answerArr);
+            }
+
+            commentMap.put(comment.getId(), commentObj);
+        });
+
+        comments.forEach(comment -> {
+            // Verificar se o comentário tem um pai (foi respondido)
+            if (comment.getKanbanCommentAnswered() != null) {
+                int parentId = comment.getKanbanCommentAnswered().getId();
+                JsonObject parentComment = commentMap.get(parentId);
+
+                // Adicionar como resposta ao pai
+                if (parentComment != null) {
+                    JsonArray answers = parentComment.getAsJsonArray("answers");
+                    answers.add(commentMap.get(comment.getId()));
+                }
+            } else {
+                // Adicionar o comentário principal ao array
+                arr.add(commentMap.get(comment.getId()));
+            }
+        });
+
+        return arr;
     }
 
     @PostMapping(path = "/private/user/kanban/column")
@@ -160,7 +231,7 @@ public class KanbanColumnController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(1) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(4) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",425);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
@@ -174,6 +245,55 @@ public class KanbanColumnController {
         kanbanColumn.setIndex(kanbanColumnList.size());
 
         KanbanColumn dbKanbanColumn = kanbanColumnRepository.saveAndFlush(kanbanColumn);
+
+        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+
+        KanbanNotification kanbanNotification = new KanbanNotification();
+
+        kanbanNotification.setType("CREATE");
+        kanbanNotification.setViewed(false);
+        JsonObject auxAdmin = new JsonObject();
+        auxAdmin.addProperty("requestorId",kanbanUser.getUser().getId());
+        auxAdmin.addProperty("requestorName",kanbanUser.getUser().getName());
+        auxAdmin.addProperty("changedType","COLUMN");
+        auxAdmin.addProperty("changedId",dbKanbanColumn.getId());
+        auxAdmin.addProperty("changedName",dbKanbanColumn.getTitle());
+        kanbanNotification.setAux(auxAdmin.toString());
+        kanbanNotification.setMessage(
+                "Você criou a coluna "+dbKanbanColumn.getTitle()+"."
+        );
+        kanbanNotification.setUser(kanbanUser.getUser());
+
+        kanbanNotificationList.add(kanbanNotification);
+
+        List<User> userList = userRepository.findAllByAdmin();
+        userList.forEach(userAdmin->{
+            if(!Objects.equals(userAdmin.getId(), user_id)){
+                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setMessage(
+                        kanbanUser.getUser().getName()+" criou a coluna "+dbKanbanColumn.getTitle()+"."
+                );
+                kanbanNotificationAdmin.setUser(userAdmin);
+                kanbanNotificationList.add(kanbanNotificationAdmin);
+            }
+        });
+
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId.getAsInt());
+        kanbanUserList.forEach(userInKanban->{
+            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                String role = userInKanban.getUser().getRole().getName().name();
+                if (role.equals("ROLE_SUPERVISOR")) {
+                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setMessage(
+                            kanbanUser.getUser().getName()+" criou a coluna "+dbKanbanColumn.getTitle()+"."
+                    );
+                    kanbanNotification.setUser(userInKanban.getUser());
+                    kanbanNotificationList.add(kanbanNotification);
+                }
+            }
+        });
+
+        kanbanNotificationRepository.saveAll(kanbanNotificationList);
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanColumn.getId().toString());
     }
@@ -201,7 +321,7 @@ public class KanbanColumnController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(4) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(6) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",425);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
@@ -223,14 +343,67 @@ public class KanbanColumnController {
 
         List<KanbanCard> kanbanCardList = kanbanCardRepository.findAllByColumnId(columnId);
         kanbanCardList.forEach(cardId->{
-            List<KanbanCheckList> kanbanCheckList = kanbanCheckListRepository.findAllByCardId(cardId.getId());
-            kanbanCheckList.forEach(checkList->{
-                List<KanbanCheckListItem> kanbanCheckListItems = kanbanCheckListItemRepository.findAllByCheckListId(checkList.getId());
-                kanbanCheckListItemRepository.deleteAll(kanbanCheckListItems);
+            List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(cardId.getId());
+            kanbanCardCheckList.forEach(checkList->{
+                List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
+                kanbanCardCheckListItemRepository.deleteAll(kanbanCardChecklistItems);
             });
-            kanbanCheckListRepository.deleteAll(kanbanCheckList);
+            kanbanCardCheckListRepository.deleteAll(kanbanCardCheckList);
+
+            List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(cardId.getId());
+            kanbanCardCommentRepository.deleteAll(kanbanCardCommentList);
         });
+
         kanbanCardRepository.deleteAll(kanbanCardList);
+
+        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+
+        KanbanNotification kanbanNotification = new KanbanNotification();
+
+        kanbanNotification.setType("DELETE");
+        kanbanNotification.setViewed(false);
+        JsonObject auxAdmin = new JsonObject();
+        auxAdmin.addProperty("requestorId",kanbanUser.getUser().getId());
+        auxAdmin.addProperty("requestorName",kanbanUser.getUser().getName());
+        auxAdmin.addProperty("changedType","COLUMN");
+        auxAdmin.addProperty("changedId",selectedColumn.getId());
+        auxAdmin.addProperty("changedName",selectedColumn.getTitle());
+        kanbanNotification.setAux(auxAdmin.toString());
+        kanbanNotification.setMessage(
+                "Você deletou a coluna "+selectedColumn.getTitle()+"."
+        );
+        kanbanNotification.setUser(kanbanUser.getUser());
+
+        kanbanNotificationList.add(kanbanNotification);
+
+        List<User> userList = userRepository.findAllByAdmin();
+        userList.forEach(userAdmin->{
+            if(!Objects.equals(userAdmin.getId(), user_id)){
+                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setMessage(
+                        kanbanUser.getUser().getName()+" deletou a coluna "+selectedColumn.getTitle()+"."
+                );
+                kanbanNotificationAdmin.setUser(userAdmin);
+                kanbanNotificationList.add(kanbanNotificationAdmin);
+            }
+        });
+
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+        kanbanUserList.forEach(userInKanban->{
+            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                String role = userInKanban.getUser().getRole().getName().name();
+                if (role.equals("ROLE_SUPERVISOR")) {
+                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setMessage(
+                            kanbanUser.getUser().getName()+" deletou a coluna "+selectedColumn.getTitle()+"."
+                    );
+                    kanbanNotification.setUser(userInKanban.getUser());
+                    kanbanNotificationList.add(kanbanNotification);
+                }
+            }
+        });
+
+        kanbanNotificationRepository.saveAll(kanbanNotificationList);
 
         kanbanColumnRepository.deleteById(columnId);
 
@@ -265,7 +438,7 @@ public class KanbanColumnController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(2) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(7) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",435);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
@@ -273,6 +446,58 @@ public class KanbanColumnController {
 
         JsonElement columnTitle = jsonObj.get("title");
         if(columnTitle != null){
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+
+            KanbanNotification kanbanNotification = new KanbanNotification();
+
+            kanbanNotification.setType("UPDATE");
+            kanbanNotification.setViewed(false);
+            JsonObject auxAdmin = new JsonObject();
+            auxAdmin.addProperty("requestorId",kanbanUser.getUser().getId());
+            auxAdmin.addProperty("requestorName",kanbanUser.getUser().getName());
+            auxAdmin.addProperty("changedType","COLUMN");
+            auxAdmin.addProperty("changedId",selectedColumn.getId());
+            auxAdmin.addProperty("changedName",selectedColumn.getTitle());
+            kanbanNotification.setAux(auxAdmin.toString());
+            kanbanNotification.setMessage(
+                    "Você atualizou o título da coluna " +
+                            selectedColumn.getTitle() + " para " + columnTitle.getAsString() + "."
+            );
+            kanbanNotification.setUser(kanbanUser.getUser());
+
+            kanbanNotificationList.add(kanbanNotification);
+
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setMessage(
+                            kanbanUser.getUser().getName() + ", atualizou o título da coluna " +
+                                    selectedColumn.getTitle() + " para " + columnTitle.getAsString() + "."
+                    );
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
+                }
+            });
+
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + ", atualizou o título da coluna " +
+                                        selectedColumn.getTitle() + " para " + columnTitle.getAsString() + "."
+                        );
+                        kanbanNotification.setUser(userInKanban.getUser());
+                        kanbanNotificationList.add(kanbanNotification);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
             selectedColumn.setTitle(columnTitle.getAsString());
         }
 
@@ -313,7 +538,7 @@ public class KanbanColumnController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getPermissionLevel().charAt(3) == '0'){
+        if(kanbanUser.getUser().getPermissionLevel().charAt(5) == '0'){
             errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",425);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
@@ -351,6 +576,58 @@ public class KanbanColumnController {
                 toColumnList.get(i).setIndex(i);
             }
         }
+
+        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+
+        KanbanNotification kanbanNotification = new KanbanNotification();
+
+        kanbanNotification.setType("MOVE");
+        kanbanNotification.setViewed(false);
+        JsonObject auxAdmin = new JsonObject();
+        auxAdmin.addProperty("requestorId",kanbanUser.getUser().getId());
+        auxAdmin.addProperty("requestorName",kanbanUser.getUser().getName());
+        auxAdmin.addProperty("changedType","COLUMN");
+        auxAdmin.addProperty("changedId",selectedColumn.getId());
+        auxAdmin.addProperty("changedName",selectedColumn.getTitle());
+        kanbanNotification.setAux(auxAdmin.toString());
+        kanbanNotification.setMessage(
+                "Você moveu a coluna " +
+                        selectedColumn.getTitle() + "."
+        );
+        kanbanNotification.setUser(kanbanUser.getUser());
+
+        kanbanNotificationList.add(kanbanNotification);
+
+        List<User> userList = userRepository.findAllByAdmin();
+        userList.forEach(userAdmin->{
+            if(!Objects.equals(userAdmin.getId(), user_id)){
+                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setMessage(
+                        kanbanUser.getUser().getName() + " moveu a coluna " +
+                                selectedColumn.getTitle() + "."
+                );
+                kanbanNotificationAdmin.setUser(userAdmin);
+                kanbanNotificationList.add(kanbanNotificationAdmin);
+            }
+        });
+
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+        kanbanUserList.forEach(userInKanban->{
+            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                String role = userInKanban.getUser().getRole().getName().name();
+                if (role.equals("ROLE_SUPERVISOR")) {
+                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setMessage(
+                            kanbanUser.getUser().getName() + " moveu a coluna " +
+                                    selectedColumn.getTitle() + "."
+                    );
+                    kanbanNotification.setUser(userInKanban.getUser());
+                    kanbanNotificationList.add(kanbanNotification);
+                }
+            }
+        });
+
+        kanbanNotificationRepository.saveAll(kanbanNotificationList);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

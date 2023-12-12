@@ -2,6 +2,10 @@ package com.api.sistema_rc.model;
 
 import com.google.gson.JsonObject;
 import jakarta.persistence.*;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "kanban_cards")
@@ -12,14 +16,18 @@ public class KanbanCard {
     @ManyToOne
     @JoinColumn(nullable = false,name = "kanban_column_id")
     private KanbanColumn kanbanColumn;
+    @ManyToOne
+    @JoinColumn(name = "kanban_inner_card_id")
+    private KanbanCard kanbanInnerCard;
     @Column(length = 255,nullable = false)
     private String title;
     @Column(length = 255)
     private String description;
     @Column(length = 255)
-    private String tags;
-    @Column(length = 255)
     private String members;
+    @Column
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDateTime deadline;
     @Column(nullable = false)
     private Integer index;
 
@@ -39,6 +47,14 @@ public class KanbanCard {
         this.kanbanColumn = kanbanColumn;
     }
 
+    public KanbanCard getKanbanInnerCard() {
+        return kanbanInnerCard;
+    }
+
+    public void setKanbanInnerCard(KanbanCard kanbanInnerCard) {
+        this.kanbanInnerCard = kanbanInnerCard;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -55,14 +71,6 @@ public class KanbanCard {
         this.description = description;
     }
 
-    public String getTags() {
-        return tags;
-    }
-
-    public void setTags(String tags) {
-        this.tags = tags;
-    }
-
     public String getMembers() {
         return members;
     }
@@ -71,21 +79,19 @@ public class KanbanCard {
         this.members = members;
     }
 
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
+
     public Integer getIndex() {
         return index;
     }
 
     public void setIndex(Integer index) {
         this.index = index;
-    }
-
-    public String toJson(JsonObject obj){
-        obj.addProperty("id",getId());
-        obj.addProperty("title",getTitle());
-        obj.addProperty("description",getDescription());
-        obj.addProperty("tags",getTags());
-        obj.addProperty("members",getMembers());
-        obj.addProperty("index",getIndex());
-        return obj.toString();
     }
 }

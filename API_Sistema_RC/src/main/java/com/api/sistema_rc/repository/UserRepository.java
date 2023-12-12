@@ -18,4 +18,6 @@ public interface UserRepository extends JpaRepository<User,Integer> {
     List<User> findAllByEmail(@Param("email") String email,@Param("page") Integer page);
     @Query(value = "SELECT * FROM users LIMIT 10 OFFSET :page",nativeQuery = true)
     List<User> findAll(@Param("page") Integer page);
+    @Query(value = "SELECT * FROM users WHERE role_id = 1",nativeQuery = true)
+    List<User> findAllByAdmin();
 }
