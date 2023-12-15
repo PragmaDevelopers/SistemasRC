@@ -1,6 +1,4 @@
 import { TypeOf } from 'zod';
-import {signUpA,signUpB} from '@/utils/inputsValidation';
+import {signUp} from '@/utils/inputsValidation';
 
-export type IFormSignUpAInputs = TypeOf<typeof signUpA>;
-
-export type IFormSignUpBInputs = TypeOf<typeof signUpB>;
+export type IFormSignUpInputs = TypeOf<typeof signUp>;

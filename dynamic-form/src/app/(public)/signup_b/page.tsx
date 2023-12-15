@@ -1,11 +1,11 @@
 "use client"
 import React, { ReactNode, useState, useEffect, createElement } from "react";
-import { IFormSignUpBInputs } from "../../../Interface/IFormInputs";
+import { IFormSignUpInputs } from "../../../Interface/IFormInputs";
 import ICepApi from "../../../Interface/ICepApi";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { getAddressManually, tryGetAddressByCep } from "@/utils/handleError";
-import {signUpB} from "@/utils/inputsValidation";
+import {signUp} from "@/utils/inputsValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AccordionItem } from "@/components/AccordionItem";
 import states from "@/api/states/states";
@@ -13,8 +13,8 @@ import states from "@/api/states/states";
 type IInputType = "text" | "email" | "select" | "radio" | "number" | "checkbox" | "search" | "date" | "tel" | "textarea"
 
 export default function SignUpPageB() {
-  const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<IFormSignUpBInputs>({
-    resolver: zodResolver(signUpB)
+  const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<IFormSignUpInputs>({
+    resolver: zodResolver(signUp)
   });
 
   const [accordions,setAccordions] = useState<{pessoa_fisica: any[],pessoa_juridica: any[],}>({
@@ -512,6 +512,20 @@ export default function SignUpPageB() {
             setAccordions({pessoa_fisica:accordions.pessoa_fisica,pessoa_juridica:newAccordion});
         }
   }
+  
+  const [selectedArr,setSelectedArr] = useState<string[]>([]);
+    function addItem(item:string){
+        if(!selectedArr.includes(item)){
+            setSelectedArr([item,...watch().procuracao as string[]]);
+            setValue("procuracao",[item,...selectedArr]);
+        }
+    }
+
+    function removeItem(item:string){
+        const selectedFilter = selectedArr.filter(value=>value !== item);
+        setSelectedArr(selectedFilter);
+        setValue("procuracao",selectedFilter);
+    }
 
   return (
     <div className="mx-auto px-2 w-full max-w-4xl my-3">
@@ -827,12 +841,12 @@ export default function SignUpPageB() {
                             drafts[draftIndex] = {
                                 name: draftName,
                                 data: accordions,
-                                category: "signUpB"
+                                category: "signUp"
                             }
                         }else{
                             drafts.push({
                                 name: draftName,
-                                category: "signUpB",
+                                category: "signUp",
                                 data: accordions
                             })
                         }
@@ -855,17 +869,35 @@ export default function SignUpPageB() {
                     <AccordionItem className="flex flex-wrap items-center justify-center" title={accordion.title}>
                         {
                             accordion.title === "Cliente" && (
-                                <div className="mb-2 w-2/4 border-x-8">
-                                    <label className="block">Tipo Pessoa (conjunto fixo)</label>
-                                    <div onChange={(e:any)=>{
-                                        setTypePerson(e.target.value)
-                                    }} className="inline-block">
-                                        <input {...register("tipo_pessoa",{required:true})} className="mx-1" type="radio" id="input-tipo-pessoa" value="pessoa_fisica" />
-                                        <label htmlFor="input-tipo-pessoa">Pessoa física</label>
-                                        <input {...register("tipo_pessoa",{required:true})} className="mx-1" type="radio" id="input-tipo-pessoa" value="pessoa_juridica" />
-                                        <label htmlFor="input-tipo-pessoa">Pessoa jurídica</label>
+                                <>
+                                    <div className="mb-2 w-2/4 border-x-8">
+                                        <label className="block">Tipo Pessoa (conjunto fixo)</label>
+                                        <div onChange={(e:any)=>{
+                                            setTypePerson(e.target.value)
+                                        }} className="inline-block">
+                                            <input {...register("tipo_pessoa",{required:true})} className="mx-1" type="radio" id="input-tipo-pessoa" value="pessoa_fisica" />
+                                            <label htmlFor="input-tipo-pessoa">Pessoa física</label>
+                                            <input {...register("tipo_pessoa",{required:true})} className="mx-1" type="radio" id="input-tipo-pessoa" value="pessoa_juridica" />
+                                            <label htmlFor="input-tipo-pessoa">Pessoa jurídica</label>
+                                        </div>
                                     </div>
-                                </div>
+                                    <div className="mb-2 w-2/4 border-x-8">
+                                        <label htmlFor="input-power-attorney">Procuração: </label>
+                                        <select onChange={(e)=>{addItem(e.target.value)}} defaultValue="default" className="w-full" id="input-power-attorney">
+                                            <option disabled value="default">-- Escolha um tipo de procuração --</option>
+                                            <option value="previdenciario">Previdenciário</option>
+                                            <option value="trabalhista">Trabalhista</option>
+                                            <option value="administrativo">Administrativo</option>
+                                            <option value="civel">Cível</option>
+                                        </select>
+                                        <input type="hidden" {...register("procuracao",{required:true})} />
+                                        <div className="flex gap-2 pt-2 flex-wrap">
+                                            {selectedArr.map(value=>{
+                                                return <span onClick={()=>removeItem(value)} key={value} className="bg-slate-300 inline-block py-1 px-2 cursor-pointer">{value}</span>
+                                            })}
+                                        </div>
+                                    </div>
+                                </>
                             )
                         }
                         {accordion.inputs.map((input:any,inputIndex:number)=>{

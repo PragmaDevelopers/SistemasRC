@@ -1,25 +1,25 @@
 import { UseFormRegister,UseFormSetValue,UseFormWatch } from "react-hook-form";
-import { IFormSignUpAInputs } from "@/Interface/IFormInputs";
+import { IFormSignUpInputs } from "@/Interface/IFormInputs";
 import issuingBodies from "@/api/issuingBodies/issuingBodies";
 import states from "@/api/states/states";
 import { useEffect,useState } from "react";
 
 type ISimpleSelection = {
-    register: UseFormRegister<IFormSignUpAInputs>,
+    register: UseFormRegister<IFormSignUpInputs>,
     className: string
 }
 
 type IIntermediateSelection = {
-    register: UseFormRegister<IFormSignUpAInputs>,
-    setValue: UseFormSetValue<IFormSignUpAInputs>,
-    watch: UseFormWatch<IFormSignUpAInputs>,
+    register: UseFormRegister<IFormSignUpInputs>,
+    setValue: UseFormSetValue<IFormSignUpInputs>,
+    watch: UseFormWatch<IFormSignUpInputs>,
     className: string
 }
 
 type IAdvancedSelection = {
-    register: UseFormRegister<IFormSignUpAInputs>,
-    setValue: UseFormSetValue<IFormSignUpAInputs>,
-    watch: UseFormWatch<IFormSignUpAInputs>,
+    register: UseFormRegister<IFormSignUpInputs>,
+    setValue: UseFormSetValue<IFormSignUpInputs>,
+    watch: UseFormWatch<IFormSignUpInputs>,
     apiInfo: string[]
     className: string
 }

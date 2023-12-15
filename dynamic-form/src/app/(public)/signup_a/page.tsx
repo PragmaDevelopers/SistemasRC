@@ -1,6 +1,6 @@
 "use client"
 import React, { ReactNode, useState, useEffect } from "react";
-import { IFormSignUpAInputs } from "../../../Interface/IFormInputs";
+import { IFormSignUpInputs } from "../../../Interface/IFormInputs";
 import ICepApi from "../../../Interface/ICepApi";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -20,17 +20,17 @@ import {
 import { FullName, Email, RG,CPF,MotherName,CEP,CTPSn,CTPSserie } from "@/components/form/InputText/InputText";
 import { CommonLawMarriage,AddressComplement } from "@/components/form/InputRadio/InputRadio";
 import { getAddressManually, tryGetAddressByCep } from "@/utils/handleError";
-import {signUpA} from "@/utils/inputsValidation";
+import {signUp} from "@/utils/inputsValidation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AccordionItem } from "@/components/AccordionItem";
 
 export default function SignUpPage() {
-  const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<IFormSignUpAInputs>({
+  const { register, handleSubmit, watch,setValue,formState: {errors} } = useForm<IFormSignUpInputs>({
     defaultValues: {
       procuracao: [],
       cepNotFound: false,
     },
-    resolver: zodResolver(signUpA)
+    resolver: zodResolver(signUp)
   });
 
   const [cepData,setCepData] = useState<ICepApi>({
@@ -41,7 +41,7 @@ export default function SignUpPage() {
   });
 
   const router = useRouter();
-  const onSubmit: SubmitHandler<IFormSignUpAInputs> = (data) => {
+  const onSubmit: SubmitHandler<IFormSignUpInputs> = (data) => {
     if(Boolean(data.uniao_estavel)){
       data.uniao_estavel = "vive em união estável"
     }else{

@@ -156,7 +156,8 @@ function getValidation(key:IValidations,isOptional:boolean){
     }
 }
 
-export const signUpA = z.object({
+export const signUp = z.object({
+    tipo_pessoa: getValidation("tipo_pessoa",false),
     procuracao: getValidation("procuracao",false) as z.ZodEffects<z.ZodArray<z.ZodString, "many">, string[], string[]>,
     nome_completo: getValidation("nome_completo",false),
     profissao: getValidation("profissao",false),
@@ -180,11 +181,4 @@ export const signUpA = z.object({
     ctps_n: getValidation("ctps_n",true),
     ctps_serie: getValidation("ctps_serie",true),
     uf_do_ctps: getValidation("uf_do_ctps",true),
-})
-
-export const signUpB = z.object({
-    tipo_pessoa: getValidation("tipo_pessoa",false),
-    nome_completo: getValidation("nome_completo",false),
-    profissao: getValidation("profissao",false),
-    estado_civil: getValidation("estado_civil",false)
 })
