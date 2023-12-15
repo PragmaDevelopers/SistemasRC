@@ -464,42 +464,85 @@ export default function SignUpPageB() {
                 inputArr.forEach((obj,index)=>{
                     if(isChildren){
                         if(usePush){
-                            newAccordion[newAccordion.length - 1].inputs[0].children.push({
-                                label: obj.label,
-                                value: obj.valueOrName
-                            })
+                            if(accordionIndex == -1){
+                                newAccordion[newAccordion.length - 1].inputs[0].children.push({
+                                    label: obj.label,
+                                    value: obj.valueOrName
+                                })
+                            }else{
+                                newAccordion[accordionIndex].inputs[0].children.push({
+                                    label: obj.label,
+                                    value: obj.valueOrName
+                                })
+                            }
                         }else{
-                            newAccordion.push({
-                                title: newSectionName,
-                                inputs: [
-                                    {
-                                    type: type.replace("new-",""),
-                                    name: setName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                    label: setLabel,
-                                    children:[{label: obj.label,value: obj.valueOrName}]
-                                    }
-                                ]
-                            })
+                            if(accordionIndex == -1){
+                                newAccordion.push({
+                                    title: newSectionName,
+                                    inputs: [
+                                        {
+                                        type: type.replace("new-",""),
+                                        name: setName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                        label: setLabel,
+                                        children:[{label: obj.label,value: obj.valueOrName}]
+                                        }
+                                    ]
+                                })
+                            }else{
+                                newAccordion.splice(accordionIndex,0,{
+                                    title: newSectionName,
+                                    inputs: [
+                                        {
+                                        type: type.replace("new-",""),
+                                        name: setName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                        label: setLabel,
+                                        children:[{label: obj.label,value: obj.valueOrName}]
+                                        }
+                                    ]
+                                })
+                            }
                             usePush = true;
                         }
                     }else{
                         if(usePush){
-                            newAccordion[newAccordion.length - 1].inputs.push({
-                                type: type.replace("new-",""),
-                                name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                label: obj.label
-                            })
-                        }else{
-                            newAccordion.push({
-                                title: newSectionName,
-                                inputs: [
-                                    {
+                            if(accordionIndex == -1){
+                                newAccordion[newAccordion.length - 1].inputs.push({
                                     type: type.replace("new-",""),
                                     name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
                                     label: obj.label
-                                    }
-                                ]
-                            })
+                                })
+                            }else{
+                                newAccordion[accordionIndex].inputs.push({
+                                    type: type.replace("new-",""),
+                                    name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                    label: obj.label
+                                })
+                            }
+                        }else{
+                            if(accordionIndex == -1){
+                                newAccordion.push({
+                                    title: newSectionName,
+                                    inputs: [
+                                        {
+                                        type: type.replace("new-",""),
+                                        name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                        label: obj.label
+                                        }
+                                    ]
+                                })
+                            }else{
+                                newAccordion.splice(accordionIndex,0,{
+                                    title: newSectionName,
+                                    inputs: [
+                                        {
+                                        type: type.replace("new-",""),
+                                        name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                        label: obj.label
+                                        }
+                                    ]
+                                })
+                            }
+                            
                             usePush = true;
                         }
                     }
