@@ -397,6 +397,9 @@ export default function SignUpPageB() {
         const newAccordion = accordions[typePerson];
         if(functionType === "existing input" && inputIndex !== undefined && accordionIndex !== undefined && valueIndex !== undefined){
             inputArr.forEach((obj,index)=>{
+                if(obj.label == "" || obj.valueOrName == ""){
+                    return;
+                }
                 if(valueIndex !== -1 && inputIndex !== -1){
                     newAccordion[accordionIndex].inputs[inputIndex as number].children.splice(valueIndex + index,0,{
                         label: obj.label,
@@ -415,7 +418,13 @@ export default function SignUpPageB() {
             if(functionType === "new input" && type && accordionIndex !== undefined && inputIndex !== undefined){
                 let usePush = false;
                 inputArr.forEach((obj,index,arr)=>{
+                    if(obj.label == "" || obj.valueOrName == ""){
+                        return;
+                    }
                     if(isChildren){
+                        if(setName == "" || setLabel == ""){
+                            return;
+                        }
                         if(usePush){
                             if(inputIndex === -1){
                                 inputIndex = newAccordion[accordionIndex].inputs.length - 1;
@@ -459,10 +468,19 @@ export default function SignUpPageB() {
                     }
                 })
             }
-            if(functionType === "new section" && accordionIndex !== undefined){
+            if(functionType === "new section" && accordionIndex !== undefined && newSectionName !== ""){
                 let usePush = false;
                 inputArr.forEach((obj,index)=>{
                     if(isChildren){
+                        const inputs = []
+                        if(setName != "" && setLabel != "" && obj.label != "" && obj.valueOrName != ""){
+                            inputs.push({
+                                type: type.replace("new-",""),
+                                name: setName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                label: setLabel,
+                                children:[{label: obj.label,value: obj.valueOrName}]
+                                })
+                        }
                         if(usePush){
                             if(accordionIndex == -1){
                                 newAccordion[newAccordion.length - 1].inputs[0].children.push({
@@ -479,67 +497,42 @@ export default function SignUpPageB() {
                             if(accordionIndex == -1){
                                 newAccordion.push({
                                     title: newSectionName,
-                                    inputs: [
-                                        {
-                                        type: type.replace("new-",""),
-                                        name: setName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                        label: setLabel,
-                                        children:[{label: obj.label,value: obj.valueOrName}]
-                                        }
-                                    ]
+                                    inputs: inputs
                                 })
                             }else{
                                 newAccordion.splice(accordionIndex,0,{
                                     title: newSectionName,
-                                    inputs: [
-                                        {
-                                        type: type.replace("new-",""),
-                                        name: setName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                        label: setLabel,
-                                        children:[{label: obj.label,value: obj.valueOrName}]
-                                        }
-                                    ]
+                                    inputs: inputs
                                 })
                             }
                             usePush = true;
                         }
                     }else{
+                        const inputs = []
+                        if(obj.label != "" && obj.valueOrName != ""){
+                            inputs.push({
+                                type: type.replace("new-",""),
+                                name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
+                                label: obj.label
+                            })
+                        }
                         if(usePush){
                             if(accordionIndex == -1){
-                                newAccordion[newAccordion.length - 1].inputs.push({
-                                    type: type.replace("new-",""),
-                                    name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                    label: obj.label
-                                })
+                                newAccordion[newAccordion.length - 1].inputs.push(inputs)
                             }else{
-                                newAccordion[accordionIndex].inputs.push({
-                                    type: type.replace("new-",""),
-                                    name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                    label: obj.label
-                                })
+                                newAccordion[accordionIndex].inputs.push(inputs)
                             }
                         }else{
                             if(accordionIndex == -1){
                                 newAccordion.push({
                                     title: newSectionName,
-                                    inputs: [
-                                        {
-                                        type: type.replace("new-",""),
-                                        name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                        label: obj.label
-                                        }
-                                    ]
+                                    inputs: inputs
                                 })
+                                
                             }else{
                                 newAccordion.splice(accordionIndex,0,{
                                     title: newSectionName,
-                                    inputs: [
-                                        {
-                                        type: type.replace("new-",""),
-                                        name: obj.valueOrName.trim().replace(/[ ]{1,}/g,"_").toLowerCase(),
-                                        label: obj.label
-                                        }
-                                    ]
+                                    inputs: inputs
                                 })
                             }
                             
