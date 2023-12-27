@@ -1,11 +1,6 @@
 package com.api.sistema_rc.model;
 
-import com.google.gson.JsonObject;
 import jakarta.persistence.*;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "kanban_cards")
@@ -25,9 +20,6 @@ public class KanbanCard {
     private String description;
     @Column(length = 255)
     private String members;
-    @Column
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDateTime deadline;
     @Column(nullable = false)
     private Integer index;
 
@@ -77,14 +69,6 @@ public class KanbanCard {
 
     public void setMembers(String members) {
         this.members = members;
-    }
-
-    public LocalDateTime getDeadline() {
-        return deadline;
-    }
-
-    public void setDeadline(LocalDateTime deadline) {
-        this.deadline = deadline;
     }
 
     public Integer getIndex() {

@@ -13,4 +13,8 @@ import java.util.Optional;
 public interface KanbanCardRepository extends JpaRepository<KanbanCard,Integer> {
     @Query(value = "SELECT * FROM kanban_cards WHERE kanban_column_id = :id ORDER BY index",nativeQuery = true)
     List<KanbanCard> findAllByColumnId(@Param("id") Integer columnId);
+    @Query(value = "SELECT * FROM kanban_cards WHERE kanban_column_id = :id AND kanban_inner_card_id IS NULL ORDER BY index",nativeQuery = true)
+    List<KanbanCard> findAllByColumnIdAndNotInnerCard(@Param("id") Integer columnId);
+    @Query(value = "SELECT * FROM kanban_cards WHERE kanban_inner_card_id = :id ORDER BY index",nativeQuery = true)
+    List<KanbanCard> findAllByInnerCardId(@Param("id") Integer innerCardId);
 }

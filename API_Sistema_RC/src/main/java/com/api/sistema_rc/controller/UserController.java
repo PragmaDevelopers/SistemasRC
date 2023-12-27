@@ -25,6 +25,8 @@ import javax.sql.rowset.serial.SerialBlob;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -97,8 +99,8 @@ public class UserController {
         user.setPassword(encryptedPassword);
 
         user.setNationality(nationality.getAsString());
-        user.setRegistration_date(LocalDate.now());
-        user.setPermissionLevel("00000000000000000000000000");
+        user.setRegistration_date(LocalDateTime.now());
+        user.setPermissionLevel("00000000000000000000000000000000000");
 
         Role role = new Role();
         role.setId(3);
@@ -218,8 +220,8 @@ public class UserController {
 
         JsonElement permissionLevel = jsonObj.get("permissionLevel");
         if(permissionLevel != null){
-            if(permissionLevel.getAsString().split("").length != 26){
-                errorMessage.addProperty("mensagem","O permissionLevel precisa ter 26 caracteres!");
+            if(permissionLevel.getAsString().split("").length != 35){
+                errorMessage.addProperty("mensagem","O permissionLevel precisa ter 35 caracteres!");
                 errorMessage.addProperty("status",400);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
@@ -308,7 +310,7 @@ public class UserController {
         formattedUser.addProperty("nationality",user.getNationality());
         formattedUser.addProperty("gender",user.getGender());
         formattedUser.addProperty("role",user.getRole().getName().name());
-        formattedUser.addProperty("permission_level",user.getPermissionLevel());
+        formattedUser.addProperty("permissionLevel",user.getPermissionLevel());
         if(user.getProfilePicture() == null){
             formattedUser.addProperty("profilePicture",(String) null);
         }else{
@@ -327,14 +329,30 @@ public class UserController {
     @GetMapping(path = "/private/users/search")
     public ResponseEntity<String> getUsersByName(@RequestParam(name = "name",required = false) String name,
                                                  @RequestParam(name = "email",required = false) String email,
+                                                 @RequestParam(name = "id",required = false) Integer id,
                                                  @RequestParam(name = "page",required = false,defaultValue = "1") Integer page){
         List<User> userList;
         if(name != null){
-            userList = userRepository.findAllByName(name,10 * (page - 1));
+            if(page != null){
+                userList = userRepository.findAllByNameLimitPage(name,10 * (page - 1));
+            }else{
+                userList = userRepository.findAllByName(name);
+            }
         }else if(email != null){
-            userList = userRepository.findAllByEmail(email,10 * (page - 1));
+            if(page != null) {
+                userList = userRepository.findAllByEmailLimitPage(email,10 * (page - 1));
+            }else{
+                userList = userRepository.findAllByEmail(email);
+            }
+        }else if(id != null){
+            userList = new ArrayList<>();
+            userList.add(userRepository.findById(id).get());
         }else{
-            userList = userRepository.findAll(10 * (page - 1));
+            if(page != null) {
+                userList = userRepository.findAllLimitPage(10 * (page - 1));
+            }else{
+                userList = userRepository.findAll();
+            }
         }
         JsonArray users = new JsonArray();
         userList.forEach(user->{
@@ -347,7 +365,7 @@ public class UserController {
             formattedUser.addProperty("nationality",user.getNationality());
             formattedUser.addProperty("gender",user.getGender());
             formattedUser.addProperty("role",user.getRole().getName().name());
-            formattedUser.addProperty("permission_level",user.getPermissionLevel());
+            formattedUser.addProperty("permissionLevel",user.getPermissionLevel());
             if(user.getProfilePicture() == null){
                 formattedUser.addProperty("profilePicture",(String) null);
             }else{

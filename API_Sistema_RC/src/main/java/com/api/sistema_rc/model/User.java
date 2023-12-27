@@ -5,6 +5,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.sql.Blob;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +25,7 @@ public class User{
     private Blob profilePicture;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate registration_date;
+    private LocalDateTime registration_date;
     @Column(length = 255,nullable = false,unique = true)
     private String email;
     @Column(length = 255,unique = true)
@@ -70,11 +71,11 @@ public class User{
         this.profilePicture = profilePicture;
     }
 
-    public LocalDate getRegistration_date() {
+    public LocalDateTime getRegistration_date() {
         return registration_date;
     }
 
-    public void setRegistration_date(LocalDate registration_date) {
+    public void setRegistration_date(LocalDateTime registration_date) {
         this.registration_date = registration_date;
     }
 

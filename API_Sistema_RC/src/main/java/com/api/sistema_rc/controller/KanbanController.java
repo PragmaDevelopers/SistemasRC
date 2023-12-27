@@ -1,5 +1,6 @@
 package com.api.sistema_rc.controller;
 
+import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
 import com.api.sistema_rc.util.TokenService;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -147,19 +149,22 @@ public class KanbanController {
         List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
         KanbanNotification kanbanNotification = new KanbanNotification();
-        kanbanNotification.setType("CREATE");
-        kanbanNotification.setViewed(false);
-        JsonObject aux = new JsonObject();
-        aux.addProperty("requestorId",user.getId());
-        aux.addProperty("requestorName",user.getName());
-        aux.addProperty("changedType","KANBAN");
-        aux.addProperty("changedId",dbKanban.getId());
-        aux.addProperty("changedName",dbKanban.getTitle());
-        kanbanNotification.setAux(aux.toString());
+
+        kanbanNotification.setUser(user);
+        kanbanNotification.setSenderUser(user);
+
+        kanbanNotification.setRegistration_date(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou o kanban "+dbKanban.getTitle()+"."
         );
-        kanbanNotification.setUser(user);
+        kanbanNotification.setViewed(false);
+
+        KanbanCategory kanbanCategory = new KanbanCategory();
+        kanbanCategory.setId(1);
+        kanbanCategory.setName(CategoryName.KANBAN_CREATE);
+        kanbanNotification.setKanbanCategory(kanbanCategory);
+
+        kanbanNotification.setKanban(dbKanban);
 
         kanbanNotificationList.add(kanbanNotification);
 
@@ -167,10 +172,10 @@ public class KanbanController {
         userList.forEach(userAdmin->{
             if(!Objects.equals(userAdmin.getId(), user.getId())){
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         user.getName()+" criou o kanban "+dbKanban.getTitle()+"."
                 );
-                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
@@ -253,48 +258,50 @@ public class KanbanController {
         List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
         KanbanNotification kanbanNotification = new KanbanNotification();
-        kanbanNotification.setType("INVITE");
-        kanbanNotification.setViewed(false);
-        JsonObject auxInvited = new JsonObject();
-        auxInvited.addProperty("requestorId",kanbanUser.getUser().getId());
-        auxInvited.addProperty("requestorName",kanbanUser.getUser().getName());
-        auxInvited.addProperty("invitedId",inviteUser.getId());
-        auxInvited.addProperty("invitedName",inviteUser.getName());
-        auxInvited.addProperty("changedType","KANBAN");
-        auxInvited.addProperty("changedId",kanban.getId());
-        auxInvited.addProperty("changedName",kanban.getTitle());
-        kanbanNotification.setAux(auxInvited.toString());
-        kanbanNotification.setMessage(
-                kanbanUser.getUser().getName()+" convidou você para o kanban "+kanban.getTitle()+"."
-        );
 
-        kanbanNotification.setUser(inviteUser);
+        kanbanNotification.setUser(kanbanUser.getUser());
+        kanbanNotification.setSenderUser(kanbanUser.getUser());
+        kanbanNotification.setRecipientUser(inviteUser);
+
+        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setMessage(
+                "Você convidou "+inviteUser.getName()+" para o kanban "+kanban.getTitle()+"."
+        );
+        kanbanNotification.setViewed(false);
+
+        KanbanCategory kanbanCategory = new KanbanCategory();
+        kanbanCategory.setId(4);
+        kanbanCategory.setName(CategoryName.KANBAN_INVITE);
+        kanbanNotification.setKanbanCategory(kanbanCategory);
+
+        kanbanNotification.setKanban(kanban);
+
         kanbanNotificationList.add(kanbanNotification);
 
         List<User> userList = userRepository.findAllByAdmin();
         userList.forEach(userAdmin->{
-            if(userAdmin.getId() != inviteUserId.getAsInt()){
+            if(!Objects.equals(userAdmin.getId(), user_id)){
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         kanbanUser.getUser().getName()+" convidou "+inviteUser.getName()+
                                 " para o kanban "+kanban.getTitle()+"."
                 );
-                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
 
         List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId.getAsInt());
         kanbanUserList.forEach(userInKanban->{
-            if(userInKanban.getUser().getId() != inviteUserId.getAsInt()){
+            if(!Objects.equals(userInKanban.getUser().getId(), user_id)){
                 String role = userInKanban.getUser().getRole().getName().name();
                 if(role.equals("ROLE_SUPERVISOR")){
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationSupervisor.setMessage(
                             kanbanUser.getUser().getName()+" convidou "+inviteUser.getName()+
                                     " para o kanban "+kanban.getTitle()+"."
                     );
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationList.add(kanbanNotificationSupervisor);
                 }
             }
@@ -336,63 +343,74 @@ public class KanbanController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
+        List<String> modifiedArr = new ArrayList<>();
+
         JsonObject kanbanJson = gson.fromJson(body, JsonObject.class);
+
         JsonElement kanbanTitle = kanbanJson.get("title");
+        String oldKanbanTitle = kanban.getTitle();
         if(kanbanTitle != null){
-            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
-
-            KanbanNotification kanbanNotification = new KanbanNotification();
-
-            kanbanNotification.setType("UPDATE");
-            kanbanNotification.setViewed(false);
-            JsonObject auxAdmin = new JsonObject();
-            auxAdmin.addProperty("requestorId",kanbanUser.getUser().getId());
-            auxAdmin.addProperty("requestorName",kanbanUser.getUser().getName());
-            auxAdmin.addProperty("changedType","KANBAN");
-            auxAdmin.addProperty("changedId",kanban.getId());
-            auxAdmin.addProperty("changedName",kanban.getTitle());
-            kanbanNotification.setAux(auxAdmin.toString());
-            kanbanNotification.setMessage(
-                    kanbanUser.getUser().getName()+", atualizou o título do kanban "+
-                            kanban.getTitle()+" para "+kanbanTitle.getAsString()+"."
-            );
-            kanbanNotification.setUser(kanbanUser.getUser());
-
-            kanbanNotificationList.add(kanbanNotification);
-
-            List<User> userList = userRepository.findAllByAdmin();
-            userList.forEach(userAdmin->{
-                if(!Objects.equals(userAdmin.getId(), user_id)){
-                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationAdmin.setMessage(
-                            kanbanUser.getUser().getName()+", atualizou o título do kanban "+
-                                    kanban.getTitle()+" para "+kanbanTitle.getAsString()+"."
-                    );
-                    kanbanNotificationAdmin.setUser(userAdmin);
-                    kanbanNotificationList.add(kanbanNotificationAdmin);
-                }
-            });
-
-            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
-            kanbanUserList.forEach(userInKanban->{
-                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                    String role = userInKanban.getUser().getRole().getName().name();
-                    if (role.equals("ROLE_SUPERVISOR")) {
-                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                        kanbanNotificationSupervisor.setMessage(
-                                kanbanUser.getUser().getName() + ", atualizou o título do kanban " +
-                                        kanban.getTitle() + " para " + kanbanTitle.getAsString() + "."
-                        );
-                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                        kanbanNotificationList.add(kanbanNotificationSupervisor);
-                    }
-                }
-            });
-
-            kanbanNotificationRepository.saveAll(kanbanNotificationList);
-
             kanban.setTitle(kanbanTitle.getAsString());
+            modifiedArr.add("título");
         }
+
+        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+
+        KanbanNotification kanbanNotification = new KanbanNotification();
+
+        kanbanNotification.setUser(kanbanUser.getUser());
+        kanbanNotification.setSenderUser(kanbanUser.getUser());
+
+        String message = " atualizou ("+String.join(",",modifiedArr)+") do kanban "+
+                kanban.getTitle();
+
+        if(kanbanTitle != null){
+            message = " atualizou ("+String.join(",",modifiedArr)+") do kanban "+
+                    oldKanbanTitle + " (título antigo) | " + kanban.getTitle() + " (novo título).";
+        }
+
+        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setMessage("Você"+message);
+        kanbanNotification.setViewed(false);
+
+        KanbanCategory kanbanCategory = new KanbanCategory();
+        kanbanCategory.setId(2);
+        kanbanCategory.setName(CategoryName.KANBAN_UPDATE);
+        kanbanNotification.setKanbanCategory(kanbanCategory);
+
+        kanbanNotification.setKanban(kanban);
+
+        kanbanNotificationList.add(kanbanNotification);
+
+        List<User> userList = userRepository.findAllByAdmin();
+        String finalMessage = message;
+        userList.forEach(userAdmin->{
+            if(!Objects.equals(userAdmin.getId(), user_id)){
+                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setUser(userAdmin);
+                kanbanNotificationAdmin.setMessage(
+                        kanbanUser.getUser().getName()+ finalMessage
+                );
+                kanbanNotificationList.add(kanbanNotificationAdmin);
+            }
+        });
+
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
+        kanbanUserList.forEach(userInKanban->{
+            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                String role = userInKanban.getUser().getRole().getName().name();
+                if (role.equals("ROLE_SUPERVISOR")) {
+                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                    kanbanNotificationSupervisor.setMessage(
+                            kanbanUser.getUser().getName()+finalMessage
+                    );
+                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                }
+            }
+        });
+
+        kanbanNotificationRepository.saveAll(kanbanNotificationList);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -446,48 +464,49 @@ public class KanbanController {
 
         KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setType("UNINVITE");
-        kanbanNotification.setViewed(false);
-        JsonObject aux = new JsonObject();
-        aux.addProperty("requestorId",yourKanbanUser.getUser().getId());
-        aux.addProperty("requestorName",yourKanbanUser.getUser().getName());
-        aux.addProperty("unvitedId",targetKanbanUser.getUser().getId());
-        aux.addProperty("unvitedName",targetKanbanUser.getUser().getName());
-        aux.addProperty("changedType","KANBAN");
-        aux.addProperty("changedId",kanban.getId());
-        aux.addProperty("changedName",kanban.getTitle());
-        kanbanNotification.setAux(aux.toString());
+        kanbanNotification.setUser(yourKanbanUser.getUser());
+        kanbanNotification.setSenderUser(yourKanbanUser.getUser());
+        kanbanNotification.setRecipientUser(targetKanbanUser.getUser());
+
+        kanbanNotification.setRegistration_date(LocalDateTime.now());
         kanbanNotification.setMessage(
-                yourKanbanUser.getUser().getName()+" removeu você do kanban "+yourKanbanUser.getKanban().getTitle()+"."
+                "Você removeu "+targetKanbanUser.getUser().getName()+" do kanban "+yourKanbanUser.getKanban().getTitle()+"."
         );
-        kanbanNotification.setUser(targetKanbanUser.getUser());
+        kanbanNotification.setViewed(false);
+
+        KanbanCategory kanbanCategory = new KanbanCategory();
+        kanbanCategory.setId(5);
+        kanbanCategory.setName(CategoryName.KANBAN_UNINVITE);
+        kanbanNotification.setKanbanCategory(kanbanCategory);
+
+        kanbanNotification.setKanban(yourKanbanUser.getKanban());
 
         kanbanNotificationList.add(kanbanNotification);
 
         List<User> userList = userRepository.findAllByAdmin();
         userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), targetKanbanUser.getId())){
+            if(!Objects.equals(userAdmin.getId(), yourKanbanUser.getUser().getId())){
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification();
+                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         yourKanbanUser.getUser().getName() + " removeu o usuário " +
                                 targetKanbanUser.getUser().getName() + " do kanban " + yourKanbanUser.getKanban().getTitle() + "."
                 );
-                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
 
         List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
         kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), targetKanbanUser.getUser().getId())) {
+            if(!Objects.equals(userInKanban.getUser().getId(), yourKanbanUser.getUser().getId())) {
                 String role = userInKanban.getUser().getRole().getName().name();
                 if (role.equals("ROLE_SUPERVISOR")) {
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationSupervisor.setMessage(
                             yourKanbanUser.getUser().getName() + " removeu o usuário " +
                                     targetKanbanUser.getUser().getName() + " do kanban " + yourKanbanUser.getKanban().getTitle() + "."
                     );
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationList.add(kanbanNotificationSupervisor);
                 }
             }
@@ -550,25 +569,27 @@ public class KanbanController {
 
         kanbanUserRepository.deleteAll(kanbanUserList);
 
-        kanbanRepository.deleteById(kanbanId);
-
         List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
         KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setType("DELETE");
-        kanbanNotification.setViewed(false);
-        JsonObject auxAdmin = new JsonObject();
-        auxAdmin.addProperty("requestorId",kanbanUser.getUser().getId());
-        auxAdmin.addProperty("requestorName",kanbanUser.getUser().getName());
-        auxAdmin.addProperty("changedType","KANBAN");
-        auxAdmin.addProperty("changedId",kanban.getId());
-        auxAdmin.addProperty("changedName",kanban.getTitle());
-        kanbanNotification.setAux(auxAdmin.toString());
+        kanbanNotification.setUser(kanbanUser.getUser());
+        kanbanNotification.setSenderUser(kanbanUser.getUser());
+
+        kanbanNotification.setRegistration_date(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou o kanban "+kanban.getTitle()+"."
         );
-        kanbanNotification.setUser(kanbanUser.getUser());
+        kanbanNotification.setViewed(false);
+
+        KanbanCategory kanbanCategory = new KanbanCategory();
+        kanbanCategory.setId(3);
+        kanbanCategory.setName(CategoryName.KANBAN_DELETE);
+        kanbanNotification.setKanbanCategory(kanbanCategory);
+
+        for (KanbanNotification dbNotificationKanban : kanbanNotificationRepository.findAllByKanbanId(kanbanId)) {
+            dbNotificationKanban.setKanban(null);
+        }
 
         kanbanNotificationList.add(kanbanNotification);
 
@@ -576,10 +597,10 @@ public class KanbanController {
         userList.forEach(userAdmin->{
             if(!Objects.equals(userAdmin.getId(), user_id)){
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         kanbanUser.getUser().getName()+" deletou o kanban "+kanban.getTitle()+"."
                 );
-                kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
@@ -589,16 +610,18 @@ public class KanbanController {
                 String role = userInKanban.getUser().getRole().getName().name();
                 if(role.equals("ROLE_SUPERVISOR")){
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationSupervisor.setMessage(
                             kanbanUser.getUser().getName()+" deletou o kanban "+kanban.getTitle()+"."
                     );
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationList.add(kanbanNotificationSupervisor);
                 }
             }
         });
 
         kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
+        kanbanRepository.deleteById(kanbanId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

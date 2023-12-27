@@ -13,11 +13,15 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User,Integer> {
     Optional<User> findByEmail(String email);
     @Query(value = "SELECT * FROM users WHERE name ILIKE :name% LIMIT 10 OFFSET :page",nativeQuery = true)
-    List<User> findAllByName(@Param("name") String name,@Param("page") Integer page);
+    List<User> findAllByNameLimitPage(@Param("name") String name,@Param("page") Integer page);
+    @Query(value = "SELECT * FROM users WHERE name ILIKE :name%",nativeQuery = true)
+    List<User> findAllByName(@Param("name") String name);
     @Query(value = "SELECT * FROM users WHERE email ILIKE :email% LIMIT 10 OFFSET :page",nativeQuery = true)
-    List<User> findAllByEmail(@Param("email") String email,@Param("page") Integer page);
+    List<User> findAllByEmailLimitPage(@Param("email") String email,@Param("page") Integer page);
+    @Query(value = "SELECT * FROM users WHERE email ILIKE :email%",nativeQuery = true)
+    List<User> findAllByEmail(@Param("email") String email);
     @Query(value = "SELECT * FROM users LIMIT 10 OFFSET :page",nativeQuery = true)
-    List<User> findAll(@Param("page") Integer page);
+    List<User> findAllLimitPage(@Param("page") Integer page);
     @Query(value = "SELECT * FROM users WHERE role_id = 1",nativeQuery = true)
     List<User> findAllByAdmin();
 }
