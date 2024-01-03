@@ -1,5 +1,6 @@
 package com.api.sistema_rc.controller;
 
+import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
 import com.api.sistema_rc.util.TokenService;
@@ -44,10 +45,12 @@ public class KanbanCategoryController {
         JsonArray categoryArr = new JsonArray();
 
         kanbanCategory.forEach(category -> {
-            JsonObject tagObj = new JsonObject();
-            tagObj.addProperty("id", category.getId());
-            tagObj.addProperty("name", category.getName().name());
-            categoryArr.add(tagObj);
+            if(category.getName().name().equals(CategoryName.CARD_MOVE.name())){
+                JsonObject tagObj = new JsonObject();
+                tagObj.addProperty("id", category.getId());
+                tagObj.addProperty("name", category.getName().name());
+                categoryArr.add(tagObj);
+            }
         });
 
         return ResponseEntity.status(HttpStatus.OK).body(categoryArr.toString());
