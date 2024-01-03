@@ -14,17 +14,24 @@ public class KanbanDeadline {
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDateTime date;
+    @Column(nullable = false)
+    private boolean overdue;
     @ManyToOne
-    @JoinColumn(nullable = false,name = "kanban_category_id")
+    @JoinColumn(nullable = false,name = "user_id")
+    private User user;
+    @ManyToOne
+    @JoinColumn(name = "kanban_category_id")
     private KanbanCategory kanbanCategory;
+    @Column(length = 255)
+    private String value;
+    @Column(length = 255)
+    private String valueType;
     @ManyToOne
     @JoinColumn(name = "kanban_card_id")
     private KanbanCard kanbanCard;
     @ManyToOne
     @JoinColumn(name = "kanban_card_checklist_id")
     private KanbanCardChecklist kanbanCardChecklist;
-    @Column(nullable = false)
-    private boolean overdue;
     @ManyToOne
     @JoinColumn(name = "action_kanban_id")
     private Kanban actionKanban;
@@ -53,6 +60,30 @@ public class KanbanDeadline {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public String getValueType() {
+        return valueType;
+    }
+
+    public void setValueType(String valueType) {
+        this.valueType = valueType;
     }
 
     public LocalDateTime getDate() {

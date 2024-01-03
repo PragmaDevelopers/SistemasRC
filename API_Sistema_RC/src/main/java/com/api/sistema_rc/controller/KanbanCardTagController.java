@@ -177,7 +177,7 @@ public class KanbanCardTagController {
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
                 kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " criou a tag  " +
+                        kanbanUser.getUser().getName() + " criou a tag " +
                                 dbKanbanCardTag.getName() + " no card "+kanbanCard.getTitle()+
                                 " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
                                 " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
@@ -194,7 +194,7 @@ public class KanbanCardTagController {
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
                     kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationSupervisor.setMessage(
-                            kanbanUser.getUser().getName() + " criou a tag  " +
+                            kanbanUser.getUser().getName() + " criou a tag " +
                                     dbKanbanCardTag.getName() + " no card "+kanbanCard.getTitle()+
                                     " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
                                     " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."

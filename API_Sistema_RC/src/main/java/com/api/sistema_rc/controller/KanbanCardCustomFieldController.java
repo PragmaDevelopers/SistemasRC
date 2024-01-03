@@ -47,6 +47,7 @@ public class KanbanCardCustomFieldController {
     @Autowired
     private UserRepository userRepository;
     private final Gson gson = new Gson();
+
     @GetMapping(path = "/private/user/kanban/column/card/{cardId}/customFields")
     public ResponseEntity<String> getCustomFields(@PathVariable Integer cardId, @RequestHeader("Authorization") String token) {
         JsonObject errorMessage = new JsonObject();
@@ -94,21 +95,21 @@ public class KanbanCardCustomFieldController {
     }
 
     @PostMapping(path = "/private/user/kanban/column/card/customField")
-    public ResponseEntity<String> postCustomField(@RequestBody String body,@RequestHeader("Authorization") String token){
+    public ResponseEntity<String> postCustomField(@RequestBody String body, @RequestHeader("Authorization") String token) {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         JsonObject errorMessage = new JsonObject();
 
         JsonElement cardId = jsonObj.get("cardId");
-        if(cardId == null){
-            errorMessage.addProperty("mensagem","O campo cardId é necessário!");
-            errorMessage.addProperty("status",470);
+        if (cardId == null) {
+            errorMessage.addProperty("mensagem", "O campo cardId é necessário!");
+            errorMessage.addProperty("status", 470);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
         boolean isCard = kanbanCardRepository.findById(cardId.getAsInt()).isPresent();
-        if(!isCard){
-            errorMessage.addProperty("mensagem","Card não foi encontrado!");
-            errorMessage.addProperty("status",474);
+        if (!isCard) {
+            errorMessage.addProperty("mensagem", "Card não foi encontrado!");
+            errorMessage.addProperty("status", 474);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
@@ -117,38 +118,38 @@ public class KanbanCardCustomFieldController {
         Kanban kanban = kanbanCard.getKanbanColumn().getKanban();
         Integer user_id = tokenService.validateToken(token);
 
-        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
+        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(), user_id);
 
-        if(kanbanUser == null){
-            errorMessage.addProperty("mensagem","Você não está cadastrado nesse kanban!");
-            errorMessage.addProperty("status",471);
+        if (kanbanUser == null) {
+            errorMessage.addProperty("mensagem", "Você não está cadastrado nesse kanban!");
+            errorMessage.addProperty("status", 471);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getUser().getPermissionLevel().charAt(29) == '0'){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (criar customField!");
-            errorMessage.addProperty("status",475);
+        if (kanbanUser.getUser().getPermissionLevel().charAt(29) == '0') {
+            errorMessage.addProperty("mensagem", "Você não tem autorização para essa ação (criar customField!");
+            errorMessage.addProperty("status", 475);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
         JsonElement customFieldName = jsonObj.get("name");
-        if(customFieldName == null){
-            errorMessage.addProperty("mensagem","O campo name é necessário!");
-            errorMessage.addProperty("status",470);
+        if (customFieldName == null) {
+            errorMessage.addProperty("mensagem", "O campo name é necessário!");
+            errorMessage.addProperty("status", 470);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
         JsonElement customFieldValue = jsonObj.get("value");
-        if(customFieldValue == null){
-            errorMessage.addProperty("mensagem","O campo value é necessário!");
-            errorMessage.addProperty("status",470);
+        if (customFieldValue == null) {
+            errorMessage.addProperty("mensagem", "O campo value é necessário!");
+            errorMessage.addProperty("status", 470);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
         JsonElement customFieldType = jsonObj.get("fieldType");
-        if(customFieldType == null){
-            errorMessage.addProperty("mensagem","O campo fieldType é necessário!");
-            errorMessage.addProperty("status",470);
+        if (customFieldType == null) {
+            errorMessage.addProperty("mensagem", "O campo fieldType é necessário!");
+            errorMessage.addProperty("status", 470);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
@@ -173,9 +174,9 @@ public class KanbanCardCustomFieldController {
 
         kanbanNotification.setRegistration_date(LocalDateTime.now());
         kanbanNotification.setMessage(
-                "Você criou o customField " + dbKanbanCardCustomField.getName() + " no card "+kanbanCard.getTitle()+
-                        " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
-                        " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
+                "Você criou o customField " + dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
+                        " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
+                        " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
         );
         kanbanNotification.setViewed(false);
 
@@ -189,32 +190,32 @@ public class KanbanCardCustomFieldController {
         kanbanNotificationList.add(kanbanNotification);
 
         List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
+        userList.forEach(userAdmin -> {
+            if (!Objects.equals(userAdmin.getId(), user_id)) {
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
                 kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         kanbanUser.getUser().getName() + " criou o customField  " +
-                                dbKanbanCardCustomField.getName() + " no card "+kanbanCard.getTitle()+
-                                " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
-                                " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
+                                dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
+                                " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
+                                " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
                 );
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
 
         List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+        kanbanUserList.forEach(userInKanban -> {
+            if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
                 String role = userInKanban.getUser().getRole().getName().name();
                 if (role.equals("ROLE_SUPERVISOR")) {
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
                     kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationSupervisor.setMessage(
                             kanbanUser.getUser().getName() + " criou o customField  " +
-                                    dbKanbanCardCustomField.getName() + " no card "+kanbanCard.getTitle()+
-                                    " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
-                                    " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
+                                    dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
+                                    " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
+                                    " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
                     );
                     kanbanNotificationList.add(kanbanNotificationSupervisor);
                 }
@@ -225,16 +226,17 @@ public class KanbanCardCustomFieldController {
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCardCustomField.getId().toString());
     }
+
     @Transactional
     @PatchMapping(path = "/private/user/kanban/column/card/customField/{customFieldId}")
-    public ResponseEntity<String> patchCustomField(@RequestBody String body,@RequestHeader("Authorization") String token,
-                                           @PathVariable Integer customFieldId){
+    public ResponseEntity<String> patchCustomField(@RequestBody String body, @RequestHeader("Authorization") String token,
+                                                   @PathVariable Integer customFieldId) {
         JsonObject errorMessage = new JsonObject();
 
         boolean isCustomField = kanbanCardCustomFieldRepository.findById(customFieldId).isPresent();
-        if(!isCustomField){
-            errorMessage.addProperty("mensagem","CustomField não foi encontrado!");
-            errorMessage.addProperty("status",474);
+        if (!isCustomField) {
+            errorMessage.addProperty("mensagem", "CustomField não foi encontrado!");
+            errorMessage.addProperty("status", 474);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
@@ -245,17 +247,17 @@ public class KanbanCardCustomFieldController {
 
         Kanban kanban = selectedCustomField.getKanbanCard().getKanbanColumn().getKanban();
 
-        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
+        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(), user_id);
 
-        if(kanbanUser == null){
-            errorMessage.addProperty("mensagem","Você não está cadastrado nesse kanban!");
-            errorMessage.addProperty("status",471);
+        if (kanbanUser == null) {
+            errorMessage.addProperty("mensagem", "Você não está cadastrado nesse kanban!");
+            errorMessage.addProperty("status", 471);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getUser().getPermissionLevel().charAt(30) == '0'){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
-            errorMessage.addProperty("status",475);
+        if (kanbanUser.getUser().getPermissionLevel().charAt(30) == '0') {
+            errorMessage.addProperty("mensagem", "Você não tem autorização para essa ação!");
+            errorMessage.addProperty("status", 475);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
@@ -263,19 +265,19 @@ public class KanbanCardCustomFieldController {
 
         JsonElement customFieldName = jsonObj.get("name");
         String oldCustomFieldName = selectedCustomField.getName();
-        if(customFieldName != null){
+        if (customFieldName != null) {
             selectedCustomField.setName(customFieldName.getAsString());
             modifiedArr.add("nome");
         }
 
         JsonElement customFieldValue = jsonObj.get("value");
-        if(customFieldValue != null){
+        if (customFieldValue != null) {
             selectedCustomField.setValue(customFieldValue.getAsString());
             modifiedArr.add("valor");
         }
 
         JsonElement customFieldType = jsonObj.get("fieldType");
-        if(customFieldType != null){
+        if (customFieldType != null) {
             selectedCustomField.setType(customFieldType.getAsString());
             modifiedArr.add("tipo de campo");
         }
@@ -287,21 +289,21 @@ public class KanbanCardCustomFieldController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        String message = " atualizou (" +String.join(",",modifiedArr)+ ") no customField " +
-                selectedCustomField.getName() + " do card "+selectedCustomField.getKanbanCard().getTitle()+
-                " da coluna "+selectedCustomField.getKanbanCard().getKanbanColumn().getTitle()+
-                " do kanban "+selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle()+".";
+        String message = " atualizou (" + String.join(",", modifiedArr) + ") no customField " +
+                selectedCustomField.getName() + " do card " + selectedCustomField.getKanbanCard().getTitle() +
+                " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
 
-        if(customFieldName != null){
-            message = " atualizou (" +String.join(",",modifiedArr)+ ") no customField " +
-                    oldCustomFieldName + " (nome antigo) | "+selectedCustomField.getName()+" (novo nome) do card "+
-                    selectedCustomField.getKanbanCard().getTitle()+ " da coluna "+
-                    selectedCustomField.getKanbanCard().getKanbanColumn().getTitle()+ " do kanban "+
-                    selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle()+".";
+        if (customFieldName != null) {
+            message = " atualizou (" + String.join(",", modifiedArr) + ") no customField " +
+                    oldCustomFieldName + " (nome antigo) | " + selectedCustomField.getName() + " (novo nome) do card " +
+                    selectedCustomField.getKanbanCard().getTitle() + " da coluna " +
+                    selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() + " do kanban " +
+                    selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
         }
 
         kanbanNotification.setRegistration_date(LocalDateTime.now());
-        kanbanNotification.setMessage("Você"+message);
+        kanbanNotification.setMessage("Você" + message);
         kanbanNotification.setViewed(false);
 
         KanbanCategory kanbanCategory = new KanbanCategory();
@@ -315,23 +317,23 @@ public class KanbanCardCustomFieldController {
 
         List<User> userList = userRepository.findAllByAdmin();
         String finalMessage = message;
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
+        userList.forEach(userAdmin -> {
+            if (!Objects.equals(userAdmin.getId(), user_id)) {
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
                 kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName()+ finalMessage);
+                kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName() + finalMessage);
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
 
         List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+        kanbanUserList.forEach(userInKanban -> {
+            if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
                 String role = userInKanban.getUser().getRole().getName().name();
                 if (role.equals("ROLE_SUPERVISOR")) {
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
                     kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName()+ finalMessage);
+                    kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName() + finalMessage);
                     kanbanNotificationList.add(kanbanNotificationSupervisor);
                 }
             }
@@ -343,12 +345,12 @@ public class KanbanCardCustomFieldController {
     }
 
     @DeleteMapping(path = "/private/user/kanban/column/card/customField/{customFieldId}")
-    public ResponseEntity<String> deleteCustomField(@PathVariable Integer customFieldId,@RequestHeader("Authorization") String token){
+    public ResponseEntity<String> deleteCustomField(@PathVariable Integer customFieldId, @RequestHeader("Authorization") String token) {
         JsonObject errorMessage = new JsonObject();
         boolean isCustomField = kanbanCardCustomFieldRepository.findById(customFieldId).isPresent();
-        if(!isCustomField){
-            errorMessage.addProperty("mensagem","CustomField não foi encontrado!");
-            errorMessage.addProperty("status",474);
+        if (!isCustomField) {
+            errorMessage.addProperty("mensagem", "CustomField não foi encontrado!");
+            errorMessage.addProperty("status", 474);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
@@ -357,17 +359,17 @@ public class KanbanCardCustomFieldController {
         Kanban kanban = selectedCustomField.getKanbanCard().getKanbanColumn().getKanban();
         Integer user_id = tokenService.validateToken(token);
 
-        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
+        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(), user_id);
 
-        if(kanbanUser == null){
-            errorMessage.addProperty("mensagem","Você não está cadastrado nesse kanban!");
-            errorMessage.addProperty("status",471);
+        if (kanbanUser == null) {
+            errorMessage.addProperty("mensagem", "Você não está cadastrado nesse kanban!");
+            errorMessage.addProperty("status", 471);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        if(kanbanUser.getUser().getPermissionLevel().charAt(31) == '0'){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
-            errorMessage.addProperty("status",475);
+        if (kanbanUser.getUser().getPermissionLevel().charAt(31) == '0') {
+            errorMessage.addProperty("mensagem", "Você não tem autorização para essa ação!");
+            errorMessage.addProperty("status", 475);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
@@ -381,9 +383,9 @@ public class KanbanCardCustomFieldController {
         kanbanNotification.setRegistration_date(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou o customField " +
-                        selectedCustomField.getName() + " no card "+selectedCustomField.getKanbanCard().getTitle()+
-                        " da coluna "+selectedCustomField.getKanbanCard().getKanbanColumn().getTitle()+
-                        " do kanban "+selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+                        selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
+                        " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                        " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
         );
         kanbanNotification.setViewed(false);
 
@@ -399,32 +401,32 @@ public class KanbanCardCustomFieldController {
         kanbanNotificationList.add(kanbanNotification);
 
         List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
+        userList.forEach(userAdmin -> {
+            if (!Objects.equals(userAdmin.getId(), user_id)) {
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
                 kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         kanbanUser.getUser().getName() + " deletou o customField " +
-                                selectedCustomField.getName() + " no card "+selectedCustomField.getKanbanCard().getTitle()+
-                                " da coluna "+selectedCustomField.getKanbanCard().getKanbanColumn().getTitle()+
-                                " do kanban "+selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+                                selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
+                                " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                                " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
                 );
                 kanbanNotificationList.add(kanbanNotificationAdmin);
             }
         });
 
         List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+        kanbanUserList.forEach(userInKanban -> {
+            if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
                 String role = userInKanban.getUser().getRole().getName().name();
                 if (role.equals("ROLE_SUPERVISOR")) {
                     KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
                     kanbanNotificationSupervisor.setUser(userInKanban.getUser());
                     kanbanNotificationSupervisor.setMessage(
                             kanbanUser.getUser().getName() + " deletou o customField " +
-                                    selectedCustomField.getName() + " no card "+selectedCustomField.getKanbanCard().getTitle()+
-                                    " da coluna "+selectedCustomField.getKanbanCard().getKanbanColumn().getTitle()+
-                                    " do kanban "+selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+                                    selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
+                                    " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                                    " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
                     );
                     kanbanNotificationList.add(kanbanNotificationSupervisor);
                 }
@@ -438,3 +440,4 @@ public class KanbanCardCustomFieldController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
+

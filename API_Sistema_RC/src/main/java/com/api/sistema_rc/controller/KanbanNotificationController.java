@@ -69,7 +69,9 @@ public class KanbanNotificationController {
                 category.equals(CategoryName.CARDCOMMENT_DELETE) ||
                 category.equals(CategoryName.CARDCHECKLIST_DELETE) ||
                 category.equals(CategoryName.CARDCHECKLISTITEM_DELETE) ||
-                category.equals(CategoryName.CARDCUSTOMFIELD_DELETE)
+                category.equals(CategoryName.CARDCUSTOMFIELD_DELETE) ||
+                category.equals(CategoryName.CARDDEADLINE_DELETE) ||
+                category.equals(CategoryName.CARDCHECKLISTDEADLINE_DELETE)
             ){
                 notificationObj.addProperty("changed_id",(String) null);
             }else{
@@ -141,6 +143,17 @@ public class KanbanNotificationController {
                         notificationObj.addProperty("changed_id",(String) null);
                     }else {
                         notificationObj.addProperty("changed_id",notification.getKanbanCardCustomField().getId());
+                    }
+                }else if(
+                        category.equals(CategoryName.CARDDEADLINE_CREATE) ||
+                        category.equals(CategoryName.CARDDEADLINE_UPDATE) ||
+                        category.equals(CategoryName.CARDCHECKLISTDEADLINE_CREATE) ||
+                        category.equals(CategoryName.CARDCHECKLISTDEADLINE_UPDATE)
+                ){
+                    if(notification.getKanbanDeadline() == null){
+                        notificationObj.addProperty("changed_id",(String) null);
+                    }else {
+                        notificationObj.addProperty("changed_id",notification.getKanbanDeadline().getId());
                     }
                 }
             }

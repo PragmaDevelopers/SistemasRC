@@ -42,6 +42,8 @@ public class KanbanColumnController {
     private KanbanCardChecklistRepository kanbanCardCheckListRepository;
     @Autowired
     private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
+    @Autowired
+    private KanbanDeadlineRepository kanbanDeadlineRepository;
     private final Gson gson = new Gson();
 
     @GetMapping(path = "/private/user/kanban/{kanbanId}/columns")
@@ -95,11 +97,26 @@ public class KanbanColumnController {
                     }
                     cardObj.add("members", members);
 
-//                    if(card.getDeadline() == null){
-//                        cardObj.addProperty("deadline", (String) null);
-//                    }else{
-//                        cardObj.addProperty("deadline", String.valueOf(card.getDeadline()));
-//                    }
+                    boolean isDeadline = kanbanDeadlineRepository.findByCardId(card.getId()).isPresent();
+                    if(!isDeadline){
+                        cardObj.addProperty("deadline", (String) null);
+                    }else{
+                        KanbanDeadline kanbanDeadline = kanbanDeadlineRepository.findByCardId(card.getId()).get();
+                        JsonObject deadlineObj = new JsonObject();
+                        deadlineObj.addProperty("id",kanbanDeadline.getId());
+                        deadlineObj.addProperty("date",kanbanDeadline.getDate().toString());
+                        deadlineObj.addProperty("overdue",kanbanDeadline.isOverdue());
+                        deadlineObj.addProperty("category", kanbanDeadline.getKanbanCategory().getName().name());
+                        deadlineObj.addProperty("toKanbanId",(String) null);
+                        deadlineObj.addProperty("toColumnId",(String) null);
+                        if(kanbanDeadline.getActionKanbanColumn() != null){
+                            deadlineObj.addProperty("toKanbanId",kanbanDeadline.getActionKanbanColumn().getKanban().getId());
+                            deadlineObj.addProperty("toColumnId",kanbanDeadline.getActionKanbanColumn().getId());
+                        }
+
+                        cardObj.add("deadline", deadlineObj);
+                    }
+
                     cardObj.addProperty("index",card.getIndex());
                     List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(card.getId());
                     JsonArray checkListArr = new JsonArray();
