@@ -87,6 +87,23 @@ public class KanbanCardTagController {
         return ResponseEntity.status(HttpStatus.OK).body(tagArr.toString());
     }
 
+    @GetMapping(path = "/private/user/kanban/column/card/tags")
+    public ResponseEntity<String> getAllTags() {
+        List<KanbanCardTag> kanbanCardTag = kanbanCardTagRepository.findAll();
+
+        JsonArray tagArr = new JsonArray();
+
+        kanbanCardTag.forEach(tag -> {
+            JsonObject tagObj = new JsonObject();
+            tagObj.addProperty("id", tag.getId());
+            tagObj.addProperty("name", tag.getName());
+            tagObj.addProperty("color", tag.getColor());
+            tagArr.add(tagObj);
+        });
+
+        return ResponseEntity.status(HttpStatus.OK).body(tagArr.toString());
+    }
+
     @PostMapping(path = "/private/user/kanban/column/card/tag")
     public ResponseEntity<String> postTag(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
@@ -154,7 +171,7 @@ public class KanbanCardTagController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou a tag " + dbKanbanCardTag.getName() + " no card "+kanbanCard.getTitle()+
                         " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
@@ -277,7 +294,7 @@ public class KanbanCardTagController {
                     selectedTag.getKanbanCard().getKanbanColumn().getKanban().getTitle()+".";
         }
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage("Você"+message);
         kanbanNotification.setViewed(false);
 
@@ -354,7 +371,7 @@ public class KanbanCardTagController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou a tag " +
                         selectedTag.getName() + " no card "+selectedTag.getKanbanCard().getTitle()+
@@ -367,10 +384,7 @@ public class KanbanCardTagController {
         kanbanCategory.setId(17);
         kanbanCategory.setName(CategoryName.CARDTAG_DELETE);
         kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        for (KanbanNotification dbNotificationTag : kanbanNotificationRepository.findAllByCardTagId(tagId)) {
-            dbNotificationTag.setKanbanCardTag(null);
-        }
+        kanbanNotification.setKanbanCardTag(null);
 
         kanbanNotificationList.add(kanbanNotification);
 

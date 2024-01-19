@@ -172,7 +172,7 @@ public class KanbanCardCustomFieldController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou o customField " + dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
                         " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
@@ -302,7 +302,7 @@ public class KanbanCardCustomFieldController {
                     selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
         }
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage("Você" + message);
         kanbanNotification.setViewed(false);
 
@@ -380,7 +380,7 @@ public class KanbanCardCustomFieldController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou o customField " +
                         selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
@@ -393,10 +393,7 @@ public class KanbanCardCustomFieldController {
         kanbanCategory.setId(30);
         kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_DELETE);
         kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        for (KanbanNotification dbNotificationTag : kanbanNotificationRepository.findAllByCardCustomFieldId(customFieldId)) {
-            dbNotificationTag.setKanbanCardCustomField(null);
-        }
+        kanbanNotification.setKanbanCardCustomField(null);
 
         kanbanNotificationList.add(kanbanNotification);
 

@@ -24,6 +24,9 @@ public class UserDetailsImpl implements UserDetails {
         authorities.add(new SimpleGrantedAuthority(role));
         return authorities;
     }
+    public boolean isVerify(){
+        return user.isVerify();
+    }
     public String getLogin(){
         return user.getId().toString();
     }

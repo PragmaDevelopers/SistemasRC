@@ -1,9 +1,12 @@
 package com.api.sistema_rc.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "kanban_deadlines")
@@ -11,6 +14,9 @@ public class KanbanDeadline {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @OneToMany(mappedBy = "kanbanDeadline", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private List<KanbanNotification> kanbanDeadlineNotifications;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDateTime date;

@@ -16,10 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,23 +37,74 @@ public class KanbanController {
     @Autowired
     private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
     @Autowired
+    private KanbanDeadlineRepository kanbanDeadlineRepository;
+    @Autowired
+    private KanbanCardCustomFieldRepository kanbanCardCustomFieldRepository;
+    @Autowired
+    private KanbanCardCommentRepository kanbanCardCommentRepository;
+    @Autowired
+    private KanbanCardTagRepository kanbanCardTagRepository;
+    @Autowired
     private KanbanUserRepository kanbanUserRepository;
     @Autowired
     private KanbanNotificationRepository kanbanNotificationRepository;
     private final Gson gson = new Gson();
 
     @GetMapping(path = "/private/user/kanban")
-    public ResponseEntity<List<Kanban>> getKanban(@RequestHeader("Authorization") String token){
+    public ResponseEntity<String> getKanban(@RequestHeader("Authorization") String token,
+                                                  @RequestParam(name = "columns",required = false) boolean isColumns){
         Integer user_id = tokenService.validateToken(token);
         List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByUserId(user_id);
 
         List<Kanban> kanbanList = kanbanUserList.stream()
                 .map(KanbanUser::getKanban)
-                .collect(Collectors.toList());
+                .toList();
 
-        return ResponseEntity.status(HttpStatus.OK).body(kanbanList);
+        JsonArray kanbanArr = new JsonArray();
+
+        kanbanList.forEach(kanban -> {
+            JsonObject kanbanObj = new JsonObject();
+            kanbanObj.addProperty("id",kanban.getId());
+            kanbanObj.addProperty("title",kanban.getTitle());
+            if(isColumns){
+                List<KanbanColumn> kanbanColumnList = kanbanColumnRepository.findAllByKanbanId(kanban.getId());
+                JsonArray columnArr = new JsonArray();
+                for (KanbanColumn column : kanbanColumnList) {
+                    JsonObject columnObj = new JsonObject();
+                    columnObj.addProperty("id",column.getId());
+                    columnObj.addProperty("title",column.getTitle());
+                    List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnIdAndNotInnerCard(column.getId());
+                    JsonArray cardArr = new JsonArray();
+                    for(KanbanCard card : kanbanCardsList) {
+                        JsonObject cardObj = new JsonObject();
+                        cardObj.addProperty("id", card.getId());
+                        cardObj.addProperty("kanbanID", kanban.getId());
+                        cardObj.addProperty("columnID", column.getId());
+                        cardObj.addProperty("title", card.getTitle());
+                        cardObj.addProperty("index", card.getIndex());
+                        List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
+                        JsonArray tagArr = new JsonArray();
+                        for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
+                            JsonObject tagObj = new JsonObject();
+                            tagObj.addProperty("id",kanbanCardTag.getId());
+                            tagObj.addProperty("name",kanbanCardTag.getName());
+                            tagObj.addProperty("color",kanbanCardTag.getColor());
+                            tagArr.add(tagObj);
+                        }
+                        cardObj.add("tags",tagArr);
+                        cardArr.add(cardObj);
+                    }
+                    columnObj.add("cards",cardArr);
+                    columnArr.add(columnObj);
+                }
+                kanbanObj.add("columns",columnArr);
+            }
+            kanbanArr.add(kanbanObj);
+        });
+
+        return ResponseEntity.status(HttpStatus.OK).body(kanbanArr.toString());
     }
-    @GetMapping(path = "/private/user/kanban/{kanbanId}")
+    @GetMapping(path = "/private/user/kanban/{kanbanId}/members")
     public ResponseEntity<String> getUsersInKanban(@PathVariable Integer kanbanId,@RequestHeader("Authorization") String token){
         JsonObject errorMessage = new JsonObject();
 
@@ -153,7 +201,7 @@ public class KanbanController {
         kanbanNotification.setUser(user);
         kanbanNotification.setSenderUser(user);
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou o kanban "+dbKanban.getTitle()+"."
         );
@@ -171,6 +219,11 @@ public class KanbanController {
         List<User> userList = userRepository.findAllByAdmin();
         userList.forEach(userAdmin->{
             if(!Objects.equals(userAdmin.getId(), user.getId())){
+                KanbanUser inviteKanbanUser = new KanbanUser();
+                inviteKanbanUser.setUser(userAdmin);
+                inviteKanbanUser.setKanban(dbKanban);
+                kanbanUserRepository.save(inviteKanbanUser);
+
                 KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
                 kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
@@ -184,7 +237,7 @@ public class KanbanController {
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanban.getId().toString());
     }
-    @PostMapping(path = "/private/user/invite/kanban")
+    @PostMapping(path = "/private/user/kanban/invite")
     public ResponseEntity<String> inviteKanban(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject kanbanJson = gson.fromJson(body, JsonObject.class);
         JsonObject errorMessage = new JsonObject();
@@ -263,7 +316,7 @@ public class KanbanController {
         kanbanNotification.setSenderUser(kanbanUser.getUser());
         kanbanNotification.setRecipientUser(inviteUser);
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você convidou "+inviteUser.getName()+" para o kanban "+kanban.getTitle()+"."
         );
@@ -369,7 +422,7 @@ public class KanbanController {
                     oldKanbanTitle + " (título antigo) | " + kanban.getTitle() + " (novo título).";
         }
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage("Você"+message);
         kanbanNotification.setViewed(false);
 
@@ -414,7 +467,7 @@ public class KanbanController {
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-    @DeleteMapping(path = "/private/user/kanban/{kanbanId}/remove/user/{targetUserId}")
+    @DeleteMapping(path = "/private/user/kanban/{kanbanId}/uninvite/user/{targetUserId}")
     public ResponseEntity<String> uninviteKanban(@PathVariable Integer kanbanId,@PathVariable Integer targetUserId,@RequestHeader("Authorization") String token){
         JsonObject errorMessage = new JsonObject();
         if(kanbanId == null){
@@ -468,7 +521,7 @@ public class KanbanController {
         kanbanNotification.setSenderUser(yourKanbanUser.getUser());
         kanbanNotification.setRecipientUser(targetKanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você removeu "+targetKanbanUser.getUser().getName()+" do kanban "+yourKanbanUser.getKanban().getTitle()+"."
         );
@@ -486,7 +539,7 @@ public class KanbanController {
         List<User> userList = userRepository.findAllByAdmin();
         userList.forEach(userAdmin->{
             if(!Objects.equals(userAdmin.getId(), yourKanbanUser.getUser().getId())){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification();
+                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
                 kanbanNotificationAdmin.setUser(userAdmin);
                 kanbanNotificationAdmin.setMessage(
                         yourKanbanUser.getUser().getName() + " removeu o usuário " +
@@ -549,26 +602,6 @@ public class KanbanController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        List<KanbanColumn> kanbanColumnList = kanbanColumnRepository.findAllByKanbanId(kanbanId);
-        kanbanColumnList.forEach(column->{
-            List<KanbanCard> kanbanCardList = kanbanCardRepository.findAllByColumnId(column.getId());
-            kanbanCardList.forEach(card->{
-                List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(card.getId());
-                kanbanCardCheckList.forEach(checkList->{
-                    List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
-                    kanbanCardCheckListItemRepository.deleteAll(kanbanCardChecklistItems);
-                });
-                kanbanCardCheckListRepository.deleteAll(kanbanCardCheckList);
-            });
-            kanbanCardRepository.deleteAll(kanbanCardList);
-        });
-
-        kanbanColumnRepository.deleteAll(kanbanColumnList);
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
-
-        kanbanUserRepository.deleteAll(kanbanUserList);
-
         List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
         KanbanNotification kanbanNotification = new KanbanNotification();
@@ -576,7 +609,7 @@ public class KanbanController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou o kanban "+kanban.getTitle()+"."
         );
@@ -586,10 +619,7 @@ public class KanbanController {
         kanbanCategory.setId(3);
         kanbanCategory.setName(CategoryName.KANBAN_DELETE);
         kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        for (KanbanNotification dbNotificationKanban : kanbanNotificationRepository.findAllByKanbanId(kanbanId)) {
-            dbNotificationKanban.setKanban(null);
-        }
+        kanbanNotification.setKanban(null);
 
         kanbanNotificationList.add(kanbanNotification);
 
@@ -605,6 +635,7 @@ public class KanbanController {
             }
         });
 
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
         kanbanUserList.forEach(userInKanban->{
             if(!Objects.equals(userInKanban.getUser().getId(), user_id)){
                 String role = userInKanban.getUser().getRole().getName().name();

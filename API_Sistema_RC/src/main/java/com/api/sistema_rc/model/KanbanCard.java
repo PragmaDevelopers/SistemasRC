@@ -1,6 +1,10 @@
 package com.api.sistema_rc.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.List;
 
 @Entity
 @Table(name = "kanban_cards")
@@ -8,6 +12,24 @@ public class KanbanCard {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @OneToMany(mappedBy = "kanbanCard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<KanbanCardChecklist> checklists;
+    @OneToMany(mappedBy = "kanbanCard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<KanbanCardComment> comments;
+    @OneToMany(mappedBy = "kanbanCard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<KanbanCardCustomField> customFields;
+    @OneToMany(mappedBy = "kanbanCard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<KanbanCardTag> tags;
+    @OneToMany(mappedBy = "kanbanCard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<KanbanDeadline> deadlines;
+    @OneToMany(mappedBy = "kanbanCard", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private List<KanbanNotification> kanbanCardNotifications;
     @ManyToOne
     @JoinColumn(nullable = false,name = "kanban_column_id")
     private KanbanColumn kanbanColumn;
@@ -16,7 +38,8 @@ public class KanbanCard {
     private KanbanCard kanbanInnerCard;
     @Column(length = 255,nullable = false)
     private String title;
-    @Column(length = 255)
+    @Lob
+    @Column
     private String description;
     @Column(length = 255)
     private String members;

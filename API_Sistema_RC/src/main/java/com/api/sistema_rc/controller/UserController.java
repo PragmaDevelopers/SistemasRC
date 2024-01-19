@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.sql.rowset.serial.SerialBlob;
+import java.security.SecureRandom;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -65,7 +66,9 @@ public class UserController {
 
         Optional<User> dbUser = userRepository.findByEmail(email.getAsString());
         if (dbUser.isPresent()) {
-            throw new EmailAlreadyExistsException("O email já está cadastrado!");
+            errorMessage.addProperty("mensagem","O email já está cadastrado!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
         JsonElement password = jsonObj.get("password");
@@ -108,6 +111,15 @@ public class UserController {
 
         user.setRole(role);
 
+        SecureRandom random = new SecureRandom();
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            int digit = random.nextInt(10);
+            code.append(digit);
+        }
+        user.setCodeToVerify(code.toString());
+        user.setVerify(false);
+
         userRepository.save(user);
 
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -134,15 +146,39 @@ public class UserController {
         }
 
         var usernamePassword = new UsernamePasswordAuthenticationToken(email.getAsString(),password.getAsString());
+        var auth = (UserDetailsImpl) authenticationManager.authenticate(usernamePassword).getPrincipal();
+//        if(!auth.isVerify()){
+//            errorMessage.addProperty("mensagem","Email não verificado!");
+//            errorMessage.addProperty("status",420);
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+//        }
+
         try {
-            var auth = authenticationManager.authenticate(usernamePassword);
-            String token = tokenService.generateToken((UserDetailsImpl) auth.getPrincipal());
+            String token = tokenService.generateToken(auth);
             return ResponseEntity.status(HttpStatus.OK).body(token);
         } catch (AuthenticationException e) {
             errorMessage.addProperty("mensagem","Falha na autenticação: " + e.getMessage());
             errorMessage.addProperty("status",400);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
+    }
+
+    @PatchMapping(path = "/public/user/verify")
+    public ResponseEntity<String> userVerify(@RequestBody String body) {
+        JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
+
+        JsonObject errorMessage = new JsonObject();
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PatchMapping(path = "/public/user/code/verify")
+    public ResponseEntity<String> newCodeToVerify(@RequestBody String body) {
+        JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
+
+        JsonObject errorMessage = new JsonObject();
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Transactional
@@ -240,6 +276,8 @@ public class UserController {
         Integer user_id = tokenService.validateToken(token);
         User user = userRepository.findById(user_id).get();
 
+        JsonObject errorMessage = new JsonObject();
+
         JsonElement name = jsonObj.get("name");
         if(name != null){
             user.setName(name.getAsString());
@@ -249,7 +287,9 @@ public class UserController {
         if(email != null){
             Optional<User> dbUser = userRepository.findByEmail(email.getAsString());
             if (dbUser.isPresent()) {
-                throw new EmailAlreadyExistsException("O email já está cadastrado!");
+                errorMessage.addProperty("mensagem","O email já está cadastrado!");
+                errorMessage.addProperty("status",400);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
             user.setEmail(email.getAsString());
         }
@@ -272,7 +312,16 @@ public class UserController {
 
         JsonElement profilePicture = jsonObj.get("profilePicture");
         if(profilePicture != null){
-            byte[] decodedBlobData = Base64.getDecoder().decode(profilePicture.getAsString());
+            String imageFormat = extractImageFormat(profilePicture.getAsString());
+            if(imageFormat == null){
+                errorMessage.addProperty("mensagem","Não foi possivel encontrar o formato da imagem entre data:image/???;base64,");
+                errorMessage.addProperty("status",400);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+            }
+            user.setPictureFormat(imageFormat);
+
+            String base64Data = profilePicture.getAsString().replaceAll("data:image\\/.*;base64,", "");
+            byte[] decodedBlobData = Base64.getDecoder().decode(base64Data);
             Blob blob;
             try {
                 blob = new SerialBlob(decodedBlobData);
@@ -288,6 +337,19 @@ public class UserController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    public static String extractImageFormat(String base64ImageData) {
+        // Encontre a parte da string que indica o formato da imagem
+        int startIndex = base64ImageData.indexOf("data:image/") + "data:image/".length();
+        int endIndex = base64ImageData.indexOf(";base64,");
+
+        if (startIndex != -1 && endIndex != -1) {
+            return base64ImageData.substring(startIndex, endIndex);
+        }
+
+        // Se não for possível extrair o formato, retorne null ou uma string indicativa de erro
+        return null;
     }
 
     @GetMapping(path = "/private/user/profile")
@@ -317,7 +379,7 @@ public class UserController {
             try {
                 byte[] bytes = user.getProfilePicture().getBytes(1,(int) user.getProfilePicture().length());
                 String encoded = Base64.getEncoder().encodeToString(bytes);
-                formattedUser.addProperty("profilePicture",encoded);
+                formattedUser.addProperty("profilePicture","data:image/"+user.getPictureFormat()+";base64,"+encoded);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -326,7 +388,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(formattedUser.toString());
     }
 
-    @GetMapping(path = "/private/users/search")
+    @GetMapping(path = "/private/user/search")
     public ResponseEntity<String> getUsersByName(@RequestParam(name = "name",required = false) String name,
                                                  @RequestParam(name = "email",required = false) String email,
                                                  @RequestParam(name = "id",required = false) Integer id,
@@ -346,7 +408,9 @@ public class UserController {
             }
         }else if(id != null){
             userList = new ArrayList<>();
-            userList.add(userRepository.findById(id).get());
+            if(userRepository.findById(id).isPresent()){
+                userList.add(userRepository.findById(id).get());
+            }
         }else{
             if(page != null) {
                 userList = userRepository.findAllLimitPage(10 * (page - 1));
@@ -372,7 +436,7 @@ public class UserController {
                 try {
                     byte[] bytes = user.getProfilePicture().getBytes(1,(int) user.getProfilePicture().length());
                     String encoded = Base64.getEncoder().encodeToString(bytes);
-                    formattedUser.addProperty("profilePicture",encoded);
+                    formattedUser.addProperty("profilePicture","data:image/"+user.getPictureFormat()+";base64,"+encoded);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }

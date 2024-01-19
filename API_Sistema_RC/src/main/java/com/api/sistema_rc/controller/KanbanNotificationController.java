@@ -37,16 +37,22 @@ public class KanbanNotificationController {
     private KanbanNotificationRepository kanbanNotificationRepository;
     private final Gson gson = new Gson();
     @GetMapping(path = "/private/user/notifications")
-    public ResponseEntity<String> getNotifications(@RequestHeader("Authorization") String token){
+    public ResponseEntity<String> getNotifications(@RequestHeader("Authorization") String token,
+                                                   @RequestParam(required = false,defaultValue = "false") boolean isLimit){
         Integer user_id = tokenService.validateToken(token);
 
-        List<KanbanNotification> kanbanNotificationList = kanbanNotificationRepository.findAllByUserId(user_id);
+        List<KanbanNotification> kanbanNotificationList;
+        if(isLimit){
+            kanbanNotificationList = kanbanNotificationRepository.findAllByUserIdWithLimit(user_id);
+        }else{
+            kanbanNotificationList = kanbanNotificationRepository.findAllByUserId(user_id);
+        }
 
         JsonArray notificationArr = new JsonArray();
         kanbanNotificationList.forEach(notification->{
             JsonObject notificationObj = new JsonObject();
             notificationObj.addProperty("id",notification.getId());
-            notificationObj.addProperty("registration_date",notification.getRegistration_date().toString());
+            notificationObj.addProperty("registrationDate",notification.getRegistrationDate().toString());
             notificationObj.addProperty("message",notification.getMessage());
             notificationObj.addProperty("viewed",notification.isViewed());
             notificationObj.addProperty("category",notification.getKanbanCategory().getName().name());

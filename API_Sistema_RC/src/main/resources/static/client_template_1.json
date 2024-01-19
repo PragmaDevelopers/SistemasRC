@@ -1,0 +1,441 @@
+{
+  "pessoa_fisica": [
+    {
+      "title": "Cliente",
+      "inputs": [
+        {
+          "type": "search",
+          "name": "nome_do_cliente",
+          "label": "Nome"
+        },
+        {
+          "type": "text",
+          "name": "profissao",
+          "label": "Profissão"
+        },
+        {
+          "type": "select",
+          "name": "estado_civil",
+          "label": "Estado Civil",
+          "children": [
+            "Solteiro (a)",
+            "Casado (a)",
+            "Divorciado (a)",
+            "Separado (a) de Fato",
+            "Separado (a) Judicialmente",
+            "Viúvo (a)",
+            "União Estável"
+          ]
+        },
+        {
+          "type": "text",
+          "name": "cpf",
+          "label": "CPF"
+        },
+        {
+          "type": "select",
+          "name": "perfil",
+          "label": "Perfil",
+          "children": [
+            "Aposentadoria",
+            "Aposentadoria/Declaratoria",
+            "Aposentadoria especial",
+            "Aposentadoria por idade urbana",
+            "Aposentadoria por incapacidade permanente",
+            "Aposentadoria por tempo de contruibuição",
+            "Auxilio - acidente",
+            "Auxilio - doença",
+            "Cliente demitido por justa causa",
+            "Consumidor",
+            "Declaratória de Tempo Especial",
+            "Fraude",
+            "Indicado por cliente",
+            "Isenção de IR por doença grave",
+            "LOAS",
+            "vive em união estável",
+            "não vive em união estável",
+            "Pensão alimentícia",
+            "Pensão por morte",
+            "Restabelecimento de beneficio",
+            "Revisão da aposentadoria",
+            "Revisão de benefício, pensão por morte",
+            "REVISÃO FGTS",
+            "Salário maternidade",
+            "Trabalhista"
+          ]
+        },
+        {
+          "type": "text",
+          "name": "nacionalidade",
+          "label": "Nacionalidade"
+        },
+        {
+          "type": "select",
+          "name": "escolaridade",
+          "label": "Escolaridade",
+          "children": [
+            "E. Fundamental Incompleto",
+            "E. Fundamental Completo",
+            "E. Médio Incompleto",
+            "E. Médio Completo",
+            "E. Técnico",
+            "Graduação Incompleta",
+            "Graduação Completa",
+            "Pós-Graduação Incompleta",
+            "Pós-Graduação Completa",
+            "Mestrado Incompleto",
+            "Mestrado Completo",
+            "Doutorado Incompleto",
+            "Doutorado Completo",
+            "Analfabeto"
+          ]
+        },
+        {
+          "type": "date",
+          "name": "nascimento",
+          "label": "Nascimento"
+        },
+        {
+          "type": "text",
+          "name": "rg",
+          "label": "RG"
+        },
+        {
+          "type": "text",
+          "name": "PIS",
+          "label": "PIS"
+        }
+      ]
+    },
+    {
+      "title": "Contato",
+      "inputs": [
+        {
+          "type": "email",
+          "name": "email_1",
+          "label": "E-mail 1"
+        },
+        {
+          "type": "email",
+          "name": "email_2",
+          "label": "E-mail 2"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_celular",
+          "label": "Telefone Celular"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_residencial",
+          "label": "Telefone Residencial"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_comercial",
+          "label": "Telefone Comercial"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_fax",
+          "label": "Telefone Fax"
+        }
+      ]
+    },
+    {
+      "title": "Endereço",
+      "inputs": [
+        {
+          "type": "search",
+          "name": "cep",
+          "label": "CEP"
+        },
+        {
+          "type": "select",
+          "name": "estado",
+          "label": "Estado",
+          "children": [
+            "AC - Acre",
+            "AL - Alagoas",
+            "AP - Amapá",
+            "AM - Amazonas",
+            "BA - Bahia",
+            "CE - Ceará",
+            "DF - Distrito Federal",
+            "ES - Espírito Santo",
+            "GO - Goiás",
+            "MA - Maranhão",
+            "MT - Mato Grosso",
+            "MS - Mato Grosso do Sul",
+            "MG - Minas Gerais",
+            "PA - Pará",
+            "PB - Paraíba",
+            "PR - Paraná",
+            "PE - Pernambuco",
+            "PI - Piauí",
+            "RJ - Rio de Janeiro",
+            "RN - Rio Grande do Norte",
+            "RS - Rio Grande do Sul",
+            "RO - Rondônia",
+            "RR - Roraima",
+            "SC - Santa Catarina",
+            "SP - São Paulo",
+            "SE - Sergipe",
+            "TO - Tocantins"
+          ]
+        },
+        {
+          "type": "text",
+          "name": "endereco",
+          "label": "Endereço"
+        },
+        {
+          "type": "text",
+          "name": "bairro",
+          "label": "Bairro"
+        },
+        {
+          "type": "text",
+          "name": "cidade",
+          "label": "Cidade"
+        }
+      ]
+    },
+    {
+      "title": "Campos Adicionais",
+      "inputs": [
+        {
+          "type": "text",
+          "name": "contato",
+          "label": "Contato"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_contato",
+          "label": "Telefone Contato"
+        },
+        {
+          "type": "text",
+          "name": "nome_do_pai",
+          "label": "Nome do pai"
+        },
+        {
+          "type": "text",
+          "name": "nome_do_mae",
+          "label": "Nome da mãe"
+        },
+        {
+          "type": "text",
+          "name": "c._livre_pf1",
+          "label": "C. Livre PF1"
+        },
+        {
+          "type": "text",
+          "name": "c._livre_pf2",
+          "label": "C. Livre PF2",
+          "children": [
+            "Não vive em união estável",
+            "Vive em união estável"
+          ]
+        },
+        {
+          "type": "textarea",
+          "name": "observacao",
+          "label": "Observação"
+        }
+      ]
+    }
+  ],
+  "pessoa_juridica": [
+    {
+      "title": "Cliente",
+      "inputs": [
+        {
+          "type": "search",
+          "name": "razao_social",
+          "label": "Razão Social"
+        },
+        {
+          "type": "text",
+          "name": "nome_fantasia",
+          "label": "Nome Fantasia"
+        },
+        {
+          "type": "text",
+          "name": "cnpj",
+          "label": "CNPJ"
+        },
+        {
+          "type": "select",
+          "name": "perfil",
+          "label": "Perfil",
+          "children": [
+            "Aposentadoria",
+            "Aposentadoria/Declaratoria",
+            "Aposentadoria especial",
+            "Aposentadoria por idade urbana",
+            "Aposentadoria por incapacidade permanente",
+            "Aposentadoria por tempo de contruibuição",
+            "Auxilio - acidente",
+            "Auxilio - doença",
+            "Cliente demitido por justa causa",
+            "Consumidor",
+            "Declaratória de Tempo Especial",
+            "Fraude",
+            "Indicado por cliente",
+            "Isenção de IR por doença grave",
+            "LOAS",
+            "vive em união estável",
+            "não vive em união estável",
+            "Pensão alimentícia",
+            "Pensão por morte",
+            "Restabelecimento de beneficio",
+            "Revisão da aposentadoria",
+            "Revisão de benefício, pensão por morte",
+            "REVISÃO FGTS",
+            "Salário maternidade",
+            "Trabalhista"
+          ]
+        },
+        {
+          "type": "text",
+          "name": "responsavel",
+          "label": "Responsável"
+        },
+        {
+          "type": "text",
+          "name": "ramo_de_atividade",
+          "label": "Ramo de atividade"
+        },
+        {
+          "type": "text",
+          "name": "inscricao_estadual",
+          "label": "Inscrição estadual"
+        },
+        {
+          "type": "text",
+          "name": "inscricao_municipal",
+          "label": "Inscrição municipal"
+        }
+      ]
+    },
+    {
+      "title": "Contato",
+      "inputs": [
+        {
+          "type": "email",
+          "name": "email_1",
+          "label": "E-mail 1"
+        },
+        {
+          "type": "email",
+          "name": "email_2",
+          "label": "E-mail 2"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_1",
+          "label": "Telefone 1"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_2",
+          "label": "Telefone 2"
+        },
+        {
+          "type": "tel",
+          "name": "telefone_fax",
+          "label": "Telefone Fax"
+        },
+        {
+          "type": "text",
+          "name": "site",
+          "label": "Site"
+        }
+      ]
+    },
+    {
+      "title": "Endereço",
+      "inputs": [
+        {
+          "type": "search",
+          "name": "cep",
+          "label": "CEP"
+        },
+        {
+          "type": "select",
+          "name": "estado",
+          "label": "Estado",
+          "children": [
+            "AC - Acre",
+            "AL - Alagoas",
+            "AP - Amapá",
+            "AM - Amazonas",
+            "BA - Bahia",
+            "CE - Ceará",
+            "DF - Distrito Federal",
+            "ES - Espírito Santo",
+            "GO - Goiás",
+            "MA - Maranhão",
+            "MT - Mato Grosso",
+            "MS - Mato Grosso do Sul",
+            "MG - Minas Gerais",
+            "PA - Pará",
+            "PB - Paraíba",
+            "PR - Paraná",
+            "PE - Pernambuco",
+            "PI - Piauí",
+            "RJ - Rio de Janeiro",
+            "RN - Rio Grande do Norte",
+            "RS - Rio Grande do Sul",
+            "RO - Rondônia",
+            "RR - Roraima",
+            "SC - Santa Catarina",
+            "SP - São Paulo",
+            "SE - Sergipe",
+            "TO - Tocantins"
+          ]
+        },
+        {
+          "type": "text",
+          "name": "endereco",
+          "label": "Endereço"
+        },
+        {
+          "type": "text",
+          "name": "bairro",
+          "label": "Bairro"
+        },
+        {
+          "type": "text",
+          "name": "cidade",
+          "label": "Cidade"
+        }
+      ]
+    },
+    {
+      "title": "Campos Adicionais",
+      "inputs": [
+        {
+          "type": "text",
+          "name": "c._livre_pj1",
+          "label": "C. Livre PJ1"
+        },
+        {
+          "type": "text",
+          "name": "c._livre_pj2",
+          "label": "C. Livre PJ2",
+          "children": [
+            "Não vive em união estável",
+            "Vive em união estável"
+          ]
+        },
+        {
+          "type": "textarea",
+          "name": "observacao",
+          "label": "Observação"
+        }
+      ]
+    }
+  ]
+}

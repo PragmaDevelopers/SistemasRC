@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -44,12 +45,13 @@ public class KanbanColumnController {
     private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
     @Autowired
     private KanbanDeadlineRepository kanbanDeadlineRepository;
+    @Autowired
+    private KanbanCardCustomFieldRepository kanbanCardCustomFieldRepository;
     private final Gson gson = new Gson();
 
     @GetMapping(path = "/private/user/kanban/{kanbanId}/columns")
     public ResponseEntity<String> getColumns(@PathVariable Integer kanbanId,
-                                             @RequestHeader("Authorization") String token,
-                                             @RequestParam(name = "cards",required = false) boolean isCards){
+                                             @RequestHeader("Authorization") String token){
         JsonObject errorMessage = new JsonObject();
         if(kanbanId == null){
             errorMessage.addProperty("mensagem","O campo kanbanId é necessário!");
@@ -82,223 +84,43 @@ public class KanbanColumnController {
             columnObj.addProperty("id",column.getId());
             columnObj.addProperty("title",column.getTitle());
             columnObj.addProperty("index",column.getIndex());
-            if(isCards){
-                List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnIdAndNotInnerCard(column.getId());
-                JsonArray cardArr = new JsonArray();
-                for(KanbanCard card : kanbanCardsList){
-                    JsonObject cardObj = new JsonObject();
-                    cardObj.addProperty("id",card.getId());
-                    cardObj.addProperty("title",card.getTitle());
-                    cardObj.addProperty("description",card.getDescription());
-
-                    JsonArray members = new JsonArray();
-                    for (String memberId : card.getMembers().split(",")) {
-                        members.add(Integer.parseInt(memberId));
-                    }
-                    cardObj.add("members", members);
-
-                    boolean isDeadline = kanbanDeadlineRepository.findByCardId(card.getId()).isPresent();
-                    if(!isDeadline){
-                        cardObj.addProperty("deadline", (String) null);
-                    }else{
-                        KanbanDeadline kanbanDeadline = kanbanDeadlineRepository.findByCardId(card.getId()).get();
-                        JsonObject deadlineObj = new JsonObject();
-                        deadlineObj.addProperty("id",kanbanDeadline.getId());
-                        deadlineObj.addProperty("date",kanbanDeadline.getDate().toString());
-                        deadlineObj.addProperty("overdue",kanbanDeadline.isOverdue());
-                        deadlineObj.addProperty("category", kanbanDeadline.getKanbanCategory().getName().name());
-                        deadlineObj.addProperty("toKanbanId",(String) null);
-                        deadlineObj.addProperty("toColumnId",(String) null);
-                        if(kanbanDeadline.getActionKanbanColumn() != null){
-                            deadlineObj.addProperty("toKanbanId",kanbanDeadline.getActionKanbanColumn().getKanban().getId());
-                            deadlineObj.addProperty("toColumnId",kanbanDeadline.getActionKanbanColumn().getId());
-                        }
-
-                        cardObj.add("deadline", deadlineObj);
-                    }
-
-                    cardObj.addProperty("index",card.getIndex());
-                    List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(card.getId());
-                    JsonArray checkListArr = new JsonArray();
-                    for (KanbanCardChecklist checkList : kanbanCardCheckList) {
-                        JsonObject checkListObj = new JsonObject();
-                        checkListObj.addProperty("id",checkList.getId());
-                        checkListObj.addProperty("name",checkList.getName());
-
-                        List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
-                        JsonArray checkListItemArr = new JsonArray();
-                        for (KanbanCardChecklistItem checkListItem : kanbanCardChecklistItems) {
-                            JsonObject checkListItemObj = new JsonObject();
-                            checkListItemObj.addProperty("id",checkListItem.getId());
-                            checkListItemObj.addProperty("name",checkListItem.getName());
-                            checkListItemObj.addProperty("completed",checkListItem.isCompleted());
-                            checkListItemArr.add(checkListItemObj);
-                        }
-                        checkListObj.add("items",checkListItemArr);
-                        checkListArr.add(checkListObj);
-                    }
-                    cardObj.add("checkList",checkListArr);
-                    
-                    List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
-                    JsonArray tagArr = new JsonArray();
-                    for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
-                        JsonObject tagObj = new JsonObject();
-                        tagObj.addProperty("id",kanbanCardTag.getId());
-                        tagObj.addProperty("name",kanbanCardTag.getName());
-                        tagObj.addProperty("color",kanbanCardTag.getColor());
-                        tagArr.add(tagObj);
-                    }
-                    cardObj.add("tags",tagArr);
-
-                    List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(card.getId());
-                    JsonArray commentArr = processComments(kanbanCardCommentList,new JsonArray());
-                    cardObj.add("comments",commentArr);
-
-                    List<KanbanCard> kanbanInnerCardList = kanbanCardRepository.findAllByInnerCardId(card.getId());
-                    JsonArray innerCardArr = processInnerCards(kanbanInnerCardList,new JsonArray());
-                    cardObj.add("innerCards",innerCardArr);
-
-                    cardArr.add(cardObj);
-                }
-                columnObj.add("cards",cardArr);
-            }
-
             columnsArr.add(columnObj);
         });
-        return ResponseEntity.status(HttpStatus.OK).body(columnsArr.toString());
-    }
 
-    public JsonArray processComments(List<KanbanCardComment> comments, JsonArray arr) {
-        Map<Integer, JsonObject> commentMap = new HashMap<>();
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
 
-        comments.forEach(comment -> {
-            // Processar o comentário atual
-            JsonObject commentObj = new JsonObject();
-            commentObj.addProperty("id", comment.getId());
-            commentObj.addProperty("content", comment.getContent());
-            commentObj.addProperty("edited", comment.isEdited());
+        JsonArray userArray = new JsonArray();
 
-            if (comment.getRegistration_date() == null) {
-                commentObj.addProperty("registration_date", (String) null);
-            } else {
-                commentObj.addProperty("registration_date", String.valueOf(comment.getRegistration_date()));
-            }
-
-            JsonObject userObj = new JsonObject();
-            userObj.addProperty("id", comment.getUser().getId());
-            userObj.addProperty("name", comment.getUser().getName());
-            userObj.addProperty("email", comment.getUser().getEmail());
-            commentObj.add("user", userObj);
-
-            // Verificar se há respostas e chamar recursivamente
-            List<KanbanCardComment> kanbanCardCommentAnsweredList = kanbanCardCommentRepository.findAllByCommentAnsweredId(comment.getId());
-
-            if (!kanbanCardCommentAnsweredList.isEmpty()) {
-                JsonArray answerArr = new JsonArray();
-                processComments(kanbanCardCommentAnsweredList, answerArr);
-                commentObj.add("answers", answerArr);
-            }
-
-            commentMap.put(comment.getId(), commentObj);
-        });
-
-        comments.forEach(comment -> {
-            // Verificar se o comentário tem um pai (foi respondido)
-            if (comment.getKanbanCommentAnswered() != null) {
-                int parentId = comment.getKanbanCommentAnswered().getId();
-                JsonObject parentComment = commentMap.get(parentId);
-
-                // Adicionar como resposta ao pai
-                if (parentComment != null) {
-                    JsonArray answers = parentComment.getAsJsonArray("answers");
-                    answers.add(commentMap.get(comment.getId()));
+        kanbanUserList.forEach(userInKanban->{
+            JsonObject formattedUser = new JsonObject();
+            formattedUser.addProperty("id",userInKanban.getUser().getId());
+            formattedUser.addProperty("name",userInKanban.getUser().getName());
+            formattedUser.addProperty("email",userInKanban.getUser().getEmail());
+            formattedUser.addProperty("pushEmail",userInKanban.getUser().getPushEmail());
+            formattedUser.addProperty("registration_date",userInKanban.getUser().getRegistration_date().toString());
+            formattedUser.addProperty("nationality",userInKanban.getUser().getNationality());
+            formattedUser.addProperty("gender",userInKanban.getUser().getGender());
+            formattedUser.addProperty("role",userInKanban.getUser().getRole().getName().name());
+            formattedUser.addProperty("permissionLevel",userInKanban.getUser().getPermissionLevel());
+            if(userInKanban.getUser().getProfilePicture() == null){
+                formattedUser.addProperty("profilePicture",(String) null);
+            }else{
+                try {
+                    byte[] bytes = userInKanban.getUser().getProfilePicture().getBytes(1,(int) userInKanban.getUser().getProfilePicture().length());
+                    String encoded = Base64.getEncoder().encodeToString(bytes);
+                    formattedUser.addProperty("profilePicture",encoded);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
-            } else {
-                // Adicionar o comentário principal ao array
-                arr.add(commentMap.get(comment.getId()));
             }
+            userArray.add(formattedUser);
         });
 
-        return arr;
-    }
+        JsonObject selectedKanban = new JsonObject();
+        selectedKanban.add("columns",columnsArr);
+        selectedKanban.add("members",userArray);
 
-    public JsonArray processInnerCards(List<KanbanCard> innerCards,JsonArray arr){
-        Map<Integer, JsonObject> innerCardMap = new HashMap<>();
-
-        innerCards.forEach(innerCard -> {
-            // Processar o comentário atual
-            JsonObject innerCardObj = new JsonObject();
-
-            innerCardObj.addProperty("id",innerCard.getId());
-            innerCardObj.addProperty("title",innerCard.getTitle());
-            innerCardObj.addProperty("description",innerCard.getDescription());
-
-            JsonArray members = new JsonArray();
-            for (String memberId : innerCard.getMembers().split(",")) {
-                members.add(Integer.parseInt(memberId));
-            }
-            innerCardObj.add("members", members);
-
-//            if(innerCard.getDeadline() == null){
-//                innerCardObj.addProperty("deadline", (String) null);
-//            }else{
-//                innerCardObj.addProperty("deadline", String.valueOf(innerCard.getDeadline()));
-//            }
-            innerCardObj.addProperty("index",innerCard.getIndex());
-
-            List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(innerCard.getId());
-            JsonArray checkListArr = new JsonArray();
-            for (KanbanCardChecklist checkList : kanbanCardCheckList) {
-                JsonObject checkListObj = new JsonObject();
-                checkListObj.addProperty("id",checkList.getId());
-                checkListObj.addProperty("name",checkList.getName());
-
-                List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
-                JsonArray checkListItemArr = new JsonArray();
-                for (KanbanCardChecklistItem checkListItem : kanbanCardChecklistItems) {
-                    JsonObject checkListItemObj = new JsonObject();
-                    checkListItemObj.addProperty("id",checkListItem.getId());
-                    checkListItemObj.addProperty("name",checkListItem.getName());
-                    checkListItemObj.addProperty("completed",checkListItem.isCompleted());
-                    checkListItemArr.add(checkListItemObj);
-                }
-                checkListObj.add("items",checkListItemArr);
-                checkListArr.add(checkListObj);
-            }
-            innerCardObj.add("checkList",checkListArr);
-
-            List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(innerCard.getId());
-            JsonArray tagArr = new JsonArray();
-            for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
-                JsonObject tagObj = new JsonObject();
-                tagObj.addProperty("id",kanbanCardTag.getId());
-                tagObj.addProperty("name",kanbanCardTag.getName());
-                tagObj.addProperty("color",kanbanCardTag.getColor());
-                tagArr.add(tagObj);
-            }
-            innerCardObj.add("tags",tagArr);
-
-            List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(innerCard.getId());
-            JsonArray commentArr = processComments(kanbanCardCommentList,new JsonArray());
-            innerCardObj.add("comments",commentArr);
-
-            // Verificar se há respostas e chamar recursivamente
-            List<KanbanCard> kanbanInnerCardList = kanbanCardRepository.findAllByInnerCardId(innerCard.getId());
-
-            if (!kanbanInnerCardList.isEmpty()) {
-                JsonArray innerCardArr = new JsonArray();
-                processInnerCards(kanbanInnerCardList, innerCardArr);
-                innerCardObj.add("innerCards", innerCardArr);
-            }
-
-            innerCardMap.put(innerCard.getId(), innerCardObj);
-        });
-
-        innerCards.forEach(innerCard -> {
-            arr.add(innerCardMap.get(innerCard.getId()));
-        });
-
-        return arr;
+        return ResponseEntity.status(HttpStatus.OK).body(selectedKanban.toString());
     }
 
     @PostMapping(path = "/private/user/kanban/column")
@@ -361,7 +183,7 @@ public class KanbanColumnController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou a coluna "+dbKanbanColumn.getTitle()+" no kanban "+kanban.getTitle()+"."
         );
@@ -451,21 +273,6 @@ public class KanbanColumnController {
             }
         }
 
-        List<KanbanCard> kanbanCardList = kanbanCardRepository.findAllByColumnId(columnId);
-        kanbanCardList.forEach(cardId->{
-            List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(cardId.getId());
-            kanbanCardCheckList.forEach(checkList->{
-                List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
-                kanbanCardCheckListItemRepository.deleteAll(kanbanCardChecklistItems);
-            });
-            kanbanCardCheckListRepository.deleteAll(kanbanCardCheckList);
-
-            List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(cardId.getId());
-            kanbanCardCommentRepository.deleteAll(kanbanCardCommentList);
-        });
-
-        kanbanCardRepository.deleteAll(kanbanCardList);
-
         List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
         KanbanNotification kanbanNotification = new KanbanNotification();
@@ -473,7 +280,7 @@ public class KanbanColumnController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou a coluna "+selectedColumn.getTitle()+" do kanban "+kanban.getTitle()+"."
         );
@@ -483,10 +290,7 @@ public class KanbanColumnController {
         kanbanCategory.setId(8);
         kanbanCategory.setName(CategoryName.COLUMN_DELETE);
         kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        for (KanbanNotification dbNotificationColumn : kanbanNotificationRepository.findAllByColumnId(columnId)) {
-            dbNotificationColumn.setKanbanColumn(null);
-        }
+        kanbanNotification.setKanbanColumn(null);
 
         kanbanNotificationList.add(kanbanNotification);
 
@@ -583,7 +387,7 @@ public class KanbanColumnController {
                     " (novo título) do kanban " + kanban.getTitle() + ".";
         }
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage("Você"+message);
         kanbanNotification.setViewed(false);
 
@@ -626,7 +430,7 @@ public class KanbanColumnController {
     }
 
     @Transactional
-    @PatchMapping(path = "/private/user/kanban/move/column")
+    @PatchMapping(path = "/private/user/kanban/column/move")
     public ResponseEntity<String> moveColumn(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
@@ -681,19 +485,15 @@ public class KanbanColumnController {
         }
 
         toColumnList.sort(Comparator.comparing(KanbanColumn::getIndex));
-        for (int i = 0;i < toColumnList.size();i++) {
-            if(Objects.equals(toColumnList.get(i).getId(), selectedColumn.getId()) && Objects.equals(toColumnList.get(i + 1).getIndex(), selectedColumn.getIndex())){
+        for (int i = 0; i < toColumnList.size() - 1; i++) {
+            if (Objects.equals(toColumnList.get(i).getId(), selectedColumn.getId()) && Objects.equals(toColumnList.get(i + 1).getIndex(), selectedColumn.getIndex())) {
                 toColumnList.get(i).setIndex(i + 1);
                 toColumnList.get(i + 1).setIndex(i);
-                i+=2;
-                if(i >= toColumnList.size()){
-                    break;
-                }
-            }else if(Objects.equals(toColumnList.get(i).getId(), selectedColumn.getId()) && toColumnList.get(i - 1).getIndex() == toIndex.getAsInt()){
+                i += 1;  // ajuste aqui
+            } else if (Objects.equals(toColumnList.get(i).getId(), selectedColumn.getId()) && i > 0 && toColumnList.get(i - 1).getIndex() == toIndex.getAsInt()) {
                 toColumnList.get(i).setIndex(i - 1);
                 toColumnList.get(i - 1).setIndex(i);
-                i+=1;
-            }{
+            } else {
                 toColumnList.get(i).setIndex(i);
             }
         }
@@ -705,7 +505,7 @@ public class KanbanColumnController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você moveu a coluna " +
                         selectedColumn.getTitle() + " do kanban " + kanban.getTitle() + "."

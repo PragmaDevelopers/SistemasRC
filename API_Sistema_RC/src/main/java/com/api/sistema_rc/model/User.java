@@ -23,6 +23,8 @@ public class User{
     @Lob @Basic(fetch=FetchType.LAZY)
     @Column
     private Blob profilePicture;
+    @Column(length = 255)
+    private String pictureFormat;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDateTime registration_date;
@@ -30,6 +32,10 @@ public class User{
     private String email;
     @Column(length = 255,unique = true)
     private String pushEmail;
+    @Column(nullable = false)
+    private boolean isVerify;
+    @Column(length = 255,nullable = false)
+    private String codeToVerify;
     @Column(nullable = false)
     private String password;
     @Column(length = 30,nullable = false)
@@ -71,6 +77,14 @@ public class User{
         this.profilePicture = profilePicture;
     }
 
+    public String getPictureFormat() {
+        return pictureFormat;
+    }
+
+    public void setPictureFormat(String pictureFormat) {
+        this.pictureFormat = pictureFormat;
+    }
+
     public LocalDateTime getRegistration_date() {
         return registration_date;
     }
@@ -93,6 +107,22 @@ public class User{
 
     public void setPushEmail(String pushEmail) {
         this.pushEmail = pushEmail;
+    }
+
+    public boolean isVerify() {
+        return isVerify;
+    }
+
+    public void setVerify(boolean verify) {
+        isVerify = verify;
+    }
+
+    public String getCodeToVerify() {
+        return codeToVerify;
+    }
+
+    public void setCodeToVerify(String codeToVerify) {
+        this.codeToVerify = codeToVerify;
     }
 
     public String getPassword() {

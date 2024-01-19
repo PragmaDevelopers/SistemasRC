@@ -77,10 +77,10 @@ public class KanbanCardCommentController {
                 commentObj.addProperty("id", comment.getId());
                 commentObj.addProperty("content", comment.getContent());
                 commentObj.addProperty("edited", comment.isEdited());
-                if (comment.getRegistration_date() == null) {
-                    commentObj.addProperty("registration_date", (String) null);
+                if (comment.getRegistrationDate() == null) {
+                    commentObj.addProperty("registrationDate", (String) null);
                 } else {
-                    commentObj.addProperty("registration_date", String.valueOf(comment.getRegistration_date()));
+                    commentObj.addProperty("registrationDate", String.valueOf(comment.getRegistrationDate()));
                 }
 
                 JsonObject userObj = new JsonObject();
@@ -96,10 +96,10 @@ public class KanbanCardCommentController {
                     commentAnsweredObj.addProperty("id", commentAnswered.getId());
                     commentAnsweredObj.addProperty("content", commentAnswered.getContent());
                     commentAnsweredObj.addProperty("edited", commentAnswered.isEdited());
-                    if (commentAnswered.getRegistration_date() == null) {
-                        commentAnsweredObj.addProperty("registration_date", (String) null);
+                    if (commentAnswered.getRegistrationDate() == null) {
+                        commentAnsweredObj.addProperty("registrationDate", (String) null);
                     } else {
-                        commentAnsweredObj.addProperty("registration_date", String.valueOf(commentAnswered.getRegistration_date()));
+                        commentAnsweredObj.addProperty("registrationDate", String.valueOf(commentAnswered.getRegistrationDate()));
                     }
                     JsonObject userAnsweredObj = new JsonObject();
                     userAnsweredObj.addProperty("id", commentAnswered.getUser().getId());
@@ -163,7 +163,7 @@ public class KanbanCardCommentController {
         KanbanCardComment kanbanCardComment = new KanbanCardComment();
 
         kanbanCardComment.setContent(commentContent.getAsString());
-        kanbanCardComment.setRegistration_date(LocalDateTime.now());
+        kanbanCardComment.setRegistrationDate(LocalDateTime.now());
         kanbanCardComment.setEdited(false);
 
         kanbanCardComment.setKanbanCard(kanbanCard);
@@ -178,7 +178,7 @@ public class KanbanCardCommentController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou o comentário " + dbKanbanCardComment.getContent() +
                         " no card "+ kanbanCard.getTitle()+
@@ -279,7 +279,7 @@ public class KanbanCardCommentController {
         KanbanCardComment commentAnswered = new KanbanCardComment();
 
         commentAnswered.setContent(commentContent.getAsString());
-        commentAnswered.setRegistration_date(LocalDateTime.now());
+        commentAnswered.setRegistrationDate(LocalDateTime.now());
         commentAnswered.setEdited(false);
 
         commentAnswered.setKanbanCard(kanbanCardComment.getKanbanCard());
@@ -295,7 +295,7 @@ public class KanbanCardCommentController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você respondeu o comentário " + dbKanbanCardComment.getKanbanCommentAnswered().getContent()
                         + " no card "+dbKanbanCardComment.getKanbanCard().getTitle()+
@@ -401,7 +401,7 @@ public class KanbanCardCommentController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou o comentário " + selectedComment.getContent()
                         + " no card "+selectedComment.getKanbanCard().getTitle()+
@@ -414,10 +414,7 @@ public class KanbanCardCommentController {
         kanbanCategory.setId(21);
         kanbanCategory.setName(CategoryName.CARDCOMMENT_DELETE);
         kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        for (KanbanNotification dbNotificationComment : kanbanNotificationRepository.findAllByCardCommentId(commentId)) {
-            dbNotificationComment.setKanbanCardComment(null);
-        }
+        kanbanNotification.setKanbanCardComment(null);
 
         kanbanNotificationList.add(kanbanNotification);
 
@@ -518,18 +515,18 @@ public class KanbanCardCommentController {
 
         String message = " atualizou ("+String.join(",",modifiedArr)+") no comentário "+oldCommentContent+
                 " do card "+selectedComment.getKanbanCard().getTitle()+
-                " da coluna "+selectedComment.getKanbanCard().getKanbanColumn()+
+                " da coluna "+selectedComment.getKanbanCard().getKanbanColumn().getTitle()+
                 " do kanban "+kanban.getTitle()+".";
 
         if(commentContent != null){
             message = " atualizou ("+String.join(",",modifiedArr)+") no comentário "+
                     oldCommentContent + " (conteúdo antigo) | "+selectedComment.getContent()+
                     " (novo conteúdo) do card "+selectedComment.getKanbanCard().getTitle()+
-                    " da coluna "+selectedComment.getKanbanCard().getKanbanColumn()+
+                    " da coluna "+selectedComment.getKanbanCard().getKanbanColumn().getTitle()+
                     " do kanban "+kanban.getTitle()+".";
         }
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage("Você"+message);
         kanbanNotification.setViewed(false);
 

@@ -139,7 +139,7 @@ public class KanbanChecklistController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você criou o checklist " + dbKanbanCardChecklist.getName() +
                         " no card "+kanbanCard.getTitle()+
@@ -257,7 +257,7 @@ public class KanbanChecklistController {
                     " do kanban "+kanban.getTitle()+".";
         }
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage("Você"+message);
         kanbanNotification.setViewed(false);
 
@@ -327,9 +327,6 @@ public class KanbanChecklistController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardChecklistItemRepository.findAllByChecklistId(checklistId);
-        kanbanCardChecklistItemRepository.deleteAll(kanbanCardChecklistItems);
-
         List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
         KanbanNotification kanbanNotification = new KanbanNotification();
@@ -337,7 +334,7 @@ public class KanbanChecklistController {
         kanbanNotification.setUser(kanbanUser.getUser());
         kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistration_date(LocalDateTime.now());
+        kanbanNotification.setRegistrationDate(LocalDateTime.now());
         kanbanNotification.setMessage(
                 "Você deletou o checklist " + selectedChecklist.getName() +
                         " no card "+selectedChecklist.getKanbanCard().getTitle()+
@@ -350,10 +347,7 @@ public class KanbanChecklistController {
         kanbanCategory.setId(24);
         kanbanCategory.setName(CategoryName.CARDCHECKLIST_DELETE);
         kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        for (KanbanNotification dbNotificationChecklist : kanbanNotificationRepository.findAllByCardChecklistId(checklistId)) {
-            dbNotificationChecklist.setKanbanCardChecklist(null);
-        }
+        kanbanNotification.setKanbanCardChecklist(null);
 
         kanbanNotificationList.add(kanbanNotification);
 

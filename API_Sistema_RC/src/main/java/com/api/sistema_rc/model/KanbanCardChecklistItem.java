@@ -1,6 +1,10 @@
 package com.api.sistema_rc.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.List;
 
 @Entity
 @Table(name = "kanban_card_checklist_items")
@@ -8,6 +12,9 @@ public class KanbanCardChecklistItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @OneToMany(mappedBy = "kanbanCardChecklistItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private List<KanbanNotification> kanbanCardChecklistItemNotifications;
     @ManyToOne
     @JoinColumn(nullable = false,name = "kanban_card_checklist_id")
     private KanbanCardChecklist kanbanCardChecklist;

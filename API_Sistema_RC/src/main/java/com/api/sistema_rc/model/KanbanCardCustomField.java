@@ -1,6 +1,10 @@
 package com.api.sistema_rc.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.List;
 
 @Entity
 @Table(name = "kanban_card_custom_fields")
@@ -8,6 +12,9 @@ public class KanbanCardCustomField {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @OneToMany(mappedBy = "kanbanCardCustomField", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private List<KanbanNotification> kanbanCardCustomFieldNotifications;
     @ManyToOne
     @JoinColumn(nullable = false,name = "kanban_card_id")
     private KanbanCard kanbanCard;

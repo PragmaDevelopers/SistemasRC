@@ -1,7 +1,8 @@
 package com.api.sistema_rc.model;
 
-import com.google.gson.JsonObject;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 
@@ -11,6 +12,12 @@ public class KanbanColumn {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @OneToMany(mappedBy = "kanbanColumn", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<KanbanCard> cards;
+    @OneToMany(mappedBy = "kanbanColumn", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private List<KanbanNotification> kanbanColumnNotifications;
     @ManyToOne
     @JoinColumn(nullable = false,name = "kanban_id")
     private Kanban kanban;

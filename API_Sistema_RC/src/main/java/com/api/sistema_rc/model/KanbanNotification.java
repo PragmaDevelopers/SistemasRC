@@ -17,7 +17,7 @@ public class KanbanNotification {
     private User user;
     @Column(nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDateTime registration_date;
+    private LocalDateTime registrationDate;
     @ManyToOne
     @JoinColumn(nullable = false,name = "sender_user_id")
     private User senderUser;
@@ -66,7 +66,7 @@ public class KanbanNotification {
     public KanbanNotification(KanbanNotification kanbanNotification) {
         this.id = kanbanNotification.getId();
         this.user = kanbanNotification.getUser();
-        this.registration_date = kanbanNotification.getRegistration_date();
+        this.registrationDate = kanbanNotification.getRegistrationDate();
         this.senderUser = kanbanNotification.getSenderUser();
         this.recipientUser = kanbanNotification.getRecipientUser();
         this.kanbanCategory = kanbanNotification.getKanbanCategory();
@@ -99,12 +99,12 @@ public class KanbanNotification {
         this.user = user;
     }
 
-    public LocalDateTime getRegistration_date() {
-        return registration_date;
+    public LocalDateTime getRegistrationDate() {
+        return registrationDate;
     }
 
-    public void setRegistration_date(LocalDateTime registration_date) {
-        this.registration_date = registration_date;
+    public void setRegistrationDate(LocalDateTime registrationDate) {
+        this.registrationDate = registrationDate;
     }
 
     public User getSenderUser() {

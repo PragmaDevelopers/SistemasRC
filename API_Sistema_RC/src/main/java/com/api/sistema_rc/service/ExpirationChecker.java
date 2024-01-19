@@ -57,7 +57,7 @@ public class ExpirationChecker {
                 kanbanNotification.setUser(deadline.getUser());
                 kanbanNotification.setSenderUser(deadline.getUser());
 
-                kanbanNotification.setRegistration_date(LocalDateTime.now());
+                kanbanNotification.setRegistrationDate(LocalDateTime.now());
 
                 kanbanNotification.setViewed(false);
 
