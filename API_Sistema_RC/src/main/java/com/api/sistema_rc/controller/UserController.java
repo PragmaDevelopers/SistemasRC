@@ -6,6 +6,7 @@ import com.api.sistema_rc.model.Role;
 import com.api.sistema_rc.model.User;
 import com.api.sistema_rc.model.UserDetailsImpl;
 import com.api.sistema_rc.repository.UserRepository;
+import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.util.PasswordEncoderUtils;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
@@ -42,7 +43,10 @@ public class UserController {
     private AuthenticationManager authenticationManager;
     @Autowired
     private TokenService tokenService;
-    private final Gson gson = new Gson();
+    @Autowired
+    private MailService mailService;
+    @Autowired
+    private Gson gson;
 
     @PostMapping(path = "/public/signup")
     public ResponseEntity<String> signup(@RequestBody String body){
@@ -103,7 +107,7 @@ public class UserController {
 
         user.setNationality(nationality.getAsString());
         user.setRegistration_date(LocalDateTime.now());
-        user.setPermissionLevel("00000000000000000000000000000000000");
+        user.setPermissionLevel("000000000000000000000000000000000000000");
 
         Role role = new Role();
         role.setId(3);
@@ -113,14 +117,24 @@ public class UserController {
 
         SecureRandom random = new SecureRandom();
         StringBuilder code = new StringBuilder();
-        for (int i = 0; i < 10; i++) {
-            int digit = random.nextInt(10);
-            code.append(digit);
-        }
+        boolean isCode;
+        do{
+            for (int i = 0; i < 10; i++) {
+                int digit = random.nextInt(10);
+                code.append(digit);
+            }
+            isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
+        }while(isCode);
+
         user.setCodeToVerify(code.toString());
         user.setVerify(false);
+        user.setReceiveNotification(false);
 
         userRepository.save(user);
+
+        mailService.sendMail(user.getEmail(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
+            "Para verificar sua conta clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
+        );
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -147,15 +161,30 @@ public class UserController {
 
         var usernamePassword = new UsernamePasswordAuthenticationToken(email.getAsString(),password.getAsString());
         var auth = (UserDetailsImpl) authenticationManager.authenticate(usernamePassword).getPrincipal();
-//        if(!auth.isVerify()){
-//            errorMessage.addProperty("mensagem","Email não verificado!");
-//            errorMessage.addProperty("status",420);
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
-//        }
+        if(!auth.isVerify()){
+            SecureRandom random = new SecureRandom();
+            StringBuilder code = new StringBuilder();
+            boolean isCode;
+            do{
+                for (int i = 0; i < 10; i++) {
+                    int digit = random.nextInt(10);
+                    code.append(digit);
+                }
+                isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
+            }while(isCode);
+            mailService.sendMail(email.getAsString(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
+                    "Para verificar sua conta clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
+            );
+            errorMessage.addProperty("mensagem","Email não verificado!");
+            errorMessage.addProperty("status",420);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
 
         try {
             String token = tokenService.generateToken(auth);
-            return ResponseEntity.status(HttpStatus.OK).body(token);
+            JsonObject tokenObject = new JsonObject();
+            tokenObject.addProperty("token",token);
+            return ResponseEntity.status(HttpStatus.OK).body(tokenObject.toString());
         } catch (AuthenticationException e) {
             errorMessage.addProperty("mensagem","Falha na autenticação: " + e.getMessage());
             errorMessage.addProperty("status",400);
@@ -163,20 +192,43 @@ public class UserController {
         }
     }
 
-    @PatchMapping(path = "/public/user/verify")
-    public ResponseEntity<String> userVerify(@RequestBody String body) {
-        JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
-
-        JsonObject errorMessage = new JsonObject();
-
+    @Transactional
+    @PatchMapping(path = "/public/user/verify/{code}")
+    public ResponseEntity<String> userVerify(@PathVariable String code) {
+        Optional<User> user = userRepository.findByCodeToVerify(code);
+        if(user.isPresent()){
+            user.get().setVerify(true);
+            user.get().setCodeToVerify(null);
+        }
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @PatchMapping(path = "/public/user/code/verify")
-    public ResponseEntity<String> newCodeToVerify(@RequestBody String body) {
+    @PatchMapping(path = "/public/user/new/password")
+    public ResponseEntity<String> newPassword(@RequestBody String body) {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         JsonObject errorMessage = new JsonObject();
+
+        JsonElement email = jsonObj.get("email");
+        if(email == null){
+            errorMessage.addProperty("mensagem","O campo email é necessário!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        Optional<User> user = userRepository.findByEmail(email.getAsString());
+        if(user.isEmpty()){
+            errorMessage.addProperty("mensagem","Email não encontrado!");
+            errorMessage.addProperty("status",404);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(user.get());
+        String token = tokenService.generateToken(userDetails);
+
+        mailService.sendMail(email.getAsString(),"Redefinição de senha em Rafael do Canto Advocacia e Socidade",
+                "Para redefinir sua senha clique no link: https://sistemasdocanto.vercel.app/account/redefine?token="+token
+        );
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -256,8 +308,8 @@ public class UserController {
 
         JsonElement permissionLevel = jsonObj.get("permissionLevel");
         if(permissionLevel != null){
-            if(permissionLevel.getAsString().split("").length != 35){
-                errorMessage.addProperty("mensagem","O permissionLevel precisa ter 35 caracteres!");
+            if(permissionLevel.getAsString().split("").length != 39){
+                errorMessage.addProperty("mensagem","O permissionLevel precisa ter 39 caracteres!");
                 errorMessage.addProperty("status",400);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
@@ -415,7 +467,7 @@ public class UserController {
             if(page != null) {
                 userList = userRepository.findAllLimitPage(10 * (page - 1));
             }else{
-                userList = userRepository.findAll();
+                userList = userRepository.findAllByVerify();
             }
         }
         JsonArray users = new JsonArray();

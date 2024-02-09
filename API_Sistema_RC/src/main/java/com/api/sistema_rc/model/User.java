@@ -34,8 +34,10 @@ public class User{
     private String pushEmail;
     @Column(nullable = false)
     private boolean isVerify;
-    @Column(length = 255,nullable = false)
+    @Column(length = 10,unique = true)
     private String codeToVerify;
+    @Column(nullable = false)
+    private boolean isReceiveNotification;
     @Column(nullable = false)
     private String password;
     @Column(length = 30,nullable = false)
@@ -123,6 +125,14 @@ public class User{
 
     public void setCodeToVerify(String codeToVerify) {
         this.codeToVerify = codeToVerify;
+    }
+
+    public boolean isReceiveNotification() {
+        return isReceiveNotification;
+    }
+
+    public void setReceiveNotification(boolean receiveNotification) {
+        isReceiveNotification = receiveNotification;
     }
 
     public String getPassword() {

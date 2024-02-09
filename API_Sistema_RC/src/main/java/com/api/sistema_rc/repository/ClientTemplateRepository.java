@@ -11,6 +11,6 @@ import java.util.List;
 
 @Repository
 public interface ClientTemplateRepository extends JpaRepository<ClientTemplate,Integer> {
-    @Query(value = "SELECT * FROM client_template WHERE value = :value",nativeQuery = true)
+    @Query(value = "SELECT * FROM client_templates WHERE value = :value",nativeQuery = true)
     List<ClientTemplate> findAllByValue(@Param("value") boolean value);
 }

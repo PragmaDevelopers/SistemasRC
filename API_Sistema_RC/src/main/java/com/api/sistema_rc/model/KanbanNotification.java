@@ -58,6 +58,12 @@ public class KanbanNotification {
     @ManyToOne
     @JoinColumn(name = "kanban_deadline_id")
     private KanbanDeadline kanbanDeadline;
+    @ManyToOne
+    @JoinColumn(name = "client_template_id")
+    private ClientTemplate clientTemplate;
+    @ManyToOne
+    @JoinColumn(name = "pdf_template_id")
+    private PdfEditorTemplate pdfTemplate;
 
     public KanbanNotification() {
 
@@ -81,6 +87,8 @@ public class KanbanNotification {
         this.kanbanCardTag = kanbanNotification.getKanbanCardTag();
         this.kanbanCardCustomField = kanbanNotification.getKanbanCardCustomField();
         this.kanbanDeadline = kanbanNotification.getKanbanDeadline();
+        this.clientTemplate = kanbanNotification.getClientTemplate();
+        this.pdfTemplate = kanbanNotification.getPdfTemplate();
     }
 
     public Integer getId() {
@@ -217,5 +225,21 @@ public class KanbanNotification {
 
     public void setKanbanDeadline(KanbanDeadline kanbanDeadline) {
         this.kanbanDeadline = kanbanDeadline;
+    }
+
+    public ClientTemplate getClientTemplate() {
+        return clientTemplate;
+    }
+
+    public void setClientTemplate(ClientTemplate clientTemplate) {
+        this.clientTemplate = clientTemplate;
+    }
+
+    public PdfEditorTemplate getPdfTemplate() {
+        return pdfTemplate;
+    }
+
+    public void setPdfTemplate(PdfEditorTemplate pdfTemplate) {
+        this.pdfTemplate = pdfTemplate;
     }
 }

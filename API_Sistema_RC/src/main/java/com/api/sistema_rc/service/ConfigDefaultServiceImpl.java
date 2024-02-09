@@ -64,14 +64,15 @@ public class ConfigDefaultServiceImpl {
             user1.setName("Admin");
             user1.setEmail("admin@gmail.com");
 
-            String encryptedPassword = PasswordEncoderUtils.encode("123");
-            user1.setPassword(encryptedPassword);
+            String encryptedPassword1 = PasswordEncoderUtils.encode("123");
+            user1.setPassword(encryptedPassword1);
 
             user1.setNationality("Brasileiro");
             user1.setRegistration_date(LocalDateTime.now());
-            user1.setPermissionLevel("11111111111111111111111111111111111");
+            user1.setPermissionLevel("111111111111111111111111111111111111111");
             user1.setVerify(true);
-            user1.setCodeToVerify("2352064942");
+            user1.setCodeToVerify(null);
+            user1.setReceiveNotification(false);
 
             Role roleAdmin = new Role();
             roleAdmin.setId(1);
@@ -79,7 +80,27 @@ public class ConfigDefaultServiceImpl {
 
             user1.setRole(roleAdmin);
 
-            userRepository.save(user1);
+            User user2 = new User();
+            user2.setName("Lucas Emanuel Santana Dos Santos");
+            user2.setEmail("lucasemanuel2077@gmail.com");
+
+            String encryptedPassword2 = PasswordEncoderUtils.encode("2077Rr-84");
+            user2.setPassword(encryptedPassword2);
+
+            user2.setNationality("Brasileiro");
+            user2.setRegistration_date(LocalDateTime.now());
+            user2.setPermissionLevel("111111111111111111111111111111111111111");
+            user2.setVerify(true);
+            user2.setCodeToVerify(null);
+            user2.setReceiveNotification(true);
+
+            user2.setRole(roleAdmin);
+
+            List<User> userList = new ArrayList<>();
+            userList.add(user1);
+            userList.add(user2);
+
+            userRepository.saveAll(userList);
         }
     }
 
@@ -87,24 +108,24 @@ public class ConfigDefaultServiceImpl {
     public void saveClientTemplates(){
         if(clientTemplateRepository.findAll().isEmpty()){
             // Instancie um ObjectMapper do Jackson
-            ObjectMapper objectMapper = new ObjectMapper();
+
+            String path = "static/client_template_1.json";
+
+            // Carregue o arquivo JSON usando a classe Resource do Spring
+            Resource resource = new ClassPathResource(path);
+
+            ClientTemplate clientTemplate = new ClientTemplate();
+            clientTemplate.setName("Template padrão (fixo)");
+            clientTemplate.setValue(false);
 
             try {
-
-                String path1 = "static/client_template_1.json";
-
-                // Carregue o arquivo JSON usando a classe Resource do Spring
-                Resource resource = new ClassPathResource(path1);
-
-                ClientTemplate clientTemplate = new ClientTemplate();
-                clientTemplate.setName("Template padrão (fixo)");
                 clientTemplate.setTemplate(resource.getContentAsString(Charset.defaultCharset()));
-
-                clientTemplateRepository.save(clientTemplate);
-
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
+
+            clientTemplateRepository.save(clientTemplate);
+
         }
     }
 }

@@ -3,6 +3,7 @@ package com.api.sistema_rc.controller;
 import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
+import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -21,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -49,7 +52,10 @@ public class KanbanDeadlineController {
     private KanbanCategoryRepository kanbanCategoryRepository;
     @Autowired
     private UserRepository userRepository;
-    private final Gson gson = new Gson();
+    private MailService mailService;
+    @Autowired
+    private Gson gson;
+    ExecutorService executorService = Executors.newCachedThreadPool();
     @GetMapping(path = "/private/user/kanban/column/card/{cardId}/deadlines")
     public ResponseEntity<String> getCardDeadline(@PathVariable Integer cardId,
                                                @RequestHeader("Authorization") String token) {
@@ -207,62 +213,67 @@ public class KanbanDeadlineController {
 
         KanbanDeadline dbKanbanDeadline = kanbanDeadlineRepository.saveAndFlush(kanbanDeadline);
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você criou um prazo no card "+kanbanCard.getTitle()+
-                        " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
-                        " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você criou um prazo no card "+kanbanCard.getTitle()+
+                            " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
+                            " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Criação do prazo "+dbKanbanDeadline.getDate(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategoryNotification = new KanbanCategory();
-        kanbanCategoryNotification.setId(31);
-        kanbanCategoryNotification.setName(CategoryName.CARDDEADLINE_CREATE);
-        kanbanNotification.setKanbanCategory(kanbanCategoryNotification);
+            KanbanCategory kanbanCategoryNotification = new KanbanCategory();
+            kanbanCategoryNotification.setId(31);
+            kanbanCategoryNotification.setName(CategoryName.CARDDEADLINE_CREATE);
+            kanbanNotification.setKanbanCategory(kanbanCategoryNotification);
 
-        kanbanNotification.setKanbanDeadline(dbKanbanDeadline);
+            kanbanNotification.setKanbanDeadline(dbKanbanDeadline);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " criou um prazo no card "+kanbanCard.getTitle()+
-                                " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
-                                " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " criou um prazo no card "+kanbanCard.getTitle()+
                                     " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
                                     " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do prazo "+dbKanbanDeadline.getDate(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " criou um prazo no card "+kanbanCard.getTitle()+
+                                        " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
+                                        " do kanban "+kanbanCard.getKanbanColumn().getKanban().getTitle()+"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Criação do prazo "+dbKanbanDeadline.getDate(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanDeadline.getId().toString());
     }
@@ -296,63 +307,68 @@ public class KanbanDeadlineController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você deletou o prazo no card "+selectedDeadline.getKanbanCard().getTitle()+
-                        " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
-                        " do kanban "+selectedDeadline.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você deletou o prazo no card "+selectedDeadline.getKanbanCard().getTitle()+
+                            " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
+                            " do kanban "+selectedDeadline.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Deletando prazo "+selectedDeadline.getDate(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(33);
-        kanbanCategory.setName(CategoryName.CARDDEADLINE_DELETE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-        kanbanNotification.setKanbanDeadline(null);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(33);
+            kanbanCategory.setName(CategoryName.CARDDEADLINE_DELETE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+            kanbanNotification.setKanbanDeadline(null);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " deletou o prazo no card "+selectedDeadline.getKanbanCard().getTitle()+
-                                " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
-                                " do kanban "+selectedDeadline.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " deletou o prazo no card "+selectedDeadline.getKanbanCard().getTitle()+
                                     " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
                                     " do kanban "+selectedDeadline.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Deletando prazo "+selectedDeadline.getDate(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
+            });
+
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " deletou o prazo no card "+selectedDeadline.getKanbanCard().getTitle()+
+                                        " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
+                                        " do kanban "+selectedDeadline.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Deletando prazo "+selectedDeadline.getDate(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
+            kanbanDeadlineRepository.deleteById(deadlineId);
         });
-
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
-
-        kanbanDeadlineRepository.deleteById(deadlineId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -413,7 +429,7 @@ public class KanbanDeadlineController {
         }
 
         JsonElement category = jsonObj.get("category");
-        if(category != null){
+        if(category != null && !Objects.equals(category.getAsString(), "")){
             if(!Objects.equals(category.getAsString(), CategoryName.CARD_MOVE.name())){
                 errorMessage.addProperty("mensagem","Só são aceitas as categorias CARD_MOVE!");
                 errorMessage.addProperty("status",474);
@@ -432,7 +448,7 @@ public class KanbanDeadlineController {
         }
 
         JsonElement toColumnId = jsonObj.get("toColumnId");
-        if(toColumnId != null){
+        if(toColumnId != null && !Objects.equals(toColumnId.getAsString(), "")){
             if(!Objects.equals(selectedDeadline.getKanbanCategory().getName().name(), CategoryName.CARD_MOVE.name())){
                 errorMessage.addProperty("mensagem","Categoria CARD_MOVE necessária!");
                 errorMessage.addProperty("status",474);
@@ -451,54 +467,59 @@ public class KanbanDeadlineController {
             modifiedArr.add("coluna de destino");
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        String message = " atualizou ("+String.join(",",modifiedArr)+") no prazo do card "+selectedDeadline.getKanbanCard().getTitle()+
-                " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
-                " do kanban "+kanban.getTitle()+".";
+            String message = " atualizou ("+String.join(",",modifiedArr)+") no prazo do card "+selectedDeadline.getKanbanCard().getTitle()+
+                    " da coluna "+selectedDeadline.getKanbanCard().getKanbanColumn().getTitle()+
+                    " do kanban "+kanban.getTitle()+".";
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage("Você"+message);
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage("Você"+message);
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Atualização do prazo "+selectedDeadline.getDate(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(32);
-        kanbanCategory.setName(CategoryName.CARDDEADLINE_UPDATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(32);
+            kanbanCategory.setName(CategoryName.CARDDEADLINE_UPDATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
 
-        kanbanNotification.setKanbanDeadline(selectedDeadline);
+            kanbanNotification.setKanbanDeadline(selectedDeadline);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName()+ message);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName()+ message);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName()+ message);
+                    mailService.sendMail(userAdmin.getEmail(),"Atualização do prazo "+selectedDeadline.getDate(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName()+ message);
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Atualização do prazo "+selectedDeadline.getDate(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

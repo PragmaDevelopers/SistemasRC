@@ -3,6 +3,7 @@ package com.api.sistema_rc.controller;
 import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
+import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -18,6 +19,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -36,7 +39,10 @@ public class KanbanChecklistController {
     private UserRepository userRepository;
     @Autowired
     private KanbanNotificationRepository kanbanNotificationRepository;
-    private final Gson gson = new Gson();
+    private MailService mailService;
+    @Autowired
+    private Gson gson;
+    ExecutorService executorService = Executors.newCachedThreadPool();
     @GetMapping(path = "/private/user/kanban/column/card/{cardId}/checklists")
     public ResponseEntity<String> getChecklists(@PathVariable Integer cardId, @RequestHeader("Authorization") String token) {
         JsonObject errorMessage = new JsonObject();
@@ -132,65 +138,70 @@ public class KanbanChecklistController {
 
         KanbanCardChecklist dbKanbanCardChecklist = kanbanCardChecklistRepository.saveAndFlush(kanbanCardChecklist);
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você criou o checklist " + dbKanbanCardChecklist.getName() +
-                        " no card "+kanbanCard.getTitle()+
-                        " da coluna "+kanbanCard.getKanbanColumn()+
-                        " do kanban "+kanban.getTitle()+"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você criou o checklist " + dbKanbanCardChecklist.getName() +
+                            " no card "+kanbanCard.getTitle()+
+                            " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
+                            " do kanban "+kanban.getTitle()+"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Criação do checklist "+dbKanbanCardChecklist.getName(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(22);
-        kanbanCategory.setName(CategoryName.CARDCHECKLIST_CREATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(22);
+            kanbanCategory.setName(CategoryName.CARDCHECKLIST_CREATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
 
-        kanbanNotification.setKanbanCardChecklist(dbKanbanCardChecklist);
+            kanbanNotification.setKanbanCardChecklist(dbKanbanCardChecklist);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " criou o checklist " + dbKanbanCardChecklist.getName() +
-                                " no card "+kanbanCard.getTitle()+
-                                " da coluna "+kanbanCard.getKanbanColumn()+
-                                " do kanban "+kanban.getTitle()+"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " criou o checklist " + dbKanbanCardChecklist.getName() +
                                     " no card "+kanbanCard.getTitle()+
-                                    " da coluna "+kanbanCard.getKanbanColumn()+
+                                    " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
                                     " do kanban "+kanban.getTitle()+"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do checklist "+dbKanbanCardChecklist.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " criou o checklist " + dbKanbanCardChecklist.getName() +
+                                        " no card "+kanbanCard.getTitle()+
+                                        " da coluna "+kanbanCard.getKanbanColumn().getTitle()+
+                                        " do kanban "+kanban.getTitle()+"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Criação do checklist "+dbKanbanCardChecklist.getName(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCardChecklist.getId().toString());
     }
@@ -210,9 +221,9 @@ public class KanbanChecklistController {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         Integer user_id = tokenService.validateToken(token);
-        KanbanCardChecklist selectedCheckList = kanbanCardChecklistRepository.findById(checklistId).get();
+        KanbanCardChecklist selectedChecklist = kanbanCardChecklistRepository.findById(checklistId).get();
 
-        Kanban kanban = selectedCheckList.getKanbanCard().getKanbanColumn().getKanban();
+        Kanban kanban = selectedChecklist.getKanbanCard().getKanbanColumn().getKanban();
 
         KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
 
@@ -231,70 +242,75 @@ public class KanbanChecklistController {
         List<String> modifiedArr = new ArrayList<>();
 
         JsonElement checklistName = jsonObj.get("name");
-        String oldChecklistName = selectedCheckList.getName();
+        String oldChecklistName = selectedChecklist.getName();
         if(checklistName != null){
-            selectedCheckList.setName(checklistName.getAsString());
+            selectedChecklist.setName(checklistName.getAsString());
             modifiedArr.add("nome");
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        String message = " atualizou ("+String.join(",",modifiedArr)+") no checklist " +
-                selectedCheckList.getName() + " do card "+selectedCheckList.getKanbanCard().getTitle()+
-                " da coluna "+selectedCheckList.getKanbanCard().getKanbanColumn().getTitle()+
-                " do kanban "+kanban.getTitle()+".";
-
-        if(checklistName != null){
-            message = " atualizou ("+String.join(",",modifiedArr)+") no checklist " +
-                    oldChecklistName+" (nome antigo) | "+
-                    selectedCheckList.getName() + " (novo nome) do card "+selectedCheckList.getKanbanCard().getTitle()+
-                    " da coluna "+selectedCheckList.getKanbanCard().getKanbanColumn().getTitle()+
+            String message = " atualizou ("+String.join(",",modifiedArr)+") no checklist " +
+                    selectedChecklist.getName() + " do card "+selectedChecklist.getKanbanCard().getTitle()+
+                    " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
                     " do kanban "+kanban.getTitle()+".";
-        }
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage("Você"+message);
-        kanbanNotification.setViewed(false);
-
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(23);
-        kanbanCategory.setName(CategoryName.CARDCHECKLIST_UPDATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        kanbanNotification.setKanbanCardChecklist(selectedCheckList);
-
-        kanbanNotificationList.add(kanbanNotification);
-
-        List<User> userList = userRepository.findAllByAdmin();
-        String finalMessage = message;
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName() + finalMessage);
-                kanbanNotificationList.add(kanbanNotificationAdmin);
+            if(checklistName != null){
+                message = " atualizou ("+String.join(",",modifiedArr)+") no checklist " +
+                        oldChecklistName+" (nome antigo) | "+
+                        selectedChecklist.getName() + " (novo nome) do card "+selectedChecklist.getKanbanCard().getTitle()+
+                        " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
+                        " do kanban "+kanban.getTitle()+".";
             }
-        });
 
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName() + finalMessage);
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage("Você"+message);
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Atualização do checklist "+selectedChecklist.getName(),kanbanNotification.getMessage());
+
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(23);
+            kanbanCategory.setName(CategoryName.CARDCHECKLIST_UPDATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+
+            kanbanNotification.setKanbanCardChecklist(selectedChecklist);
+
+            kanbanNotificationList.add(kanbanNotification);
+
+            List<User> userList = userRepository.findAllByAdmin();
+            String finalMessage = message;
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName() + finalMessage);
+                    mailService.sendMail(userAdmin.getEmail(),"Atualização do checklist "+selectedChecklist.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName() + finalMessage);
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Atualização do checklist "+selectedChecklist.getName(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -327,66 +343,71 @@ public class KanbanChecklistController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você deletou o checklist " + selectedChecklist.getName() +
-                        " no card "+selectedChecklist.getKanbanCard().getTitle()+
-                        " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
-                        " do kanban "+selectedChecklist.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você deletou o checklist " + selectedChecklist.getName() +
+                            " no card "+selectedChecklist.getKanbanCard().getTitle()+
+                            " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
+                            " do kanban "+selectedChecklist.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Deletando checklist "+selectedChecklist.getName(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(24);
-        kanbanCategory.setName(CategoryName.CARDCHECKLIST_DELETE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-        kanbanNotification.setKanbanCardChecklist(null);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(24);
+            kanbanCategory.setName(CategoryName.CARDCHECKLIST_DELETE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+            kanbanNotification.setKanbanCardChecklist(null);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " deletou o checklist " +
-                                selectedChecklist.getName() + " no card "+selectedChecklist.getKanbanCard().getTitle()+
-                                " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
-                                " do kanban "+selectedChecklist.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " deletou o checklist " +
                                     selectedChecklist.getName() + " no card "+selectedChecklist.getKanbanCard().getTitle()+
                                     " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
                                     " do kanban "+selectedChecklist.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Deletando checklist "+selectedChecklist.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
+            });
+
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " deletou o checklist " +
+                                        selectedChecklist.getName() + " no card "+selectedChecklist.getKanbanCard().getTitle()+
+                                        " da coluna "+selectedChecklist.getKanbanCard().getKanbanColumn().getTitle()+
+                                        " do kanban "+selectedChecklist.getKanbanCard().getKanbanColumn().getKanban().getTitle()+"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Deletando checklist "+selectedChecklist.getName(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
+            kanbanCardChecklistRepository.deleteById(checklistId);
         });
-
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
-
-        kanbanCardChecklistRepository.deleteById(checklistId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

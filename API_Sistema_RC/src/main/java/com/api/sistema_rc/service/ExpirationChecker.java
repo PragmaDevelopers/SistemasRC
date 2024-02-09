@@ -3,6 +3,7 @@ package com.api.sistema_rc.service;
 import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
+import org.hibernate.sql.ast.tree.expression.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +34,7 @@ public class ExpirationChecker {
 
     @Transactional
     @Scheduled(fixedRate = 15000) // Agendado para ser executado a cada 15 segundos (ajuste conforme necessário)
-    public void verificarVencimentos() {
+    public void verificarVencimentosPrazo() {
         List<KanbanDeadline> deadlines =  kanbanDeadlineRepository.findAllByOverdue(false);
         deadlines.forEach(deadline->{
             if(deadline.getDate().isBefore(LocalDateTime.now())){
@@ -147,6 +149,27 @@ public class ExpirationChecker {
                 kanbanNotificationRepository.saveAll(kanbanNotificationList);
             }
         });
+    }
+
+    @Scheduled(fixedRate = 3L * 30L * 24L * 60L * 60L * 1000L) // Agendar parar ser executado a cada 3 meses
+    public void verificarVencimentosNotificacoes() {
+        List<KanbanNotification> notifications =  kanbanNotificationRepository.findAll();
+        notifications.forEach(notification->{
+            if (hasPassedOneMonth(notification.getRegistrationDate())) {
+                kanbanNotificationRepository.deleteById(notification.getId());
+            }
+        });
+    }
+
+    public boolean hasPassedOneMonth(LocalDateTime dateTime) {
+        // Obtém a data atual
+        LocalDateTime now = LocalDateTime.now();
+
+        // Subtrai um mês da data atual
+        LocalDateTime oneMonthAgo = now.minusMonths(3);
+
+        // Verifica se o dateTime fornecido é anterior à data de um mês atrás
+        return dateTime.isBefore(oneMonthAgo);
     }
 }
 

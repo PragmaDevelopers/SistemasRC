@@ -3,6 +3,7 @@ package com.api.sistema_rc.controller;
 import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
+import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -18,6 +19,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -46,7 +49,11 @@ public class KanbanCardCustomFieldController {
     private KanbanCardCustomFieldRepository kanbanCardCustomFieldRepository;
     @Autowired
     private UserRepository userRepository;
-    private final Gson gson = new Gson();
+    @Autowired
+    private MailService mailService;
+    @Autowired
+    private Gson gson;
+    ExecutorService executorService = Executors.newCachedThreadPool();
 
     @GetMapping(path = "/private/user/kanban/column/card/{cardId}/customFields")
     public ResponseEntity<String> getCustomFields(@PathVariable Integer cardId, @RequestHeader("Authorization") String token) {
@@ -165,64 +172,69 @@ public class KanbanCardCustomFieldController {
 
         KanbanCardCustomField dbKanbanCardCustomField = kanbanCardCustomFieldRepository.saveAndFlush(kanbanCardCustomField);
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você criou o customField " + dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
-                        " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
-                        " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você criou o customField " + dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
+                            " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
+                            " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Criação do customField "+dbKanbanCardCustomField.getName(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(28);
-        kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_CREATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(28);
+            kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_CREATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
 
-        kanbanNotification.setKanbanCardCustomField(dbKanbanCardCustomField);
+            kanbanNotification.setKanbanCardCustomField(dbKanbanCardCustomField);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin -> {
-            if (!Objects.equals(userAdmin.getId(), user_id)) {
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " criou o customField  " +
-                                dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
-                                " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
-                                " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban -> {
-            if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin -> {
+                if (!Objects.equals(userAdmin.getId(), user_id)) {
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " criou o customField  " +
                                     dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
                                     " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
                                     " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do customField "+dbKanbanCardCustomField.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban -> {
+                if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " criou o customField  " +
+                                        dbKanbanCardCustomField.getName() + " no card " + kanbanCard.getTitle() +
+                                        " da coluna " + kanbanCard.getKanbanColumn().getTitle() +
+                                        " do kanban " + kanbanCard.getKanbanColumn().getKanban().getTitle() + "."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Criação do customField "+dbKanbanCardCustomField.getName(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCardCustomField.getId().toString());
     }
@@ -282,64 +294,69 @@ public class KanbanCardCustomFieldController {
             modifiedArr.add("tipo de campo");
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        String message = " atualizou (" + String.join(",", modifiedArr) + ") no customField " +
-                selectedCustomField.getName() + " do card " + selectedCustomField.getKanbanCard().getTitle() +
-                " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
-                " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
+            String message = " atualizou (" + String.join(",", modifiedArr) + ") no customField " +
+                    selectedCustomField.getName() + " do card " + selectedCustomField.getKanbanCard().getTitle() +
+                    " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                    " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
 
-        if (customFieldName != null) {
-            message = " atualizou (" + String.join(",", modifiedArr) + ") no customField " +
-                    oldCustomFieldName + " (nome antigo) | " + selectedCustomField.getName() + " (novo nome) do card " +
-                    selectedCustomField.getKanbanCard().getTitle() + " da coluna " +
-                    selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() + " do kanban " +
-                    selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
-        }
-
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage("Você" + message);
-        kanbanNotification.setViewed(false);
-
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(29);
-        kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_UPDATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        kanbanNotification.setKanbanCardCustomField(selectedCustomField);
-
-        kanbanNotificationList.add(kanbanNotification);
-
-        List<User> userList = userRepository.findAllByAdmin();
-        String finalMessage = message;
-        userList.forEach(userAdmin -> {
-            if (!Objects.equals(userAdmin.getId(), user_id)) {
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName() + finalMessage);
-                kanbanNotificationList.add(kanbanNotificationAdmin);
+            if (customFieldName != null) {
+                message = " atualizou (" + String.join(",", modifiedArr) + ") no customField " +
+                        oldCustomFieldName + " (nome antigo) | " + selectedCustomField.getName() + " (novo nome) do card " +
+                        selectedCustomField.getKanbanCard().getTitle() + " da coluna " +
+                        selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() + " do kanban " +
+                        selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + ".";
             }
-        });
 
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban -> {
-            if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName() + finalMessage);
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage("Você" + message);
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Atualização do customField "+selectedCustomField.getName(),kanbanNotification.getMessage());
+
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(29);
+            kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_UPDATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+
+            kanbanNotification.setKanbanCardCustomField(selectedCustomField);
+
+            kanbanNotificationList.add(kanbanNotification);
+
+            List<User> userList = userRepository.findAllByAdmin();
+            String finalMessage = message;
+            userList.forEach(userAdmin -> {
+                if (!Objects.equals(userAdmin.getId(), user_id)) {
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName() + finalMessage);
+                    mailService.sendMail(userAdmin.getEmail(),"Atualização do customField "+selectedCustomField.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban -> {
+                if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName() + finalMessage);
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Atualização do customField "+selectedCustomField.getName(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -373,66 +390,71 @@ public class KanbanCardCustomFieldController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você deletou o customField " +
-                        selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
-                        " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
-                        " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você deletou o customField " +
+                            selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
+                            " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                            " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Deletando customField "+selectedCustomField.getName(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(30);
-        kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_DELETE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-        kanbanNotification.setKanbanCardCustomField(null);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(30);
+            kanbanCategory.setName(CategoryName.CARDCUSTOMFIELD_DELETE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+            kanbanNotification.setKanbanCardCustomField(null);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin -> {
-            if (!Objects.equals(userAdmin.getId(), user_id)) {
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " deletou o customField " +
-                                selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
-                                " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
-                                " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban -> {
-            if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin -> {
+                if (!Objects.equals(userAdmin.getId(), user_id)) {
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " deletou o customField " +
                                     selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
                                     " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
                                     " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Deletando customField "+selectedCustomField.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
+            });
+
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban -> {
+                if (!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " deletou o customField " +
+                                        selectedCustomField.getName() + " no card " + selectedCustomField.getKanbanCard().getTitle() +
+                                        " da coluna " + selectedCustomField.getKanbanCard().getKanbanColumn().getTitle() +
+                                        " do kanban " + selectedCustomField.getKanbanCard().getKanbanColumn().getKanban().getTitle() + "."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Deletando customField "+selectedCustomField.getName(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
+            kanbanCardCustomFieldRepository.deleteById(customFieldId);
         });
-
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
-
-        kanbanCardCustomFieldRepository.deleteById(customFieldId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

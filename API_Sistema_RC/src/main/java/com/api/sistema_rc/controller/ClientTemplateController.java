@@ -42,7 +42,7 @@ public class ClientTemplateController {
     }
 
     @PostMapping(path = "/private/user/signup/client/template")
-    public ResponseEntity<String> postClientTemplate(@RequestBody String body,
+    public ResponseEntity<String> postClientTemplate(@RequestBody String body,@RequestHeader("Authorization") String token,
                                                     @RequestParam(required = false,defaultValue = "false") boolean value){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
@@ -60,6 +60,14 @@ public class ClientTemplateController {
             errorMessage.addProperty("mensagem","O campo template é necessário!");
             errorMessage.addProperty("status",400);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        Integer user_id = tokenService.validateToken(token);
+        User user = userRepository.findById(user_id).get();
+        if(user.getPermissionLevel().charAt(35) == '0'){
+            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
+            errorMessage.addProperty("status",435);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
         ClientTemplate clientTemplate = new ClientTemplate();
@@ -90,11 +98,9 @@ public class ClientTemplateController {
         }
 
         Integer user_id = tokenService.validateToken(token);
-
         User user = userRepository.findById(user_id).get();
-
-        if(user.getRole().getName() != RoleName.ROLE_ADMIN && user.getRole().getName() != RoleName.ROLE_SUPERVISOR){
-            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (deletar template de cliente)!");
+        if(user.getPermissionLevel().charAt(36) == '0'){
+            errorMessage.addProperty("mensagem","Você não tem autorização para essa ação!");
             errorMessage.addProperty("status",435);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }

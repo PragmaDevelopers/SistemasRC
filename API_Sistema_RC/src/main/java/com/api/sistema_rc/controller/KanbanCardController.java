@@ -3,6 +3,7 @@ package com.api.sistema_rc.controller;
 import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
+import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
@@ -43,7 +46,12 @@ public class KanbanCardController {
     private UserRepository userRepository;
     @Autowired
     private KanbanNotificationRepository kanbanNotificationRepository;
-    private final Gson gson = new Gson();
+    @Autowired
+    private MailService mailService;
+    @Autowired
+    private Gson gson;
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
     @GetMapping(path = "/private/user/kanban/column/{columnId}/cards")
     public ResponseEntity<String> getCards(@PathVariable Integer columnId,
                                            @RequestHeader("Authorization") String token){
@@ -86,8 +94,15 @@ public class KanbanCardController {
             cardObj.addProperty("index",card.getIndex());
 
             JsonArray members = new JsonArray();
-            for (String memberId : card.getMembers().split(",")) {
-                members.add(Integer.parseInt(memberId));
+            if(card.getMembers() !=  null && !Objects.equals(card.getMembers(), "")){
+                for (String memberId : card.getMembers().split(",")) {
+                    User member = userRepository.findById(Integer.parseInt(memberId)).get();
+                    JsonObject formattedUser = new JsonObject();
+                    formattedUser.addProperty("id",member.getId());
+                    formattedUser.addProperty("name",member.getName());
+                    formattedUser.addProperty("email",member.getEmail());
+                    members.add(formattedUser);
+                }
             }
             cardObj.add("members", members);
 
@@ -137,7 +152,12 @@ public class KanbanCardController {
         JsonArray members = new JsonArray();
         if(card.getMembers() !=  null && !Objects.equals(card.getMembers(), "")){
             for (String memberId : card.getMembers().split(",")) {
-                members.add(Integer.parseInt(memberId));
+                User member = userRepository.findById(Integer.parseInt(memberId)).get();
+                JsonObject formattedUser = new JsonObject();
+                formattedUser.addProperty("id",member.getId());
+                formattedUser.addProperty("name",member.getName());
+                formattedUser.addProperty("email",member.getEmail());
+                members.add(formattedUser);
             }
         }
         cardObj.add("members", members);
@@ -210,187 +230,64 @@ public class KanbanCardController {
         });
         cardObj.add("customFields",customFieldArr);
 
-        List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(card.getId());
-        JsonArray commentArr = processComments(kanbanCardCommentList,new JsonArray());
-        cardObj.add("comments",commentArr);
-
-        List<KanbanCard> kanbanInnerCardList = kanbanCardRepository.findAllByInnerCardId(card.getId());
-        JsonArray innerCardArr = processInnerCards(kanbanInnerCardList,new JsonArray());
-        cardObj.add("innerCards",innerCardArr);
-
         return ResponseEntity.status(HttpStatus.OK).body(cardObj.toString());
     }
-    public JsonArray processComments(List<KanbanCardComment> comments, JsonArray arr) {
-        Map<Integer, JsonObject> commentMap = new HashMap<>();
+    @GetMapping(path = "/private/user/kanban/column/card/{parentCardId}/innerCards")
+    public ResponseEntity<String> getInnerCardByParentCardId(@PathVariable Integer parentCardId,
+                                              @RequestHeader("Authorization") String token){
+        JsonObject errorMessage = new JsonObject();
 
-        comments.forEach(comment -> {
-            // Processar o comentário atual
-            JsonObject commentObj = new JsonObject();
-            commentObj.addProperty("id", comment.getId());
-            commentObj.addProperty("content", comment.getContent());
-            commentObj.addProperty("edited", comment.isEdited());
+        if(parentCardId == null){
+            errorMessage.addProperty("mensagem","O campo parentCardId é necessário!");
+            errorMessage.addProperty("status",430);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+        boolean isCard = kanbanCardRepository.findById(parentCardId).isPresent();
+        if(!isCard){
+            errorMessage.addProperty("mensagem","Card não foi encontrado!");
+            errorMessage.addProperty("status",434);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
+        }
 
-            if (comment.getRegistrationDate() == null) {
-                commentObj.addProperty("registrationDate", (String) null);
-            } else {
-                commentObj.addProperty("registrationDate", String.valueOf(comment.getRegistrationDate()));
-            }
+        KanbanCard card = kanbanCardRepository.findById(parentCardId).get();
 
-            JsonObject userObj = new JsonObject();
-            userObj.addProperty("id", comment.getUser().getId());
-            userObj.addProperty("name", comment.getUser().getName());
-            userObj.addProperty("email", comment.getUser().getEmail());
-            if(comment.getUser().getProfilePicture() == null){
-                userObj.addProperty("profilePicture",(String) null);
-            }else{
-                try {
-                    byte[] bytes = comment.getUser().getProfilePicture().getBytes(1,(int) comment.getUser().getProfilePicture().length());
-                    String encoded = Base64.getEncoder().encodeToString(bytes);
-                    userObj.addProperty("profilePicture","data:image/"+comment.getUser().getPictureFormat()+";base64,"+encoded);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            commentObj.add("user", userObj);
+        Kanban kanban = card.getKanbanColumn().getKanban();
+        Integer user_id = tokenService.validateToken(token);
 
-            // Verificar se há respostas e chamar recursivamente
-            List<KanbanCardComment> kanbanCardCommentAnsweredList = kanbanCardCommentRepository.findAllByCommentAnsweredId(comment.getId());
+        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
 
-            if (!kanbanCardCommentAnsweredList.isEmpty()) {
-                JsonArray answerArr = new JsonArray();
-                processComments(kanbanCardCommentAnsweredList, answerArr);
-                commentObj.add("answers", answerArr);
-            }
+        if(kanbanUser == null){
+            errorMessage.addProperty("mensagem","Você não está cadastrado nesse kanban!");
+            errorMessage.addProperty("status",431);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
+        }
 
-            commentMap.put(comment.getId(), commentObj);
-        });
-
-        comments.forEach(comment -> {
-            // Verificar se o comentário tem um pai (foi respondido)
-            if (comment.getKanbanCommentAnswered() != null) {
-                int parentId = comment.getKanbanCommentAnswered().getId();
-                JsonObject parentComment = commentMap.get(parentId);
-
-                // Adicionar como resposta ao pai
-                if (parentComment != null) {
-                    JsonArray answers = parentComment.getAsJsonArray("answers");
-                    answers.add(commentMap.get(comment.getId()));
-                }
-            } else {
-                // Adicionar o comentário principal ao array
-                arr.add(commentMap.get(comment.getId()));
-            }
-        });
-
-        return arr;
-    }
-
-    public JsonArray processInnerCards(List<KanbanCard> innerCards,JsonArray arr){
-        Map<Integer, JsonObject> innerCardMap = new HashMap<>();
-
-        innerCards.forEach(innerCard -> {
-            // Processar o comentário atual
+        List<KanbanCard> kanbanInnerCardList = kanbanCardRepository.findAllByInnerCardId(card.getId());
+        JsonArray innerCardArr = new JsonArray();
+        for(KanbanCard innerCard : kanbanInnerCardList) {
             JsonObject innerCardObj = new JsonObject();
-
-            innerCardObj.addProperty("id",innerCard.getId());
-            innerCardObj.addProperty("title",innerCard.getTitle());
-            innerCardObj.addProperty("description",innerCard.getDescription());
-
-            JsonArray members = new JsonArray();
-            for (String memberId : innerCard.getMembers().split(",")) {
-                members.add(Integer.parseInt(memberId));
+            innerCardObj.addProperty("id", innerCard.getId());
+            innerCardObj.addProperty("cardParentId",card.getId());
+            innerCardObj.addProperty("kanbanID", kanban.getId());
+            innerCardObj.addProperty("columnID", card.getKanbanColumn().getId());
+            innerCardObj.addProperty("title", innerCard.getTitle());
+            innerCardObj.addProperty("index", innerCard.getIndex());
+            List<KanbanCardTag> kanbanInnerCardTagList = kanbanCardTagRepository.findAllByCardId(innerCard.getId());
+            JsonArray innerTagArr = new JsonArray();
+            for (KanbanCardTag kanbanInnerCardTag : kanbanInnerCardTagList) {
+                JsonObject innerTagObj = new JsonObject();
+                innerTagObj.addProperty("id",kanbanInnerCardTag.getId());
+                innerTagObj.addProperty("name",kanbanInnerCardTag.getName());
+                innerTagObj.addProperty("color",kanbanInnerCardTag.getColor());
+                innerTagArr.add(innerTagObj);
             }
-            innerCardObj.add("members", members);
+            innerCardObj.add("tags",innerTagArr);
+            innerCardArr.add(innerCardObj);
+        }
 
-            boolean isDeadline = kanbanDeadlineRepository.findByCardId(innerCard.getId()).isPresent();
-            if(!isDeadline){
-                innerCardObj.addProperty("deadline", (String) null);
-            }else{
-                KanbanDeadline kanbanDeadline = kanbanDeadlineRepository.findByCardId(innerCard.getId()).get();
-                JsonObject deadlineObj = new JsonObject();
-                deadlineObj.addProperty("id",kanbanDeadline.getId());
-                deadlineObj.addProperty("date",kanbanDeadline.getDate().toString());
-                deadlineObj.addProperty("overdue",kanbanDeadline.isOverdue());
-                deadlineObj.addProperty("category", kanbanDeadline.getKanbanCategory().getName().name());
-                deadlineObj.addProperty("toKanbanId",(String) null);
-                deadlineObj.addProperty("toColumnId",(String) null);
-                if(kanbanDeadline.getActionKanbanColumn() != null){
-                    deadlineObj.addProperty("toKanbanId",kanbanDeadline.getActionKanbanColumn().getKanban().getId());
-                    deadlineObj.addProperty("toColumnId",kanbanDeadline.getActionKanbanColumn().getId());
-                }
-
-                innerCardObj.add("deadline", deadlineObj);
-            }
-
-            innerCardObj.addProperty("index",innerCard.getIndex());
-
-            List<KanbanCardChecklist> kanbanCardCheckList = kanbanCardCheckListRepository.findAllByCardId(innerCard.getId());
-            JsonArray checkListArr = new JsonArray();
-            for (KanbanCardChecklist checkList : kanbanCardCheckList) {
-                JsonObject checkListObj = new JsonObject();
-                checkListObj.addProperty("id",checkList.getId());
-                checkListObj.addProperty("name",checkList.getName());
-
-                List<KanbanCardChecklistItem> kanbanCardChecklistItems = kanbanCardCheckListItemRepository.findAllByChecklistId(checkList.getId());
-                JsonArray checkListItemArr = new JsonArray();
-                for (KanbanCardChecklistItem checkListItem : kanbanCardChecklistItems) {
-                    JsonObject checkListItemObj = new JsonObject();
-                    checkListItemObj.addProperty("id",checkListItem.getId());
-                    checkListItemObj.addProperty("name",checkListItem.getName());
-                    checkListItemObj.addProperty("completed",checkListItem.isCompleted());
-                    checkListItemArr.add(checkListItemObj);
-                }
-                checkListObj.add("items",checkListItemArr);
-                checkListArr.add(checkListObj);
-            }
-            innerCardObj.add("checkList",checkListArr);
-
-            List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(innerCard.getId());
-            JsonArray tagArr = new JsonArray();
-            for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
-                JsonObject tagObj = new JsonObject();
-                tagObj.addProperty("id",kanbanCardTag.getId());
-                tagObj.addProperty("name",kanbanCardTag.getName());
-                tagObj.addProperty("color",kanbanCardTag.getColor());
-                tagArr.add(tagObj);
-            }
-            innerCardObj.add("tags",tagArr);
-
-            List<KanbanCardCustomField> kanbanCardCustomField = kanbanCardCustomFieldRepository.findAllByCardId(innerCard.getId());
-            JsonArray customFieldArr = new JsonArray();
-            kanbanCardCustomField.forEach(customField -> {
-                JsonObject customFieldObj = new JsonObject();
-                customFieldObj.addProperty("id", customField.getId());
-                customFieldObj.addProperty("name", customField.getName());
-                customFieldObj.addProperty("value", customField.getValue());
-                customFieldObj.addProperty("fieldType", customField.getType());
-                customFieldObj.addProperty("index", customField.getIndex());
-                customFieldArr.add(customFieldObj);
-            });
-            innerCardObj.add("customFields",tagArr);
-
-            List<KanbanCardComment> kanbanCardCommentList = kanbanCardCommentRepository.findAllByCardId(innerCard.getId());
-            JsonArray commentArr = processComments(kanbanCardCommentList,new JsonArray());
-            innerCardObj.add("comments",commentArr);
-
-            // Verificar se há respostas e chamar recursivamente
-            List<KanbanCard> kanbanInnerCardList = kanbanCardRepository.findAllByInnerCardId(innerCard.getId());
-
-            if (!kanbanInnerCardList.isEmpty()) {
-                JsonArray innerCardArr = new JsonArray();
-                processInnerCards(kanbanInnerCardList, innerCardArr);
-                innerCardObj.add("innerCards", innerCardArr);
-            }
-
-            innerCardMap.put(innerCard.getId(), innerCardObj);
-        });
-
-        innerCards.forEach(innerCard -> {
-            arr.add(innerCardMap.get(innerCard.getId()));
-        });
-
-        return arr;
+        return ResponseEntity.status(HttpStatus.OK).body(innerCardArr.toString());
     }
+
     @PostMapping(path = "/private/user/kanban/column/card")
     public ResponseEntity<String> postCard(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
@@ -478,61 +375,65 @@ public class KanbanCardController {
 
         KanbanCard dbKanbanCard = kanbanCardRepository.saveAndFlush(kanbanCard);
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você criou o card " + dbKanbanCard.getTitle() + " na coluna "+kanbanColumn.getTitle()+
-                        " do kanban "+ kanban.getTitle() +"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você criou o card " + dbKanbanCard.getTitle() + " na coluna "+kanbanColumn.getTitle()+
+                            " do kanban "+ kanban.getTitle() +"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Criação do card "+dbKanbanCard.getTitle(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(10);
-        kanbanCategory.setName(CategoryName.CARD_CREATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(10);
+            kanbanCategory.setName(CategoryName.CARD_CREATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
 
-        kanbanNotification.setKanbanCard(dbKanbanCard);
+            kanbanNotification.setKanbanCard(dbKanbanCard);
+            kanbanNotificationList.add(kanbanNotification);
 
-        kanbanNotificationList.add(kanbanNotification);
-
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " criou o card " +
-                                dbKanbanCard.getTitle() + " na coluna "+kanbanColumn.getTitle()+
-                                " do kanban "+ kanban.getTitle() +"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " criou o card " +
                                     dbKanbanCard.getTitle() + " na coluna "+kanbanColumn.getTitle()+
                                     " do kanban "+ kanban.getTitle() +"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do card "+dbKanbanCard.getTitle(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " criou o card " +
+                                        dbKanbanCard.getTitle() + " na coluna "+kanbanColumn.getTitle()+
+                                        " do kanban "+ kanban.getTitle() +"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Criação do card "+dbKanbanCard.getTitle(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCard.getId().toString());
     }
@@ -576,10 +477,14 @@ public class KanbanCardController {
         }
 
         boolean isCardParent = true;
-        for (String memberId : kanbanCardParent.getMembers().split(",")) {
-            if(Integer.parseInt(memberId) == user_id){
-                isCardParent = false;
+        if(kanbanCardParent.getMembers() != null && !Objects.equals(kanbanCardParent.getMembers(), "")){
+            for (String memberId : kanbanCardParent.getMembers().split(",")) {
+                if(Integer.parseInt(memberId) == user_id){
+                    isCardParent = false;
+                }
             }
+        }else{
+            isCardParent = false;
         }
 
         if(isCardParent){
@@ -638,61 +543,66 @@ public class KanbanCardController {
 
         KanbanCard dbKanbanCard = kanbanCardRepository.saveAndFlush(kanbanCard);
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você criou o card " + dbKanbanCard.getTitle() + " dentro do card "+kanbanCardParent.getTitle()+
-                        " na coluna "+kanbanCardParent.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você criou o card " + dbKanbanCard.getTitle() + " dentro do card "+kanbanCardParent.getTitle()+
+                            " na coluna "+kanbanCardParent.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Criação do card interno "+dbKanbanCard.getTitle(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(11);
-        kanbanCategory.setName(CategoryName.INNERCARD_CREATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(11);
+            kanbanCategory.setName(CategoryName.INNERCARD_CREATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
 
-        kanbanNotification.setKanbanCard(dbKanbanCard);
+            kanbanNotification.setKanbanCard(dbKanbanCard);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " criou o card "+dbKanbanCard.getTitle() +
-                                " dentro do card "+kanbanCardParent.getTitle()+" na coluna "+kanbanCardParent.getKanbanColumn().getTitle()+
-                                " do kanban "+ kanban.getTitle() +"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " criou o card "+dbKanbanCard.getTitle() +
                                     " dentro do card "+kanbanCardParent.getTitle()+" na coluna "+kanbanCardParent.getKanbanColumn().getTitle()+
                                     " do kanban "+ kanban.getTitle() +"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do card interno "+dbKanbanCard.getTitle(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " criou o card "+dbKanbanCard.getTitle() +
+                                        " dentro do card "+kanbanCardParent.getTitle()+" na coluna "+kanbanCardParent.getKanbanColumn().getTitle()+
+                                        " do kanban "+ kanban.getTitle() +"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Criação do card interno "+dbKanbanCard.getTitle(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCard.getId().toString());
     }
@@ -756,60 +666,65 @@ public class KanbanCardController {
             }
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você deletou o card " + selectedCard.getTitle() + " na coluna "
-                        +selectedCard.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você deletou o card " + selectedCard.getTitle() + " na coluna "
+                            +selectedCard.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Deletando card "+selectedCard.getTitle(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(13);
-        kanbanCategory.setName(CategoryName.CARD_DELETE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-        kanbanNotification.setKanbanCard(null);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(13);
+            kanbanCategory.setName(CategoryName.CARD_DELETE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+            kanbanNotification.setKanbanCard(null);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " deletou o card " + selectedCard.getTitle() + " na coluna "+
-                                selectedCard.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " deletou o card " + selectedCard.getTitle() + " na coluna "+
                                     selectedCard.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Deletando card "+selectedCard.getTitle(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
+            });
+
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " deletou o card " + selectedCard.getTitle() + " na coluna "+
+                                        selectedCard.getKanbanColumn().getTitle()+ " do kanban "+ kanban.getTitle() +"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Deletando card "+selectedCard.getTitle(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
+            kanbanCardRepository.deleteById(cardId);
         });
-
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
-
-        kanbanCardRepository.deleteById(cardId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -865,10 +780,14 @@ public class KanbanCardController {
 
         if(selectedCard.getKanbanInnerCard() != null){
             boolean isCardParent = true;
-            for (String memberId : selectedCard.getKanbanInnerCard().getMembers().split(",")) {
-                if(Integer.parseInt(memberId) == user_id){
-                    isCardParent = false;
+            if(selectedCard.getKanbanInnerCard().getMembers() != null && !Objects.equals(selectedCard.getKanbanInnerCard().getMembers(), "")){
+                for (String memberId : selectedCard.getKanbanInnerCard().getMembers().split(",")) {
+                    if(Integer.parseInt(memberId) == user_id){
+                        isCardParent = false;
+                    }
                 }
+            }else{
+                isCardParent = false;
             }
             if(isCardParent){
                 errorMessage.addProperty("mensagem","Você não tem autorização para essa ação (atualizar card dentro deste card)!");
@@ -927,60 +846,65 @@ public class KanbanCardController {
             modifiedArr.add("membros");
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        String message = " atualizou (" +String.join(",",modifiedArr)+ ") no card " + selectedCard.getTitle() +
-                " da coluna "+selectedCard.getKanbanColumn().getTitle()+" do kanban "+kanban.getTitle()+".";
+            String message = " atualizou (" +String.join(",",modifiedArr)+ ") no card " + selectedCard.getTitle() +
+                    " da coluna "+selectedCard.getKanbanColumn().getTitle()+" do kanban "+kanban.getTitle()+".";
 
-        if(cardTitle != null){
-            message = " atualizou (" +String.join(",",modifiedArr)+ ") no card " + oldCardTitle +
-                    " (título antigo) | "+selectedCard.getTitle()+ " (título novo) da coluna "+
-                    selectedCard.getKanbanColumn().getTitle()+" do kanban "+kanban.getTitle()+".";
-        }
-
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage("Você"+message);
-        kanbanNotification.setViewed(false);
-
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(12);
-        kanbanCategory.setName(CategoryName.CARD_UPDATE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
-
-        kanbanNotification.setKanbanCard(selectedCard);
-
-        kanbanNotificationList.add(kanbanNotification);
-
-        List<User> userList = userRepository.findAllByAdmin();
-        String finalMessage = message;
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName()+finalMessage);
-                kanbanNotificationList.add(kanbanNotificationAdmin);
+            if(cardTitle != null){
+                message = " atualizou (" +String.join(",",modifiedArr)+ ") no card " + oldCardTitle +
+                        " (título antigo) | "+selectedCard.getTitle()+ " (título novo) da coluna "+
+                        selectedCard.getKanbanColumn().getTitle()+" do kanban "+kanban.getTitle()+".";
             }
-        });
 
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName()+finalMessage);
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage("Você"+message);
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Atualização do card "+selectedCard.getTitle(),kanbanNotification.getMessage());
+
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(12);
+            kanbanCategory.setName(CategoryName.CARD_UPDATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+
+            kanbanNotification.setKanbanCard(selectedCard);
+
+            kanbanNotificationList.add(kanbanNotification);
+
+            List<User> userList = userRepository.findAllByAdmin();
+            String finalMessage = message;
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(kanbanUser.getUser().getName()+finalMessage);
+                    mailService.sendMail(userAdmin.getEmail(),"Atualização do card "+selectedCard.getTitle(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(kanbanUser.getUser().getName()+finalMessage);
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Atualização do card "+selectedCard.getTitle(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -1107,64 +1031,69 @@ public class KanbanCardController {
             }
         }
 
-        List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
-        KanbanNotification kanbanNotification = new KanbanNotification();
+            KanbanNotification kanbanNotification = new KanbanNotification();
 
-        kanbanNotification.setUser(kanbanUser.getUser());
-        kanbanNotification.setSenderUser(kanbanUser.getUser());
+            kanbanNotification.setUser(kanbanUser.getUser());
+            kanbanNotification.setSenderUser(kanbanUser.getUser());
 
-        kanbanNotification.setRegistrationDate(LocalDateTime.now());
-        kanbanNotification.setMessage(
-                "Você moveu o card " + selectedCard.getTitle() + " da coluna "+
-                        selectedCard.getKanbanColumn().getTitle()+ " para a coluna "+toColumn.getTitle()+
-                        " do kanban "+ selectedCard.getKanbanColumn().getKanban().getTitle() +"."
-        );
-        kanbanNotification.setViewed(false);
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+            kanbanNotification.setMessage(
+                    "Você moveu o card " + selectedCard.getTitle() + " da coluna "+
+                            selectedCard.getKanbanColumn().getTitle()+ " para a coluna "+toColumn.getTitle()+
+                            " do kanban "+ toColumn.getKanban().getTitle() +"."
+            );
+            mailService.sendMail(kanbanUser.getUser().getEmail(),"Movendo card "+selectedCard.getTitle(),kanbanNotification.getMessage());
 
-        KanbanCategory kanbanCategory = new KanbanCategory();
-        kanbanCategory.setId(14);
-        kanbanCategory.setName(CategoryName.CARD_MOVE);
-        kanbanNotification.setKanbanCategory(kanbanCategory);
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(14);
+            kanbanCategory.setName(CategoryName.CARD_MOVE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
 
-        kanbanNotification.setKanbanCard(selectedCard);
+            kanbanNotification.setKanbanCard(selectedCard);
 
-        kanbanNotificationList.add(kanbanNotification);
+            kanbanNotificationList.add(kanbanNotification);
 
-        List<User> userList = userRepository.findAllByAdmin();
-        userList.forEach(userAdmin->{
-            if(!Objects.equals(userAdmin.getId(), user_id)){
-                KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
-                kanbanNotificationAdmin.setUser(userAdmin);
-                kanbanNotificationAdmin.setMessage(
-                        kanbanUser.getUser().getName() + " moveu o card " +
-                                selectedCard.getTitle() + " da coluna "+selectedCard.getKanbanColumn().getTitle()+
-                                " para a coluna "+toColumn.getTitle()+
-                                " do kanban "+ selectedCard.getKanbanColumn().getKanban().getTitle() +"."
-                );
-                kanbanNotificationList.add(kanbanNotificationAdmin);
-            }
-        });
-
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
-        kanbanUserList.forEach(userInKanban->{
-            if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
-                String role = userInKanban.getUser().getRole().getName().name();
-                if (role.equals("ROLE_SUPERVISOR")) {
-                    KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
-                    kanbanNotificationSupervisor.setUser(userInKanban.getUser());
-                    kanbanNotificationSupervisor.setMessage(
+            List<User> userList = userRepository.findAllByAdmin();
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user_id)){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
                             kanbanUser.getUser().getName() + " moveu o card " +
                                     selectedCard.getTitle() + " da coluna "+selectedCard.getKanbanColumn().getTitle()+
                                     " para a coluna "+toColumn.getTitle()+
-                                    " do kanban "+ selectedCard.getKanbanColumn().getKanban().getTitle() +"."
+                                    " do kanban "+ toColumn.getKanban().getTitle() +"."
                     );
-                    kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    mailService.sendMail(userAdmin.getEmail(),"Movendo card "+selectedCard.getTitle(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
                 }
-            }
-        });
+            });
 
-        kanbanNotificationRepository.saveAll(kanbanNotificationList);
+            List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanban.getId());
+            kanbanUserList.forEach(userInKanban->{
+                if(!Objects.equals(userInKanban.getUser().getId(), user_id)) {
+                    String role = userInKanban.getUser().getRole().getName().name();
+                    if (role.equals("ROLE_SUPERVISOR")) {
+                        KanbanNotification kanbanNotificationSupervisor = new KanbanNotification(kanbanNotification);
+                        kanbanNotificationSupervisor.setUser(userInKanban.getUser());
+                        kanbanNotificationSupervisor.setMessage(
+                                kanbanUser.getUser().getName() + " moveu o card " +
+                                        selectedCard.getTitle() + " da coluna "+selectedCard.getKanbanColumn().getTitle()+
+                                        " para a coluna "+toColumn.getTitle()+
+                                        " do kanban "+ toColumn.getKanban().getTitle() +"."
+                        );
+                        mailService.sendMail(userInKanban.getUser().getEmail(),"Movendo card "+selectedCard.getTitle(),kanbanNotificationSupervisor.getMessage());
+                        kanbanNotificationList.add(kanbanNotificationSupervisor);
+                    }
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

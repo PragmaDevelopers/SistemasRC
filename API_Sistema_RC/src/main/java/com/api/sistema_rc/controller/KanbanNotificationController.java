@@ -20,22 +20,7 @@ public class KanbanNotificationController {
     @Autowired
     private TokenService tokenService;
     @Autowired
-    private KanbanRepository kanbanRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private KanbanColumnRepository kanbanColumnRepository;
-    @Autowired
-    private KanbanCardRepository kanbanCardRepository;
-    @Autowired
-    private KanbanCardChecklistRepository kanbanCardCheckListRepository;
-    @Autowired
-    private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
-    @Autowired
-    private KanbanUserRepository kanbanUserRepository;
-    @Autowired
     private KanbanNotificationRepository kanbanNotificationRepository;
-    private final Gson gson = new Gson();
     @GetMapping(path = "/private/user/notifications")
     public ResponseEntity<String> getNotifications(@RequestHeader("Authorization") String token,
                                                    @RequestParam(required = false,defaultValue = "false") boolean isLimit){
@@ -77,7 +62,9 @@ public class KanbanNotificationController {
                 category.equals(CategoryName.CARDCHECKLISTITEM_DELETE) ||
                 category.equals(CategoryName.CARDCUSTOMFIELD_DELETE) ||
                 category.equals(CategoryName.CARDDEADLINE_DELETE) ||
-                category.equals(CategoryName.CARDCHECKLISTDEADLINE_DELETE)
+                category.equals(CategoryName.CARDCHECKLISTDEADLINE_DELETE) ||
+                category.equals(CategoryName.CLIENTTEMPLATE_DELETE) ||
+                category.equals(CategoryName.PDFTEMPLATE_DELETE)
             ){
                 notificationObj.addProperty("changed_id",(String) null);
             }else{
@@ -160,6 +147,22 @@ public class KanbanNotificationController {
                         notificationObj.addProperty("changed_id",(String) null);
                     }else {
                         notificationObj.addProperty("changed_id",notification.getKanbanDeadline().getId());
+                    }
+                }else if(
+                        category.equals(CategoryName.CLIENTTEMPLATE_CREATE)
+                ){
+                    if(notification.getClientTemplate() == null){
+                        notificationObj.addProperty("changed_id",(String) null);
+                    }else {
+                        notificationObj.addProperty("changed_id",notification.getClientTemplate().getId());
+                    }
+                }else if(
+                        category.equals(CategoryName.PDFTEMPLATE_CREATE)
+                ){
+                    if(notification.getPdfTemplate() == null){
+                        notificationObj.addProperty("changed_id",(String) null);
+                    }else {
+                        notificationObj.addProperty("changed_id",notification.getPdfTemplate().getId());
                     }
                 }
             }
