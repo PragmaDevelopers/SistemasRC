@@ -27,4 +27,13 @@ public class MailService {
             mailSender.send(simpleMailMessage);
         }
     }
+
+    public void sendMailWithoutVerification(String mail,String subject,String message){
+        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
+        simpleMailMessage.setFrom(fromEmail);
+        simpleMailMessage.setSubject(subject);
+        simpleMailMessage.setText(message);
+        simpleMailMessage.setTo(mail);
+        mailSender.send(simpleMailMessage);
+    }
 }

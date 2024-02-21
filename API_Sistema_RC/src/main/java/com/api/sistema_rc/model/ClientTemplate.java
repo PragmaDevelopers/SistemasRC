@@ -1,6 +1,10 @@
 package com.api.sistema_rc.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.List;
 
 @Entity
 @Table(name = "client_templates")
@@ -15,6 +19,9 @@ public class ClientTemplate {
     @Lob
     @Column(nullable = false)
     private String template;
+    @OneToMany(mappedBy = "clientTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private List<KanbanNotification> kanbanNotifications;
 
     public Integer getId() {
         return id;

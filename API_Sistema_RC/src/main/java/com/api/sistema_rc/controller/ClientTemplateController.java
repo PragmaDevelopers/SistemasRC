@@ -1,9 +1,11 @@
 package com.api.sistema_rc.controller;
 
-import com.api.sistema_rc.enums.RoleName;
+import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.ClientTemplateRepository;
+import com.api.sistema_rc.repository.KanbanNotificationRepository;
 import com.api.sistema_rc.repository.UserRepository;
+import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -21,8 +28,14 @@ public class ClientTemplateController {
     @Autowired
     private ClientTemplateRepository clientTemplateRepository;
     @Autowired
+    private KanbanNotificationRepository kanbanNotificationRepository;
+    @Autowired
     private TokenService tokenService;
-    private final Gson gson = new Gson();
+    @Autowired
+    private MailService mailService;
+    @Autowired
+    private Gson gson;
+    ExecutorService executorService = Executors.newCachedThreadPool();
     @GetMapping(path = "/private/user/signup/client/templates")
     public ResponseEntity<String> getClientTemplates(@RequestHeader("Authorization") String token,
                                                     @RequestParam(required = false,defaultValue = "false") boolean value){
@@ -77,6 +90,54 @@ public class ClientTemplateController {
 
         ClientTemplate dbClientTemplate = clientTemplateRepository.saveAndFlush(clientTemplate);
 
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
+
+            KanbanNotification kanbanNotification = new KanbanNotification();
+
+            kanbanNotification.setUser(user);
+            kanbanNotification.setSenderUser(user);
+
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+
+            String wordTemplate;
+            if(value){
+                wordTemplate = "template cliente ";
+            }else{
+                wordTemplate = "template formulário ";
+            }
+            kanbanNotification.setMessage(
+                    "Você criou o "+wordTemplate+dbClientTemplate.getName()+"."
+            );
+            mailService.sendMail(user.getEmail(),"Criação do "+wordTemplate+dbClientTemplate.getName(),kanbanNotification.getMessage());
+
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(37);
+            kanbanCategory.setName(CategoryName.CLIENTTEMPLATE_CREATE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+
+            kanbanNotification.setClientTemplate(dbClientTemplate);
+
+            kanbanNotificationList.add(kanbanNotification);
+
+            List<User> userList = userRepository.findAllByAdmin();
+            String finalWordTemplate = wordTemplate;
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user.getId())){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
+                            user.getName()+" criou o "+finalWordTemplate+dbClientTemplate.getName()+"."
+                    );
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do "+finalWordTemplate+dbClientTemplate.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+        });
+
         return ResponseEntity.status(HttpStatus.OK).body(dbClientTemplate.getId().toString());
     }
 
@@ -97,6 +158,8 @@ public class ClientTemplateController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
         }
 
+        ClientTemplate selectedClientTemplate = clientTemplateRepository.findById(clientTemplateId).get();
+
         Integer user_id = tokenService.validateToken(token);
         User user = userRepository.findById(user_id).get();
         if(user.getPermissionLevel().charAt(36) == '0'){
@@ -105,8 +168,53 @@ public class ClientTemplateController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
 
-        clientTemplateRepository.deleteById(clientTemplateId);
+        executorService.submit(() -> {
+            List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
+            KanbanNotification kanbanNotification = new KanbanNotification();
+
+            kanbanNotification.setUser(user);
+            kanbanNotification.setSenderUser(user);
+
+            kanbanNotification.setRegistrationDate(LocalDateTime.now());
+            kanbanNotification.setViewed(false);
+
+            String wordTemplate;
+            if(selectedClientTemplate.isValue()){
+                wordTemplate = "template cliente ";
+            }else{
+                wordTemplate = "template formulário ";
+            }
+            kanbanNotification.setMessage(
+                    "Você deletou o "+wordTemplate+selectedClientTemplate.getName()+"."
+            );
+            mailService.sendMail(user.getEmail(),"Deletando "+wordTemplate+selectedClientTemplate.getName(),kanbanNotification.getMessage());
+
+            KanbanCategory kanbanCategory = new KanbanCategory();
+            kanbanCategory.setId(38);
+            kanbanCategory.setName(CategoryName.CLIENTTEMPLATE_DELETE);
+            kanbanNotification.setKanbanCategory(kanbanCategory);
+
+            kanbanNotificationList.add(kanbanNotification);
+
+            List<User> userList = userRepository.findAllByAdmin();
+            String finalWordTemplate = wordTemplate;
+            userList.forEach(userAdmin->{
+                if(!Objects.equals(userAdmin.getId(), user.getId())){
+                    KanbanNotification kanbanNotificationAdmin = new KanbanNotification(kanbanNotification);
+                    kanbanNotificationAdmin.setUser(userAdmin);
+                    kanbanNotificationAdmin.setMessage(
+                            user.getName()+" deletou o "+finalWordTemplate+selectedClientTemplate.getName()+"."
+                    );
+                    mailService.sendMail(userAdmin.getEmail(),"Deletando "+finalWordTemplate+selectedClientTemplate.getName(),kanbanNotificationAdmin.getMessage());
+                    kanbanNotificationList.add(kanbanNotificationAdmin);
+                }
+            });
+
+            kanbanNotificationRepository.saveAll(kanbanNotificationList);
+
+            clientTemplateRepository.deleteById(clientTemplateId);
+        });
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

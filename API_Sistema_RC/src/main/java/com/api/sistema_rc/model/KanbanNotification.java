@@ -3,7 +3,6 @@ package com.api.sistema_rc.model;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -63,7 +62,7 @@ public class KanbanNotification {
     private ClientTemplate clientTemplate;
     @ManyToOne
     @JoinColumn(name = "pdf_template_id")
-    private PdfEditorTemplate pdfTemplate;
+    private PdfTemplate pdfTemplate;
 
     public KanbanNotification() {
 
@@ -235,11 +234,11 @@ public class KanbanNotification {
         this.clientTemplate = clientTemplate;
     }
 
-    public PdfEditorTemplate getPdfTemplate() {
+    public PdfTemplate getPdfTemplate() {
         return pdfTemplate;
     }
 
-    public void setPdfTemplate(PdfEditorTemplate pdfTemplate) {
+    public void setPdfTemplate(PdfTemplate pdfTemplate) {
         this.pdfTemplate = pdfTemplate;
     }
 }

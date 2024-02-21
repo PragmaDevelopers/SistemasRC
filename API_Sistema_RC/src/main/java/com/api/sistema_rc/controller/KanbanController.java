@@ -36,16 +36,6 @@ public class KanbanController {
     @Autowired
     private KanbanCardRepository kanbanCardRepository;
     @Autowired
-    private KanbanCardChecklistRepository kanbanCardCheckListRepository;
-    @Autowired
-    private KanbanCardChecklistItemRepository kanbanCardCheckListItemRepository;
-    @Autowired
-    private KanbanDeadlineRepository kanbanDeadlineRepository;
-    @Autowired
-    private KanbanCardCustomFieldRepository kanbanCardCustomFieldRepository;
-    @Autowired
-    private KanbanCardCommentRepository kanbanCardCommentRepository;
-    @Autowired
     private KanbanCardTagRepository kanbanCardTagRepository;
     @Autowired
     private KanbanUserRepository kanbanUserRepository;
@@ -239,7 +229,7 @@ public class KanbanController {
                     kanbanNotificationAdmin.setMessage(
                             user.getName()+" criou o kanban "+dbKanban.getTitle()+"."
                     );
-                    mailService.sendMail(userAdmin.getEmail(),"Criação de kanban "+dbKanban.getTitle(),kanbanNotificationAdmin.getMessage());
+                    mailService.sendMail(userAdmin.getEmail(),"Criação do kanban "+dbKanban.getTitle(),kanbanNotificationAdmin.getMessage());
 
                     kanbanNotificationList.add(kanbanNotificationAdmin);
                 }

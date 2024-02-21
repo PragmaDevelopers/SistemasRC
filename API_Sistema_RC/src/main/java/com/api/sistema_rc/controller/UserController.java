@@ -7,6 +7,7 @@ import com.api.sistema_rc.model.User;
 import com.api.sistema_rc.model.UserDetailsImpl;
 import com.api.sistema_rc.repository.UserRepository;
 import com.api.sistema_rc.service.MailService;
+import com.api.sistema_rc.service.UserDetailsServiceImpl;
 import com.api.sistema_rc.util.PasswordEncoderUtils;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
@@ -28,10 +29,7 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -132,13 +130,14 @@ public class UserController {
 
         userRepository.save(user);
 
-        mailService.sendMail(user.getEmail(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
-            "Para verificar sua conta clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
+        mailService.sendMailWithoutVerification(user.getEmail(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
+            "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
         );
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Transactional
     @PostMapping(path = "/public/login")
     public ResponseEntity<String> login(@RequestBody String body){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
@@ -161,6 +160,7 @@ public class UserController {
 
         var usernamePassword = new UsernamePasswordAuthenticationToken(email.getAsString(),password.getAsString());
         var auth = (UserDetailsImpl) authenticationManager.authenticate(usernamePassword).getPrincipal();
+
         if(!auth.isVerify()){
             SecureRandom random = new SecureRandom();
             StringBuilder code = new StringBuilder();
@@ -172,24 +172,20 @@ public class UserController {
                 }
                 isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
             }while(isCode);
-            mailService.sendMail(email.getAsString(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
-                    "Para verificar sua conta clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
+            userRepository.findByEmail(email.getAsString()).get().setCodeToVerify(code.toString());
+            mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
+                    "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
             );
             errorMessage.addProperty("mensagem","Email não verificado!");
             errorMessage.addProperty("status",420);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        try {
-            String token = tokenService.generateToken(auth);
-            JsonObject tokenObject = new JsonObject();
-            tokenObject.addProperty("token",token);
-            return ResponseEntity.status(HttpStatus.OK).body(tokenObject.toString());
-        } catch (AuthenticationException e) {
-            errorMessage.addProperty("mensagem","Falha na autenticação: " + e.getMessage());
-            errorMessage.addProperty("status",400);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
-        }
+        String token = tokenService.generateToken(auth);
+        JsonObject tokenObject = new JsonObject();
+        tokenObject.addProperty("token",token);
+
+        return ResponseEntity.status(HttpStatus.OK).body(tokenObject.toString());
     }
 
     @Transactional
@@ -199,6 +195,8 @@ public class UserController {
         if(user.isPresent()){
             user.get().setVerify(true);
             user.get().setCodeToVerify(null);
+        }else{
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -227,8 +225,43 @@ public class UserController {
         String token = tokenService.generateToken(userDetails);
 
         mailService.sendMail(email.getAsString(),"Redefinição de senha em Rafael do Canto Advocacia e Socidade",
-                "Para redefinir sua senha clique no link: https://sistemasdocanto.vercel.app/account/redefine?token="+token
+                "Para redefinir sua senha, clique no link: https://sistemasdocanto.vercel.app/account/redefine?token="+token
         );
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Transactional
+    @PatchMapping(path = "/private/user/new/email")
+    public ResponseEntity<String> newEmail(@RequestBody String body,@RequestHeader("Authorization") String token) {
+        JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
+
+        JsonObject errorMessage = new JsonObject();
+
+        JsonElement email = jsonObj.get("email");
+        if(email == null){
+            errorMessage.addProperty("mensagem","O campo email é necessário!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        JsonElement key = jsonObj.get("key");
+        if(key == null){
+            errorMessage.addProperty("mensagem","O campo key é necessário!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        Integer user_id = tokenService.validateToken(token);
+        User user = userRepository.findById(user_id).get();
+
+        if(!PasswordEncoderUtils.matches(user.getId().toString()+user.getRegistration_date().toString(),key.getAsString())){
+            errorMessage.addProperty("mensagem","A key é inválida!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        user.setEmail(email.getAsString());
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -319,7 +352,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-
     @Transactional
     @PatchMapping(path = "/private/user/profile")
     public ResponseEntity<String> patchUser(@RequestBody String body,@RequestHeader("Authorization") String token){
@@ -336,14 +368,17 @@ public class UserController {
         }
 
         JsonElement email = jsonObj.get("email");
-        if(email != null){
+        if(email != null && !Objects.equals(user.getEmail(),email.getAsString())){
             Optional<User> dbUser = userRepository.findByEmail(email.getAsString());
             if (dbUser.isPresent()) {
                 errorMessage.addProperty("mensagem","O email já está cadastrado!");
-                errorMessage.addProperty("status",400);
+                errorMessage.addProperty("status",420);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
-            user.setEmail(email.getAsString());
+            String key = PasswordEncoderUtils.encode(user.getId().toString()+user.getRegistration_date().toString());
+            mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de troca de email em Rafael do Canto Advocacia e Socidade",
+                    "Para verificar troca de email da sua conta, clique no link: https://sistemasdocanto.vercel.app/account/switch?key="+key+"&email="+email.getAsString()+"&token="+token.replace("Bearer ","")
+            );
         }
 
         JsonElement password = jsonObj.get("password");
@@ -388,6 +423,11 @@ public class UserController {
             user.setPushEmail(pushEmail.getAsString());
         }
 
+        JsonElement receiveNotification = jsonObj.get("isReceiveNotification");
+        if(receiveNotification != null){
+            user.setReceiveNotification(receiveNotification.getAsBoolean());
+        }
+
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -425,6 +465,7 @@ public class UserController {
         formattedUser.addProperty("gender",user.getGender());
         formattedUser.addProperty("role",user.getRole().getName().name());
         formattedUser.addProperty("permissionLevel",user.getPermissionLevel());
+        formattedUser.addProperty("isReceiveNotification",user.isReceiveNotification());
         if(user.getProfilePicture() == null){
             formattedUser.addProperty("profilePicture",(String) null);
         }else{
@@ -482,6 +523,7 @@ public class UserController {
             formattedUser.addProperty("gender",user.getGender());
             formattedUser.addProperty("role",user.getRole().getName().name());
             formattedUser.addProperty("permissionLevel",user.getPermissionLevel());
+            formattedUser.addProperty("isReceiveNotification",user.isReceiveNotification());
             if(user.getProfilePicture() == null){
                 formattedUser.addProperty("profilePicture",(String) null);
             }else{

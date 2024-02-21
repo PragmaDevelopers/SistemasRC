@@ -61,8 +61,8 @@ public class ConfigDefaultServiceImpl {
     public void saveAdminUsers(){
         if(userRepository.findAll().isEmpty()){
             User user1 = new User();
-            user1.setName("Admin");
-            user1.setEmail("admin@gmail.com");
+            user1.setName("Rafael do Canto");
+            user1.setEmail("Rafael@rafaeldocanto.com.br");
 
             String encryptedPassword1 = PasswordEncoderUtils.encode("123");
             user1.setPassword(encryptedPassword1);
