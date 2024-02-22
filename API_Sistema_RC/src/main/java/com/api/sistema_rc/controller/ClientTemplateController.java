@@ -37,9 +37,14 @@ public class ClientTemplateController {
     private Gson gson;
     ExecutorService executorService = Executors.newCachedThreadPool();
     @GetMapping(path = "/private/user/signup/client/templates")
-    public ResponseEntity<String> getClientTemplates(@RequestHeader("Authorization") String token,
+    public ResponseEntity<String> getClientTemplates(@RequestParam(required = false,defaultValue = "") String name,
                                                     @RequestParam(required = false,defaultValue = "false") boolean value){
-        List<ClientTemplate> clientTemplateList = clientTemplateRepository.findAllByValue(value);
+        List<ClientTemplate> clientTemplateList;
+        if(Objects.equals(name, "")){
+            clientTemplateList = clientTemplateRepository.findAllByValue(value);
+        }else{
+            clientTemplateList = clientTemplateRepository.findAllByNameAndValue(name,value);
+        }
 
         JsonArray clientTemplateArr = new JsonArray();
         clientTemplateList.forEach(clientTemplate -> {

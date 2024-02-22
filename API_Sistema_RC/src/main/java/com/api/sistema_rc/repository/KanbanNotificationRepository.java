@@ -12,6 +12,8 @@ import java.util.List;
 public interface KanbanNotificationRepository extends JpaRepository<KanbanNotification,Integer> {
     @Query(value = "SELECT * FROM kanban_notifications WHERE user_id = :id ORDER BY registration_date DESC",nativeQuery = true)
     List<KanbanNotification> findAllByUserId(@Param("id") Integer userId);
+    @Query(value = "SELECT COUNT(*) FROM kanban_notifications WHERE user_id = :id AND viewed = false",nativeQuery = true)
+    int findAllCountByUserId(@Param("id") Integer userId);
     @Query(value = "SELECT * FROM kanban_notifications WHERE user_id = :id ORDER BY registration_date DESC LIMIT 10",nativeQuery = true)
     List<KanbanNotification> findAllByUserIdWithLimit(@Param("id") Integer userId);
     @Query(value = "SELECT * FROM kanban_notifications WHERE kanban_id = :id",nativeQuery = true)

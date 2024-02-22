@@ -21,6 +21,12 @@ public class KanbanNotificationController {
     private TokenService tokenService;
     @Autowired
     private KanbanNotificationRepository kanbanNotificationRepository;
+    @GetMapping(path = "/private/user/notifications/count")
+    public ResponseEntity<String> getCountNotification(@RequestHeader("Authorization") String token){
+        Integer user_id = tokenService.validateToken(token);
+        int countNotification = kanbanNotificationRepository.findAllCountByUserId(user_id);
+        return ResponseEntity.status(HttpStatus.OK).body(String.valueOf(countNotification));
+    }
     @GetMapping(path = "/private/user/notifications")
     public ResponseEntity<String> getNotifications(@RequestHeader("Authorization") String token,
                                                    @RequestParam(required = false,defaultValue = "false") boolean isLimit){

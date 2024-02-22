@@ -37,13 +37,12 @@ public class PdfEditorTemplateController {
     private Gson gson;
     ExecutorService executorService = Executors.newCachedThreadPool();
     @GetMapping(path = "/private/user/signup/pdfEditor/templates")
-    public ResponseEntity<String> getPdfEditorTemplates(@RequestHeader("Authorization") String token,
-                                                        @RequestParam(required = false,defaultValue = "") String search){
+    public ResponseEntity<String> getPdfEditorTemplates(@RequestParam(required = false,defaultValue = "") String name){
         List<PdfTemplate> pdfTemplateList;
-        if(Objects.equals(search, "")){
+        if(Objects.equals(name, "")){
             pdfTemplateList = pdfTemplateRepository.findAll();
         }else{
-            pdfTemplateList = pdfTemplateRepository.findAllByName(search);
+            pdfTemplateList = pdfTemplateRepository.findAllByName(name);
         }
 
         JsonArray pdfEditorTemplateArr = new JsonArray();
