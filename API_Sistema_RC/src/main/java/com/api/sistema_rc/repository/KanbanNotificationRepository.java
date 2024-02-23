@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface KanbanNotificationRepository extends JpaRepository<KanbanNotification,Integer> {
-    @Query(value = "SELECT * FROM kanban_notifications WHERE user_id = :id ORDER BY registration_date DESC LIMIT 10 OFFSET :page",nativeQuery = true)
+    @Query(value = "SELECT * FROM kanban_notifications WHERE user_id = :id ORDER BY registration_date DESC LIMIT 5 OFFSET :page",nativeQuery = true)
     List<KanbanNotification> findAllByUserId(@Param("id") Integer userId,@Param("page") Integer page);
     @Query(value = "SELECT COUNT(*) FROM kanban_notifications WHERE user_id = :id AND viewed = false",nativeQuery = true)
     int findAllCountByUserId(@Param("id") Integer userId);

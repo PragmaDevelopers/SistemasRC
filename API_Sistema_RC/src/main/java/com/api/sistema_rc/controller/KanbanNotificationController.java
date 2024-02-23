@@ -34,7 +34,7 @@ public class KanbanNotificationController {
                                                    @RequestParam(required = false,defaultValue = "1") int page){
         Integer user_id = tokenService.validateToken(token);
 
-        List<KanbanNotification> kanbanNotificationList = kanbanNotificationRepository.findAllByUserId(user_id,10 * (page - 1));
+        List<KanbanNotification> kanbanNotificationList = kanbanNotificationRepository.findAllByUserId(user_id,5 * (page - 1));
 
         JsonArray notificationArr = new JsonArray();
         kanbanNotificationList.forEach(notification->{
