@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,15 +31,10 @@ public class KanbanNotificationController {
     }
     @GetMapping(path = "/private/user/notifications")
     public ResponseEntity<String> getNotifications(@RequestHeader("Authorization") String token,
-                                                   @RequestParam(required = false,defaultValue = "false") boolean isLimit){
+                                                   @RequestParam(required = false,defaultValue = "1") int page){
         Integer user_id = tokenService.validateToken(token);
 
-        List<KanbanNotification> kanbanNotificationList;
-        if(isLimit){
-            kanbanNotificationList = kanbanNotificationRepository.findAllByUserIdWithLimit(user_id);
-        }else{
-            kanbanNotificationList = kanbanNotificationRepository.findAllByUserId(user_id);
-        }
+        List<KanbanNotification> kanbanNotificationList = kanbanNotificationRepository.findAllByUserId(user_id,10 * (page - 1));
 
         JsonArray notificationArr = new JsonArray();
         kanbanNotificationList.forEach(notification->{
@@ -49,11 +46,33 @@ public class KanbanNotificationController {
             notificationObj.addProperty("category",notification.getKanbanCategory().getName().name());
             notificationObj.addProperty("sender_user_id",notification.getSenderUser().getId());
             notificationObj.addProperty("sender_user_name",notification.getSenderUser().getName());
+            if(notification.getSenderUser().getProfilePicture() == null){
+                notificationObj.addProperty("sender_user_profilePicture",(String) null);
+            }else{
+                try {
+                    byte[] bytes = notification.getSenderUser().getProfilePicture().getBytes(1,(int) notification.getSenderUser().getProfilePicture().length());
+                    String encoded = Base64.getEncoder().encodeToString(bytes);
+                    notificationObj.addProperty("sender_user_profilePicture","data:image/"+notification.getSenderUser().getPictureFormat()+";base64,"+encoded);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
             CategoryName category = notification.getKanbanCategory().getName();
             if(category.equals(CategoryName.KANBAN_INVITE) ||
                     category.equals(CategoryName.KANBAN_UNINVITE)
             ){
+                if(notification.getRecipientUser().getProfilePicture() == null){
+                    notificationObj.addProperty("recipient_user_profilePicture",(String) null);
+                }else{
+                    try {
+                        byte[] bytes = notification.getRecipientUser().getProfilePicture().getBytes(1,(int) notification.getRecipientUser().getProfilePicture().length());
+                        String encoded = Base64.getEncoder().encodeToString(bytes);
+                        notificationObj.addProperty("recipient_user_profilePicture","data:image/"+notification.getRecipientUser().getPictureFormat()+";base64,"+encoded);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 notificationObj.addProperty("recipient_user_id",notification.getRecipientUser().getId());
                 notificationObj.addProperty("recipient_user_name",notification.getRecipientUser().getName());
                 notificationObj.addProperty("changed_id",notification.getKanban().getId());
