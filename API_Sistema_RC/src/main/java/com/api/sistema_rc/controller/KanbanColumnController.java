@@ -91,43 +91,32 @@ public class KanbanColumnController {
             columnObj.addProperty("id",column.getId());
             columnObj.addProperty("title",column.getTitle());
             columnObj.addProperty("index",column.getIndex());
+            List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnIdAndNotInnerCard(column.getId());
+            JsonArray cardArr = new JsonArray();
+            for(KanbanCard card : kanbanCardsList) {
+                JsonObject cardObj = new JsonObject();
+                cardObj.addProperty("id", card.getId());
+                cardObj.addProperty("kanbanID", kanban.getId());
+                cardObj.addProperty("columnID", column.getId());
+                cardObj.addProperty("title", card.getTitle());
+                cardObj.addProperty("index", card.getIndex());
+                List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
+                JsonArray tagArr = new JsonArray();
+                for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
+                    JsonObject tagObj = new JsonObject();
+                    tagObj.addProperty("id",kanbanCardTag.getId());
+                    tagObj.addProperty("name",kanbanCardTag.getName());
+                    tagObj.addProperty("color",kanbanCardTag.getColor());
+                    tagArr.add(tagObj);
+                }
+                cardObj.add("tags",tagArr);
+                cardArr.add(cardObj);
+            }
+            columnObj.add("cards",cardArr);
             columnsArr.add(columnObj);
         });
 
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByKanbanId(kanbanId);
-
-        JsonArray userArray = new JsonArray();
-
-        kanbanUserList.forEach(userInKanban->{
-            JsonObject formattedUser = new JsonObject();
-            formattedUser.addProperty("id",userInKanban.getUser().getId());
-            formattedUser.addProperty("name",userInKanban.getUser().getName());
-            formattedUser.addProperty("email",userInKanban.getUser().getEmail());
-            formattedUser.addProperty("pushEmail",userInKanban.getUser().getPushEmail());
-            formattedUser.addProperty("registration_date",userInKanban.getUser().getRegistration_date().toString());
-            formattedUser.addProperty("nationality",userInKanban.getUser().getNationality());
-            formattedUser.addProperty("gender",userInKanban.getUser().getGender());
-            formattedUser.addProperty("role",userInKanban.getUser().getRole().getName().name());
-            formattedUser.addProperty("permissionLevel",userInKanban.getUser().getPermissionLevel());
-            if(userInKanban.getUser().getProfilePicture() == null){
-                formattedUser.addProperty("profilePicture",(String) null);
-            }else{
-                try {
-                    byte[] bytes = userInKanban.getUser().getProfilePicture().getBytes(1,(int) userInKanban.getUser().getProfilePicture().length());
-                    String encoded = Base64.getEncoder().encodeToString(bytes);
-                    formattedUser.addProperty("profilePicture",encoded);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            userArray.add(formattedUser);
-        });
-
-        JsonObject selectedKanban = new JsonObject();
-        selectedKanban.add("columns",columnsArr);
-        selectedKanban.add("members",userArray);
-
-        return ResponseEntity.status(HttpStatus.OK).body(selectedKanban.toString());
+        return ResponseEntity.status(HttpStatus.OK).body(columnsArr.toString());
     }
 
     @PostMapping(path = "/private/user/kanban/column")

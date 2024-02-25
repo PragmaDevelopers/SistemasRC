@@ -49,9 +49,10 @@ public class KanbanController {
 
     @GetMapping(path = "/private/user/kanban")
     public ResponseEntity<String> getKanban(@RequestHeader("Authorization") String token,
-                                                  @RequestParam(name = "columns",required = false) boolean isColumns){
+                                            @RequestParam(name = "columns",required = false) boolean isColumns,
+                                            @RequestParam(required = false,defaultValue = "1") int page){
         Integer user_id = tokenService.validateToken(token);
-        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByUserId(user_id);
+        List<KanbanUser> kanbanUserList = kanbanUserRepository.findAllByUserId(user_id,15 * (page - 1));
 
         List<Kanban> kanbanList = kanbanUserList.stream()
                 .map(KanbanUser::getKanban)
@@ -70,28 +71,8 @@ public class KanbanController {
                     JsonObject columnObj = new JsonObject();
                     columnObj.addProperty("id",column.getId());
                     columnObj.addProperty("title",column.getTitle());
-                    List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnIdAndNotInnerCard(column.getId());
-                    JsonArray cardArr = new JsonArray();
-                    for(KanbanCard card : kanbanCardsList) {
-                        JsonObject cardObj = new JsonObject();
-                        cardObj.addProperty("id", card.getId());
-                        cardObj.addProperty("kanbanID", kanban.getId());
-                        cardObj.addProperty("columnID", column.getId());
-                        cardObj.addProperty("title", card.getTitle());
-                        cardObj.addProperty("index", card.getIndex());
-                        List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
-                        JsonArray tagArr = new JsonArray();
-                        for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
-                            JsonObject tagObj = new JsonObject();
-                            tagObj.addProperty("id",kanbanCardTag.getId());
-                            tagObj.addProperty("name",kanbanCardTag.getName());
-                            tagObj.addProperty("color",kanbanCardTag.getColor());
-                            tagArr.add(tagObj);
-                        }
-                        cardObj.add("tags",tagArr);
-                        cardArr.add(cardObj);
-                    }
-                    columnObj.add("cards",cardArr);
+                    columnObj.addProperty("index",column.getIndex());
+                    columnObj.addProperty("cards",(String) null);
                     columnArr.add(columnObj);
                 }
                 kanbanObj.add("columns",columnArr);

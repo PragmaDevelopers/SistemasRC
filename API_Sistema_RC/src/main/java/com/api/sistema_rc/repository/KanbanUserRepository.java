@@ -12,8 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface KanbanUserRepository extends JpaRepository<KanbanUser,Integer> {
-    @Query(value = "SELECT * FROM kanban_users WHERE user_id = :id",nativeQuery = true)
-    List<KanbanUser> findAllByUserId(@Param("id") Integer userId);
+    @Query(value = "SELECT * FROM kanban_users WHERE user_id = :id LIMIT 15 OFFSET :page",nativeQuery = true)
+    List<KanbanUser> findAllByUserId(@Param("id") Integer userId,@Param("page") Integer page);
     @Query(value = "SELECT * FROM kanban_users WHERE kanban_id = :id",nativeQuery = true)
     List<KanbanUser> findAllByKanbanId(@Param("id") Integer kanbanId);
     @Query(value = "SELECT * FROM kanban_users WHERE kanban_id = :kanbanId AND user_id = :userId LIMIT 1",nativeQuery = true)

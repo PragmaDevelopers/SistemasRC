@@ -488,28 +488,16 @@ public class UserController {
                                                  @RequestParam(name = "page",required = false,defaultValue = "1") Integer page){
         List<User> userList;
         if(name != null){
-            if(page != null){
-                userList = userRepository.findAllByNameLimitPage(name,10 * (page - 1));
-            }else{
-                userList = userRepository.findAllByName(name);
-            }
+            userList = userRepository.findAllByName(name,10 * (page - 1));
         }else if(email != null){
-            if(page != null) {
-                userList = userRepository.findAllByEmailLimitPage(email,10 * (page - 1));
-            }else{
-                userList = userRepository.findAllByEmail(email);
-            }
+            userList = userRepository.findAllByEmail(email,10 * (page - 1));
         }else if(id != null){
             userList = new ArrayList<>();
             if(userRepository.findById(id).isPresent()){
                 userList.add(userRepository.findById(id).get());
             }
         }else{
-            if(page != null) {
-                userList = userRepository.findAllLimitPage(10 * (page - 1));
-            }else{
-                userList = userRepository.findAllByVerify();
-            }
+            userList = userRepository.findAll(10 * (page - 1));
         }
         JsonArray users = new JsonArray();
         userList.forEach(user->{
