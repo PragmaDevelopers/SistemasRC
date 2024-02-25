@@ -57,7 +57,6 @@ public class KanbanNotificationController {
                     throw new RuntimeException(e);
                 }
             }
-
             CategoryName category = notification.getKanbanCategory().getName();
             if(category.equals(CategoryName.KANBAN_INVITE) ||
                     category.equals(CategoryName.KANBAN_UNINVITE)
@@ -212,7 +211,6 @@ public class KanbanNotificationController {
             errorMessage.addProperty("status",414);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
-
         Integer user_id = tokenService.validateToken(token);
         KanbanNotification kanbanNotification = kanbanNotificationRepository.findById(notificationId).get();
         if(!Objects.equals(kanbanNotification.getUser().getId(), user_id)){
@@ -223,6 +221,17 @@ public class KanbanNotificationController {
 
         kanbanNotification.setViewed(true);
 
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Transactional
+    @PatchMapping(path = "/private/user/notification/all")
+    public ResponseEntity<String> patchNotificationAll(@RequestHeader("Authorization") String token){
+        Integer user_id = tokenService.validateToken(token);
+        List<KanbanNotification> kanbanNotificationList = kanbanNotificationRepository.findAllByUserIdAndNoViewed(user_id);
+        kanbanNotificationList.forEach(kanbanNotification -> {
+            kanbanNotification.setViewed(true);
+        });
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

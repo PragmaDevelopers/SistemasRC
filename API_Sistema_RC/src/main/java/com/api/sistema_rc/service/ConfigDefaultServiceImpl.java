@@ -67,7 +67,7 @@ public class ConfigDefaultServiceImpl {
             String encryptedPassword1 = PasswordEncoderUtils.encode("123");
             user1.setPassword(encryptedPassword1);
 
-            user1.setNationality("Brasileiro");
+            user1.setNationality("BR");
             user1.setRegistration_date(LocalDateTime.now());
             user1.setPermissionLevel("111111111111111111111111111111111111111");
             user1.setVerify(true);
@@ -87,7 +87,7 @@ public class ConfigDefaultServiceImpl {
             String encryptedPassword2 = PasswordEncoderUtils.encode("2077Rr-84");
             user2.setPassword(encryptedPassword2);
 
-            user2.setNationality("Brasileiro");
+            user2.setNationality("BR");
             user2.setRegistration_date(LocalDateTime.now());
             user2.setPermissionLevel("111111111111111111111111111111111111111");
             user2.setVerify(true);
