@@ -92,7 +92,7 @@ public class ConfigDefaultServiceImpl {
             user2.setPermissionLevel("111111111111111111111111111111111111111");
             user2.setVerify(true);
             user2.setCodeToVerify(null);
-            user2.setReceiveNotification(true);
+            user2.setReceiveNotification(false);
 
             user2.setRole(roleAdmin);
 

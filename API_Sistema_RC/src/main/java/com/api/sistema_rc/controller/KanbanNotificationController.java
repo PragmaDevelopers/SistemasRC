@@ -223,7 +223,6 @@ public class KanbanNotificationController {
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
-
     @Transactional
     @PatchMapping(path = "/private/user/notification/all")
     public ResponseEntity<String> patchNotificationAll(@RequestHeader("Authorization") String token){
@@ -232,6 +231,32 @@ public class KanbanNotificationController {
         kanbanNotificationList.forEach(kanbanNotification -> {
             kanbanNotification.setViewed(true);
         });
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+    @DeleteMapping(path = "/private/user/notification/{notificationId}")
+    public ResponseEntity<String> deleteNotification(@PathVariable Integer notificationId,@RequestHeader("Authorization") String token){
+        JsonObject errorMessage = new JsonObject();
+        if(notificationId == null){
+            errorMessage.addProperty("mensagem","O campo notificationId é necessário!");
+            errorMessage.addProperty("status",410);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+        boolean isNotification = kanbanNotificationRepository.findById(notificationId).isPresent();
+        if(!isNotification){
+            errorMessage.addProperty("mensagem","Notificação não foi encontrada!");
+            errorMessage.addProperty("status",414);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+        Integer user_id = tokenService.validateToken(token);
+        KanbanNotification kanbanNotification = kanbanNotificationRepository.findById(notificationId).get();
+        if(!Objects.equals(kanbanNotification.getUser().getId(), user_id)){
+            errorMessage.addProperty("mensagem","Essa notificação não pertence ao usuário!");
+            errorMessage.addProperty("status",414);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        kanbanNotificationRepository.deleteById(notificationId);
+
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

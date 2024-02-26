@@ -88,23 +88,35 @@ public class KanbanCardController {
 
         kanbanCardList.forEach(card->{
             JsonObject cardObj = new JsonObject();
-            cardObj.addProperty("id",card.getId());
-            cardObj.addProperty("title",card.getTitle());
-            cardObj.addProperty("description",card.getDescription());
-            cardObj.addProperty("index",card.getIndex());
+            cardObj.addProperty("id", card.getId());
+            cardObj.addProperty("kanbanID", kanban.getId());
+            cardObj.addProperty("columnID", card.getKanbanColumn().getId());
+            cardObj.addProperty("title", card.getTitle());
+            cardObj.addProperty("index", card.getIndex());
 
-            JsonArray members = new JsonArray();
-            if(card.getMembers() !=  null && !Objects.equals(card.getMembers(), "")){
-                for (String memberId : card.getMembers().split(",")) {
-                    User member = userRepository.findById(Integer.parseInt(memberId)).get();
-                    JsonObject formattedUser = new JsonObject();
-                    formattedUser.addProperty("id",member.getId());
-                    formattedUser.addProperty("name",member.getName());
-                    formattedUser.addProperty("email",member.getEmail());
-                    members.add(formattedUser);
-                }
+            List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
+            JsonArray tagArr = new JsonArray();
+            for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
+                JsonObject tagObj = new JsonObject();
+                tagObj.addProperty("id",kanbanCardTag.getId());
+                tagObj.addProperty("name",kanbanCardTag.getName());
+                tagObj.addProperty("color",kanbanCardTag.getColor());
+                tagArr.add(tagObj);
             }
-            cardObj.add("members", members);
+            cardObj.add("tags",tagArr);
+
+//            JsonArray members = new JsonArray();
+//            if(card.getMembers() !=  null && !Objects.equals(card.getMembers(), "")){
+//                for (String memberId : card.getMembers().split(",")) {
+//                    User member = userRepository.findById(Integer.parseInt(memberId)).get();
+//                    JsonObject formattedUser = new JsonObject();
+//                    formattedUser.addProperty("id",member.getId());
+//                    formattedUser.addProperty("name",member.getName());
+//                    formattedUser.addProperty("email",member.getEmail());
+//                    members.add(formattedUser);
+//                }
+//            }
+//            cardObj.add("members", members);
 
             cardsArr.add(cardObj);
         });
