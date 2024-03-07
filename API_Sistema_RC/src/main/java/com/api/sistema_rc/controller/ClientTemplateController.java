@@ -38,12 +38,13 @@ public class ClientTemplateController {
     ExecutorService executorService = Executors.newCachedThreadPool();
     @GetMapping(path = "/private/user/signup/client/templates")
     public ResponseEntity<String> getClientTemplates(@RequestParam(required = false,defaultValue = "") String name,
-                                                    @RequestParam(required = false,defaultValue = "false") boolean value){
+                                                    @RequestParam(required = false,defaultValue = "false") boolean value,
+                                                    @RequestParam(required = false,defaultValue = "1") Integer page){
         List<ClientTemplate> clientTemplateList;
         if(Objects.equals(name, "")){
-            clientTemplateList = clientTemplateRepository.findAllByValue(value);
+            clientTemplateList = clientTemplateRepository.findAllByValue(value,10 * (page - 1));
         }else{
-            clientTemplateList = clientTemplateRepository.findAllByNameAndValue(name,value);
+            clientTemplateList = clientTemplateRepository.findAllByNameAndValue(name,value,10 * (page - 1));
         }
 
         JsonArray clientTemplateArr = new JsonArray();

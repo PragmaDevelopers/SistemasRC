@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,13 +120,12 @@ public class ConfigDefaultServiceImpl {
             clientTemplate.setValue(false);
 
             try {
-                clientTemplate.setTemplate(resource.getContentAsString(Charset.defaultCharset()));
+                clientTemplate.setTemplate(resource.getContentAsString(StandardCharsets.UTF_8));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
             clientTemplateRepository.save(clientTemplate);
-
         }
     }
 }

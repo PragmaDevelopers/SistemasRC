@@ -10,6 +10,8 @@ import java.util.List;
 
 @Repository
 public interface PdfTemplateRepository extends JpaRepository<PdfTemplate,Integer> {
-    @Query(value = "SELECT * FROM pdf_templates WHERE name ILIKE :name%",nativeQuery = true)
-    List<PdfTemplate> findAllByName(@Param("name") String name);
+    @Query(value = "SELECT * FROM pdf_templates LIMIT 10 OFFSET :page",nativeQuery = true)
+    List<PdfTemplate> findAll(@Param("page") Integer page);
+    @Query(value = "SELECT * FROM pdf_templates WHERE name ILIKE :name% LIMIT 10 OFFSET :page",nativeQuery = true)
+    List<PdfTemplate> findAllByName(@Param("name") String name,@Param("page") Integer page);
 }

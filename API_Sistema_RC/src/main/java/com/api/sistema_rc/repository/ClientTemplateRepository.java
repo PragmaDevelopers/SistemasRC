@@ -11,8 +11,8 @@ import java.util.List;
 
 @Repository
 public interface ClientTemplateRepository extends JpaRepository<ClientTemplate,Integer> {
-    @Query(value = "SELECT * FROM client_templates WHERE value = :value",nativeQuery = true)
-    List<ClientTemplate> findAllByValue(@Param("value") boolean value);
-    @Query(value = "SELECT * FROM client_templates WHERE name ILIKE :name% AND value = :value",nativeQuery = true)
-    List<ClientTemplate> findAllByNameAndValue(@Param("name") String name,@Param("value") boolean value);
+    @Query(value = "SELECT * FROM client_templates WHERE value = :value LIMIT 10 OFFSET :page",nativeQuery = true)
+    List<ClientTemplate> findAllByValue(@Param("value") boolean value,@Param("page") Integer page);
+    @Query(value = "SELECT * FROM client_templates WHERE name ILIKE :name% AND value = :value LIMIT 10 OFFSET :page",nativeQuery = true)
+    List<ClientTemplate> findAllByNameAndValue(@Param("name") String name,@Param("value") boolean value,@Param("page") Integer page);
 }
