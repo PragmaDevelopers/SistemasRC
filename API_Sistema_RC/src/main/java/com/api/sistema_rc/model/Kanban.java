@@ -28,6 +28,8 @@ public class Kanban {
     private List<KanbanNotification> kanbanNotifications;
     @Column(length = 255,nullable = false)
     private String title;
+    @Column(length = 255,nullable = false)
+    private String version;
 
     public Integer getId() {
         return id;
@@ -43,5 +45,13 @@ public class Kanban {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

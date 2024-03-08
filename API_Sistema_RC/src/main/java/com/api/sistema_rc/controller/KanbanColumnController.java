@@ -119,6 +119,64 @@ public class KanbanColumnController {
         return ResponseEntity.status(HttpStatus.OK).body(columnsArr.toString());
     }
 
+    @GetMapping(path = "/private/user/kanban/column/{columnId}")
+    public ResponseEntity<String> getColumnById(@PathVariable Integer columnId,
+                                             @RequestHeader("Authorization") String token){
+        JsonObject errorMessage = new JsonObject();
+        if(columnId == null){
+            errorMessage.addProperty("mensagem","O campo columnId é necessário!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        boolean isColumn = kanbanColumnRepository.findById(columnId).isPresent();
+        if(!isColumn){
+            errorMessage.addProperty("mensagem","Column não foi encontrado!");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        KanbanColumn column = kanbanColumnRepository.findById(columnId).get();
+        Kanban kanban = column.getKanban();
+        Integer user_id = tokenService.validateToken(token);
+
+        KanbanUser kanbanUser = kanbanUserRepository.findByKanbanIdAndUserId(kanban.getId(),user_id);
+
+        if(kanbanUser == null){
+            errorMessage.addProperty("mensagem","Você não está cadastrado nesse kanban!");
+            errorMessage.addProperty("status",435);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
+        }
+
+        JsonObject columnObj = new JsonObject();
+
+        columnObj.addProperty("id",column.getId());
+        columnObj.addProperty("title",column.getTitle());
+        columnObj.addProperty("index",column.getIndex());
+        List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnIdAndNotInnerCard(column.getId());
+        JsonArray cardArr = new JsonArray();
+        for(KanbanCard card : kanbanCardsList) {
+            JsonObject cardObj = new JsonObject();
+            cardObj.addProperty("id", card.getId());
+            cardObj.addProperty("kanbanID", kanban.getId());
+            cardObj.addProperty("columnID", column.getId());
+            cardObj.addProperty("title", card.getTitle());
+            cardObj.addProperty("index", card.getIndex());
+            List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
+            JsonArray tagArr = new JsonArray();
+            for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
+                JsonObject tagObj = new JsonObject();
+                tagObj.addProperty("id",kanbanCardTag.getId());
+                tagObj.addProperty("name",kanbanCardTag.getName());
+                tagObj.addProperty("color",kanbanCardTag.getColor());
+                tagArr.add(tagObj);
+            }
+            cardObj.add("tags",tagArr);
+            cardArr.add(cardObj);
+        }
+        columnObj.add("cards",cardArr);
+
+        return ResponseEntity.status(HttpStatus.OK).body(columnObj.toString());
+    }
+
     @PostMapping(path = "/private/user/kanban/column")
     public ResponseEntity<String> postColumn(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject kanbanJson = gson.fromJson(body, JsonObject.class);

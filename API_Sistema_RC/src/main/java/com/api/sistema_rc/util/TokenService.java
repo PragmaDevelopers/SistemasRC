@@ -18,7 +18,7 @@ import java.time.ZoneOffset;
 public class TokenService {
     @Value("${api.security.token.secret}")
     private String secret;
-    public String generateToken(UserDetailsImpl user) {
+    public String generateUserToken(UserDetailsImpl user) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
@@ -28,6 +28,32 @@ public class TokenService {
                     .sign(algorithm);
         }catch (JWTCreationException exception){
             throw new RuntimeException("Error while generating token",exception);
+        }
+    }
+
+    public String generateCodeToken(String code) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            return JWT.create()
+                    .withIssuer("sistema_rc")
+                    .withSubject(code)
+                    .withExpiresAt(genExpirationDate())
+                    .sign(algorithm);
+        }catch (JWTCreationException exception){
+            throw new RuntimeException("Error while generating token",exception);
+        }
+    }
+
+    public String validateCodeToken(String code){
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            return JWT.require(algorithm)
+                    .withIssuer("sistema_rc")
+                    .build()
+                    .verify(code)
+                    .getSubject();
+        }catch (JWTVerificationException exception){
+            return "-1";
         }
     }
 

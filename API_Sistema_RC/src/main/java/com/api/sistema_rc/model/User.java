@@ -36,6 +36,10 @@ public class User{
     private boolean isVerify;
     @Column(length = 10,unique = true)
     private String codeToVerify;
+    @Column(length = 10,unique = true)
+    private String codeToSwitch;
+    @Column(length = 255,unique = true)
+    private String emailToSwitch;
     @Column(nullable = false)
     private boolean isReceiveNotification;
     @Column(nullable = false)
@@ -125,6 +129,22 @@ public class User{
 
     public void setCodeToVerify(String codeToVerify) {
         this.codeToVerify = codeToVerify;
+    }
+
+    public String getCodeToSwitch() {
+        return codeToSwitch;
+    }
+
+    public void setCodeToSwitch(String codeToSwitch) {
+        this.codeToSwitch = codeToSwitch;
+    }
+
+    public String getEmailToSwitch() {
+        return emailToSwitch;
+    }
+
+    public void setEmailToSwitch(String emailToSwitch) {
+        this.emailToSwitch = emailToSwitch;
     }
 
     public boolean isReceiveNotification() {

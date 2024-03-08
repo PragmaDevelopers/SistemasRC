@@ -130,8 +130,10 @@ public class UserController {
 
         userRepository.save(user);
 
+        String codeToken = tokenService.generateCodeToken(code.toString());
+
         mailService.sendMailWithoutVerification(user.getEmail(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
-            "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
+            "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+codeToken
         );
 
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -173,15 +175,16 @@ public class UserController {
                 isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
             }while(isCode);
             userRepository.findByEmail(email.getAsString()).get().setCodeToVerify(code.toString());
+            String codeToken = tokenService.generateCodeToken(code.toString());
             mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
-                    "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+code
+                    "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+codeToken
             );
             errorMessage.addProperty("mensagem","Email não verificado!");
             errorMessage.addProperty("status",420);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        String token = tokenService.generateToken(auth);
+        String token = tokenService.generateUserToken(auth);
         JsonObject tokenObject = new JsonObject();
         tokenObject.addProperty("token",token);
 
@@ -191,7 +194,8 @@ public class UserController {
     @Transactional
     @PatchMapping(path = "/public/user/verify/{code}")
     public ResponseEntity<String> userVerify(@PathVariable String code) {
-        Optional<User> user = userRepository.findByCodeToVerify(code);
+        String formattedCode = tokenService.validateCodeToken(code);
+        Optional<User> user = userRepository.findByCodeToVerify(formattedCode);
         if(user.isPresent()){
             user.get().setVerify(true);
             user.get().setCodeToVerify(null);
@@ -222,7 +226,7 @@ public class UserController {
         }
 
         UserDetailsImpl userDetails = new UserDetailsImpl(user.get());
-        String token = tokenService.generateToken(userDetails);
+        String token = tokenService.generateUserToken(userDetails);
 
         mailService.sendMail(email.getAsString(),"Redefinição de senha em Rafael do Canto Advocacia e Socidade",
                 "Para redefinir sua senha, clique no link: https://sistemasdocanto.vercel.app/account/redefine?token="+token
@@ -232,36 +236,28 @@ public class UserController {
     }
 
     @Transactional
-    @PatchMapping(path = "/private/user/new/email")
-    public ResponseEntity<String> newEmail(@RequestBody String body,@RequestHeader("Authorization") String token) {
+    @PatchMapping(path = "/public/user/new/email")
+    public ResponseEntity<String> newEmail(@RequestBody String body) {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         JsonObject errorMessage = new JsonObject();
 
-        JsonElement email = jsonObj.get("email");
-        if(email == null){
-            errorMessage.addProperty("mensagem","O campo email é necessário!");
+        JsonElement code = jsonObj.get("code");
+        if(code == null){
+            errorMessage.addProperty("mensagem","O campo code é necessário!");
             errorMessage.addProperty("status",400);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        JsonElement key = jsonObj.get("key");
-        if(key == null){
-            errorMessage.addProperty("mensagem","O campo key é necessário!");
+        String formattedCode = tokenService.validateCodeToken(code.getAsString());
+        Optional<User> user = userRepository.findByCodeToSwitch(formattedCode);
+        if(user.isEmpty()){
+            errorMessage.addProperty("mensagem","O code é inválida!");
             errorMessage.addProperty("status",400);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        Integer user_id = tokenService.validateToken(token);
-        User user = userRepository.findById(user_id).get();
-
-        if(!PasswordEncoderUtils.matches(user.getId().toString()+user.getRegistration_date().toString(),key.getAsString())){
-            errorMessage.addProperty("mensagem","A key é inválida!");
-            errorMessage.addProperty("status",400);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
-        }
-
-        user.setEmail(email.getAsString());
+        user.get().setEmail(user.get().getEmailToSwitch());
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -375,9 +371,21 @@ public class UserController {
                 errorMessage.addProperty("status",420);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
-            String key = PasswordEncoderUtils.encode(user.getId().toString()+user.getRegistration_date().toString());
+            SecureRandom random = new SecureRandom();
+            StringBuilder code = new StringBuilder();
+            boolean isCode;
+            do{
+                for (int i = 0; i < 10; i++) {
+                    int digit = random.nextInt(10);
+                    code.append(digit);
+                }
+                isCode = userRepository.findByCodeToSwitch(code.toString()).isPresent();
+            }while(isCode);
+            user.setCodeToSwitch(code.toString());
+            user.setEmailToSwitch(email.getAsString());
+            String codeToken = tokenService.generateCodeToken(code.toString());
             mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de troca de email em Rafael do Canto Advocacia e Socidade",
-                    "Para verificar troca de email da sua conta, clique no link: https://sistemasdocanto.vercel.app/account/switch?key="+key+"&email="+email.getAsString()+"&token="+token.replace("Bearer ","")
+                    "Para verificar troca de email da sua conta, clique no link: https://sistemasdocanto.vercel.app/account/switch?code="+codeToken
             );
         }
 
