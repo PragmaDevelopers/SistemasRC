@@ -4,6 +4,7 @@ import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
 import com.api.sistema_rc.service.MailService;
+import com.api.sistema_rc.util.CodeService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class KanbanCardController {
     @Autowired
     private KanbanCardTagRepository kanbanCardTagRepository;
     @Autowired
-    private KanbanCardCommentRepository kanbanCardCommentRepository;
+    private CodeService codeService;
     @Autowired
     private KanbanCardChecklistRepository kanbanCardCheckListRepository;
     @Autowired
@@ -93,7 +94,6 @@ public class KanbanCardController {
             cardObj.addProperty("columnID", card.getKanbanColumn().getId());
             cardObj.addProperty("title", card.getTitle());
             cardObj.addProperty("index", card.getIndex());
-
             List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
             JsonArray tagArr = new JsonArray();
             for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
@@ -300,6 +300,7 @@ public class KanbanCardController {
         return ResponseEntity.status(HttpStatus.OK).body(innerCardArr.toString());
     }
 
+    @Transactional
     @PostMapping(path = "/private/user/kanban/column/card")
     public ResponseEntity<String> postCard(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
@@ -386,6 +387,9 @@ public class KanbanCardController {
         }
 
         KanbanCard dbKanbanCard = kanbanCardRepository.saveAndFlush(kanbanCard);
+
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
 
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
@@ -619,6 +623,7 @@ public class KanbanCardController {
         return ResponseEntity.status(HttpStatus.OK).body(dbKanbanCard.getId().toString());
     }
 
+    @Transactional
     @DeleteMapping(path = "/private/user/kanban/column/card/{cardId}")
     public ResponseEntity<String> deleteCard(@PathVariable Integer cardId,@RequestHeader("Authorization") String token){
         JsonObject errorMessage = new JsonObject();
@@ -677,6 +682,9 @@ public class KanbanCardController {
                 }
             }
         }
+
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
 
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
@@ -857,6 +865,9 @@ public class KanbanCardController {
             selectedCard.setMembers(String.join(",",arrayToStringArr));
             modifiedArr.add("membros");
         }
+
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
 
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
@@ -1042,6 +1053,9 @@ public class KanbanCardController {
                 }
             }
         }
+
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
 
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();

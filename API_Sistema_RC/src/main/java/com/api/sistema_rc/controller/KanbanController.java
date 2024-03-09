@@ -4,6 +4,7 @@ import com.api.sistema_rc.enums.CategoryName;
 import com.api.sistema_rc.model.*;
 import com.api.sistema_rc.repository.*;
 import com.api.sistema_rc.service.MailService;
+import com.api.sistema_rc.util.CodeService;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -36,11 +38,13 @@ public class KanbanController {
     @Autowired
     private KanbanCardRepository kanbanCardRepository;
     @Autowired
-    private KanbanCardTagRepository kanbanCardTagRepository;
+    private CodeService codeService;
     @Autowired
     private KanbanUserRepository kanbanUserRepository;
     @Autowired
     private KanbanNotificationRepository kanbanNotificationRepository;
+    @Autowired
+    private KanbanCardTagRepository kanbanCardTagRepository;
     @Autowired
     private MailService mailService;
     @Autowired
@@ -64,6 +68,11 @@ public class KanbanController {
             JsonObject kanbanObj = new JsonObject();
             kanbanObj.addProperty("id",kanban.getId());
             kanbanObj.addProperty("title",kanban.getTitle());
+            if(kanban.getVersion() == null){
+                kanbanObj.addProperty("version",(String) null);
+            }else{
+                kanbanObj.addProperty("version",kanban.getVersion());
+            }
             if(isColumns){
                 List<KanbanColumn> kanbanColumnList = kanbanColumnRepository.findAllByKanbanId(kanban.getId());
                 JsonArray columnArr = new JsonArray();
@@ -81,6 +90,68 @@ public class KanbanController {
         });
 
         return ResponseEntity.status(HttpStatus.OK).body(kanbanArr.toString());
+    }
+    @GetMapping(path = "/private/user/kanban/{kanbanId}")
+    public ResponseEntity<String> getKanbanById(@RequestHeader("Authorization") String token,
+                                                @PathVariable Integer kanbanId){
+        JsonObject errorMessage = new JsonObject();
+        if(kanbanId == null){
+            errorMessage.addProperty("mensagem","O campo kanbanId é necessário!");
+            errorMessage.addProperty("status",410);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        boolean isKanban = kanbanRepository.findById(kanbanId).isPresent();
+        if(!isKanban){
+            errorMessage.addProperty("mensagem","Kanban não foi encontrado!");
+            errorMessage.addProperty("status",424);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage.toString());
+        }
+
+        Kanban kanban = kanbanRepository.findById(kanbanId).get();
+
+        JsonObject kanbanObj = new JsonObject();
+        kanbanObj.addProperty("id",kanban.getId());
+        kanbanObj.addProperty("title",kanban.getTitle());
+        if(kanban.getVersion() == null){
+            kanbanObj.addProperty("version",(String) null);
+        }else{
+            kanbanObj.addProperty("version",kanban.getVersion());
+        }
+        List<KanbanColumn> kanbanColumnList = kanbanColumnRepository.findAllByKanbanId(kanban.getId());
+        JsonArray columnArr = new JsonArray();
+        for (KanbanColumn column : kanbanColumnList) {
+            JsonObject columnObj = new JsonObject();
+            columnObj.addProperty("id",column.getId());
+            columnObj.addProperty("title",column.getTitle());
+            columnObj.addProperty("index",column.getIndex());
+            List<KanbanCard> kanbanCardsList = kanbanCardRepository.findAllByColumnIdAndNotInnerCard(column.getId());
+            JsonArray cardArr = new JsonArray();
+            for(KanbanCard card : kanbanCardsList) {
+                JsonObject cardObj = new JsonObject();
+                cardObj.addProperty("id", card.getId());
+                cardObj.addProperty("kanbanID", kanban.getId());
+                cardObj.addProperty("columnID", column.getId());
+                cardObj.addProperty("title", card.getTitle());
+                cardObj.addProperty("index", card.getIndex());
+                List<KanbanCardTag> kanbanCardTagList = kanbanCardTagRepository.findAllByCardId(card.getId());
+                JsonArray tagArr = new JsonArray();
+                for (KanbanCardTag kanbanCardTag : kanbanCardTagList) {
+                    JsonObject tagObj = new JsonObject();
+                    tagObj.addProperty("id",kanbanCardTag.getId());
+                    tagObj.addProperty("name",kanbanCardTag.getName());
+                    tagObj.addProperty("color",kanbanCardTag.getColor());
+                    tagArr.add(tagObj);
+                }
+                cardObj.add("tags",tagArr);
+                cardArr.add(cardObj);
+            }
+            columnObj.add("cards",cardArr);
+            columnArr.add(columnObj);
+        }
+        kanbanObj.add("columns",columnArr);
+
+        return ResponseEntity.status(HttpStatus.OK).body(kanbanObj.toString());
     }
     @GetMapping(path = "/private/user/kanban/{kanbanId}/members")
     public ResponseEntity<String> getUsersInKanban(@PathVariable Integer kanbanId,@RequestHeader("Authorization") String token){
@@ -164,6 +235,8 @@ public class KanbanController {
 
         Kanban kanban = new Kanban();
         kanban.setTitle(kanbanTitle.getAsString());
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
         Kanban dbKanban = kanbanRepository.saveAndFlush(kanban);
 
         KanbanUser kanbanUser = new KanbanUser();
@@ -221,6 +294,7 @@ public class KanbanController {
 
         return ResponseEntity.status(HttpStatus.OK).body(dbKanban.getId().toString());
     }
+    @Transactional
     @PostMapping(path = "/private/user/kanban/invite")
     public ResponseEntity<String> inviteKanban(@RequestBody String body,@RequestHeader("Authorization") String token){
         JsonObject kanbanJson = gson.fromJson(body, JsonObject.class);
@@ -291,6 +365,9 @@ public class KanbanController {
         inviteKanbanUser.setKanban(kanban);
 
         kanbanUserRepository.save(inviteKanbanUser);
+
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
 
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
@@ -411,6 +488,9 @@ public class KanbanController {
             modifiedArr.add("título");
         }
 
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
+
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();
 
@@ -476,6 +556,7 @@ public class KanbanController {
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+    @Transactional
     @DeleteMapping(path = "/private/user/kanban/{kanbanId}/uninvite/user/{targetUserId}")
     public ResponseEntity<String> uninviteKanban(@PathVariable Integer kanbanId,@PathVariable Integer targetUserId,@RequestHeader("Authorization") String token){
         JsonObject errorMessage = new JsonObject();
@@ -527,6 +608,9 @@ public class KanbanController {
             errorMessage.addProperty("status",411);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage.toString());
         }
+
+        String code = codeService.generateKanbanCode(10);
+        kanban.setVersion(code);
 
         executorService.submit(() -> {
             List<KanbanNotification> kanbanNotificationList = new ArrayList<>();

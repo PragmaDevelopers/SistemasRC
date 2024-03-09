@@ -33,7 +33,7 @@ public class ExpirationChecker {
     private UserRepository userRepository;
 
     @Transactional
-    @Scheduled(fixedRate = 15000) // Agendado para ser executado a cada 15 segundos (ajuste conforme necessário)
+    @Scheduled(fixedRate = 60000) // Agendado para ser executado a cada 60 segundos (ajuste conforme necessário)
     public void verificarVencimentosPrazo() {
         List<KanbanDeadline> deadlines =  kanbanDeadlineRepository.findAllByOverdue(false);
         deadlines.forEach(deadline->{

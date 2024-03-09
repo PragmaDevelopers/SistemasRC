@@ -8,6 +8,7 @@ import com.api.sistema_rc.model.UserDetailsImpl;
 import com.api.sistema_rc.repository.UserRepository;
 import com.api.sistema_rc.service.MailService;
 import com.api.sistema_rc.service.UserDetailsServiceImpl;
+import com.api.sistema_rc.util.CodeService;
 import com.api.sistema_rc.util.PasswordEncoderUtils;
 import com.api.sistema_rc.util.TokenService;
 import com.google.gson.Gson;
@@ -39,6 +40,8 @@ public class UserController {
     private UserRepository userRepository;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private CodeService codeService;
     @Autowired
     private TokenService tokenService;
     @Autowired
@@ -113,24 +116,15 @@ public class UserController {
 
         user.setRole(role);
 
-        SecureRandom random = new SecureRandom();
-        StringBuilder code = new StringBuilder();
-        boolean isCode;
-        do{
-            for (int i = 0; i < 10; i++) {
-                int digit = random.nextInt(10);
-                code.append(digit);
-            }
-            isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
-        }while(isCode);
+        String code = codeService.generateUserCodeVerification(10);
 
-        user.setCodeToVerify(code.toString());
+        user.setCodeToVerify(code);
         user.setVerify(false);
         user.setReceiveNotification(false);
 
         userRepository.save(user);
 
-        String codeToken = tokenService.generateCodeToken(code.toString());
+        String codeToken = tokenService.generateCodeToken(code);
 
         mailService.sendMailWithoutVerification(user.getEmail(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
             "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+codeToken
@@ -164,18 +158,9 @@ public class UserController {
         var auth = (UserDetailsImpl) authenticationManager.authenticate(usernamePassword).getPrincipal();
 
         if(!auth.isVerify()){
-            SecureRandom random = new SecureRandom();
-            StringBuilder code = new StringBuilder();
-            boolean isCode;
-            do{
-                for (int i = 0; i < 10; i++) {
-                    int digit = random.nextInt(10);
-                    code.append(digit);
-                }
-                isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
-            }while(isCode);
-            userRepository.findByEmail(email.getAsString()).get().setCodeToVerify(code.toString());
-            String codeToken = tokenService.generateCodeToken(code.toString());
+            String code = codeService.generateUserCodeVerification(10);
+            userRepository.findByEmail(email.getAsString()).get().setCodeToVerify(code);
+            String codeToken = tokenService.generateCodeToken(code);
             mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
                     "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+codeToken
             );
@@ -371,19 +356,10 @@ public class UserController {
                 errorMessage.addProperty("status",420);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
-            SecureRandom random = new SecureRandom();
-            StringBuilder code = new StringBuilder();
-            boolean isCode;
-            do{
-                for (int i = 0; i < 10; i++) {
-                    int digit = random.nextInt(10);
-                    code.append(digit);
-                }
-                isCode = userRepository.findByCodeToSwitch(code.toString()).isPresent();
-            }while(isCode);
-            user.setCodeToSwitch(code.toString());
+            String code = codeService.generateUserCodeSwitch(10);
+            user.setCodeToSwitch(code);
             user.setEmailToSwitch(email.getAsString());
-            String codeToken = tokenService.generateCodeToken(code.toString());
+            String codeToken = tokenService.generateCodeToken(code);
             mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de troca de email em Rafael do Canto Advocacia e Socidade",
                     "Para verificar troca de email da sua conta, clique no link: https://sistemasdocanto.vercel.app/account/switch?code="+codeToken
             );

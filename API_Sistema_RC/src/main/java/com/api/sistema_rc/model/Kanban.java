@@ -28,7 +28,7 @@ public class Kanban {
     private List<KanbanNotification> kanbanNotifications;
     @Column(length = 255,nullable = false)
     private String title;
-    @Column(length = 255,nullable = false)
+    @Column(length = 10,nullable = false)
     private String version;
 
     public Integer getId() {
