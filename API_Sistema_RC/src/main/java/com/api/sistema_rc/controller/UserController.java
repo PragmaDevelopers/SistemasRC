@@ -118,7 +118,7 @@ public class UserController {
 
         String code = codeService.generateUserCodeVerification(10);
 
-        user.setCodeToVerify(code);
+        user.setCodeToVerifyEmail(code);
         user.setVerify(false);
         user.setReceiveNotification(false);
 
@@ -159,7 +159,7 @@ public class UserController {
 
         if(!auth.isVerify()){
             String code = codeService.generateUserCodeVerification(10);
-            userRepository.findByEmail(email.getAsString()).get().setCodeToVerify(code);
+            userRepository.findByEmail(email.getAsString()).get().setCodeToVerifyEmail(code);
             String codeToken = tokenService.generateCodeToken(code);
             mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de cadastro em Rafael do Canto Advocacia e Socidade",
                     "Para verificar sua conta, clique no link: https://sistemasdocanto.vercel.app/account/verify?code="+codeToken
@@ -177,21 +177,22 @@ public class UserController {
     }
 
     @Transactional
-    @PatchMapping(path = "/public/user/verify/{code}")
+    @PatchMapping(path = "/public/user/verify/email/{code}")
     public ResponseEntity<String> userVerify(@PathVariable String code) {
         String formattedCode = tokenService.validateCodeToken(code);
-        Optional<User> user = userRepository.findByCodeToVerify(formattedCode);
+        Optional<User> user = userRepository.findByCodeToVerifyEmail(formattedCode);
         if(user.isPresent()){
             user.get().setVerify(true);
-            user.get().setCodeToVerify(null);
+            user.get().setCodeToVerifyEmail(null);
         }else{
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @PatchMapping(path = "/public/user/new/password")
-    public ResponseEntity<String> newPassword(@RequestBody String body) {
+    @Transactional
+    @PatchMapping(path = "/public/user/forgot/password")
+    public ResponseEntity<String> forgotPassword(@RequestBody String body) {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         JsonObject errorMessage = new JsonObject();
@@ -203,26 +204,37 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        Optional<User> user = userRepository.findByEmail(email.getAsString());
-        if(user.isEmpty()){
-            errorMessage.addProperty("mensagem","Email não encontrado!");
-            errorMessage.addProperty("status",404);
+        Optional<User> dbUser = userRepository.findByEmail(email.getAsString());
+        if (dbUser.isEmpty()) {
+            errorMessage.addProperty("mensagem","O email não existe!");
+            errorMessage.addProperty("status",420);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        UserDetailsImpl userDetails = new UserDetailsImpl(user.get());
-        String token = tokenService.generateUserToken(userDetails);
+        JsonElement newPassword = jsonObj.get("newPassword");
+        if(newPassword == null){
+            errorMessage.addProperty("mensagem","O campo newPassword é necessário!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
 
-        mailService.sendMail(email.getAsString(),"Redefinição de senha em Rafael do Canto Advocacia e Socidade",
-                "Para redefinir sua senha, clique no link: https://sistemasdocanto.vercel.app/account/redefine?token="+token
+        String encryptedPassword = PasswordEncoderUtils.encode(newPassword.getAsString());
+        dbUser.get().setPasswordToChange(encryptedPassword);
+
+        String code = codeService.generateUserCodeChangePassword(10);
+        dbUser.get().setCodeToChangePassword(code);
+        String codeToken = tokenService.generateCodeToken(code);
+
+        mailService.sendMailWithoutVerification(email.getAsString(),"Redefinição de senha em Rafael do Canto Advocacia e Socidade",
+                "Para redefinir sua senha, clique no link: https://sistemasdocanto.vercel.app/account/redefine/password?code="+codeToken
         );
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Transactional
-    @PatchMapping(path = "/public/user/new/email")
-    public ResponseEntity<String> newEmail(@RequestBody String body) {
+    @PatchMapping(path = "/public/user/redefine/password")
+    public ResponseEntity<String> redefinePassword(@RequestBody String body) {
         JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
 
         JsonObject errorMessage = new JsonObject();
@@ -234,15 +246,46 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        String formattedCode = tokenService.validateCodeToken(code.getAsString());
-        Optional<User> user = userRepository.findByCodeToSwitch(formattedCode);
+        String codeToken = tokenService.validateCodeToken(code.getAsString());
+        Optional<User> user = userRepository.findByCodeToChangePassword(codeToken);
         if(user.isEmpty()){
             errorMessage.addProperty("mensagem","O code é inválida!");
             errorMessage.addProperty("status",400);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
         }
 
-        user.get().setEmail(user.get().getEmailToSwitch());
+        user.get().setCodeToChangePassword(null);
+        user.get().setPassword(user.get().getPasswordToChange());
+        user.get().setPasswordToChange(null);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @Transactional
+    @PatchMapping(path = "/public/user/redefine/email")
+    public ResponseEntity<String> redefineEmail(@RequestBody String body) {
+        JsonObject jsonObj = gson.fromJson(body, JsonObject.class);
+
+        JsonObject errorMessage = new JsonObject();
+
+        JsonElement code = jsonObj.get("code");
+        if(code == null){
+            errorMessage.addProperty("mensagem","O campo code é necessário!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        String codeToken = tokenService.validateCodeToken(code.getAsString());
+        Optional<User> user = userRepository.findByCodeToChangeEmail(codeToken);
+        if(user.isEmpty()){
+            errorMessage.addProperty("mensagem","O user é inválida!");
+            errorMessage.addProperty("status",400);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
+        }
+
+        user.get().setCodeToChangeEmail(null);
+        user.get().setEmail(user.get().getEmailToChange());
+        user.get().setEmailToChange(null);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -356,12 +399,12 @@ public class UserController {
                 errorMessage.addProperty("status",420);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage.toString());
             }
-            String code = codeService.generateUserCodeSwitch(10);
-            user.setCodeToSwitch(code);
-            user.setEmailToSwitch(email.getAsString());
+            String code = codeService.generateUserCodeChangeEmail(10);
+            user.setCodeToChangeEmail(code);
+            user.setEmailToChange(email.getAsString());
             String codeToken = tokenService.generateCodeToken(code);
             mailService.sendMailWithoutVerification(email.getAsString(),"Verificação de troca de email em Rafael do Canto Advocacia e Socidade",
-                    "Para verificar troca de email da sua conta, clique no link: https://sistemasdocanto.vercel.app/account/switch?code="+codeToken
+                    "Para verificar troca de email da sua conta, clique no link: https://sistemasdocanto.vercel.app/account/redefine/email?code="+codeToken
             );
         }
 

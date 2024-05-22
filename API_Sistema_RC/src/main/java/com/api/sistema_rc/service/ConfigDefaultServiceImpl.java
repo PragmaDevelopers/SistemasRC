@@ -72,7 +72,7 @@ public class ConfigDefaultServiceImpl {
             user1.setRegistration_date(LocalDateTime.now());
             user1.setPermissionLevel("111111111111111111111111111111111111111");
             user1.setVerify(true);
-            user1.setCodeToVerify(null);
+            user1.setCodeToVerifyEmail(null);
             user1.setReceiveNotification(false);
 
             Role roleAdmin = new Role();
@@ -92,7 +92,7 @@ public class ConfigDefaultServiceImpl {
             user2.setRegistration_date(LocalDateTime.now());
             user2.setPermissionLevel("111111111111111111111111111111111111111");
             user2.setVerify(true);
-            user2.setCodeToVerify(null);
+            user2.setCodeToVerifyEmail(null);
             user2.setReceiveNotification(false);
 
             user2.setRole(roleAdmin);

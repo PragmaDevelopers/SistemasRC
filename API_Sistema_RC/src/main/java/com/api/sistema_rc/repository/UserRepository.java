@@ -12,10 +12,12 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User,Integer> {
     Optional<User> findByEmail(String email);
-    @Query(value = "SELECT * FROM users WHERE code_to_verify = :codeToVerify ",nativeQuery = true)
-    Optional<User> findByCodeToVerify(String codeToVerify);
-    @Query(value = "SELECT * FROM users WHERE code_to_switch = :codeToSwitch ",nativeQuery = true)
-    Optional<User> findByCodeToSwitch(String codeToSwitch);
+    @Query(value = "SELECT * FROM users WHERE code_to_verify_email = :codeToVerify ",nativeQuery = true)
+    Optional<User> findByCodeToVerifyEmail(String codeToVerify);
+    @Query(value = "SELECT * FROM users WHERE code_to_change_email = :codeToChange ",nativeQuery = true)
+    Optional<User> findByCodeToChangeEmail(String codeToChange);
+    @Query(value = "SELECT * FROM users WHERE code_to_change_password = :codeToChange ",nativeQuery = true)
+    Optional<User> findByCodeToChangePassword(String codeToChange);
     @Query(value = "SELECT * FROM users WHERE name ILIKE :name% AND is_verify = true LIMIT 10 OFFSET :page",nativeQuery = true)
     List<User> findAllByName(@Param("name") String name,@Param("page") Integer page);
     @Query(value = "SELECT * FROM users WHERE email ILIKE :email% AND is_verify = true LIMIT 10 OFFSET :page",nativeQuery = true)

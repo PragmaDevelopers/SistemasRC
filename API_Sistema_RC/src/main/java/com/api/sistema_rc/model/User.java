@@ -35,11 +35,15 @@ public class User{
     @Column(nullable = false)
     private boolean isVerify;
     @Column(length = 10,unique = true)
-    private String codeToVerify;
+    private String codeToVerifyEmail;
     @Column(length = 10,unique = true)
-    private String codeToSwitch;
-    @Column(length = 255,unique = true)
-    private String emailToSwitch;
+    private String codeToChangeEmail;
+    @Column(length = 10,unique = true)
+    private String codeToChangePassword;
+    @Column(unique = true)
+    private String emailToChange;
+    @Column(unique = true)
+    private String passwordToChange;
     @Column(nullable = false)
     private boolean isReceiveNotification;
     @Column(nullable = false)
@@ -123,28 +127,44 @@ public class User{
         isVerify = verify;
     }
 
-    public String getCodeToVerify() {
-        return codeToVerify;
+    public String getCodeToVerifyEmail() {
+        return codeToVerifyEmail;
     }
 
-    public void setCodeToVerify(String codeToVerify) {
-        this.codeToVerify = codeToVerify;
+    public void setCodeToVerifyEmail(String codeToVerifyEmail) {
+        this.codeToVerifyEmail = codeToVerifyEmail;
     }
 
-    public String getCodeToSwitch() {
-        return codeToSwitch;
+    public String getCodeToChangeEmail() {
+        return codeToChangeEmail;
     }
 
-    public void setCodeToSwitch(String codeToSwitch) {
-        this.codeToSwitch = codeToSwitch;
+    public void setCodeToChangeEmail(String codeToChangeEmail) {
+        this.codeToChangeEmail = codeToChangeEmail;
     }
 
-    public String getEmailToSwitch() {
-        return emailToSwitch;
+    public String getCodeToChangePassword() {
+        return codeToChangePassword;
     }
 
-    public void setEmailToSwitch(String emailToSwitch) {
-        this.emailToSwitch = emailToSwitch;
+    public void setCodeToChangePassword(String codeToChangePassword) {
+        this.codeToChangePassword = codeToChangePassword;
+    }
+
+    public String getEmailToChange() {
+        return emailToChange;
+    }
+
+    public void setEmailToChange(String emailToChange) {
+        this.emailToChange = emailToChange;
+    }
+
+    public String getPasswordToChange() {
+        return passwordToChange;
+    }
+
+    public void setPasswordToChange(String passwordToChange) {
+        this.passwordToChange = passwordToChange;
     }
 
     public boolean isReceiveNotification() {

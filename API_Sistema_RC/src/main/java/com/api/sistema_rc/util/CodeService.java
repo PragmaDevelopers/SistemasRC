@@ -35,11 +35,25 @@ public class CodeService {
                 int digit = random.nextInt(length);
                 code.append(digit);
             }
-            isCode = userRepository.findByCodeToVerify(code.toString()).isPresent();
+            isCode = userRepository.findByCodeToVerifyEmail(code.toString()).isPresent();
         }while(isCode);
         return code.toString();
     }
-    public String generateUserCodeSwitch(Integer length){
+    public String generateUserCodeChangeEmail(Integer length){
+        SecureRandom random = new SecureRandom();
+        StringBuilder code = new StringBuilder();
+        boolean isCode;
+        do{
+            for (int i = 1; i < length; i++) {
+                int digit = random.nextInt(length);
+                code.append(digit);
+            }
+            isCode = userRepository.findByCodeToChangeEmail(code.toString()).isPresent();
+        }while(isCode);
+        return code.toString();
+    }
+
+    public String generateUserCodeChangePassword(Integer length){
         SecureRandom random = new SecureRandom();
         StringBuilder code = new StringBuilder();
         boolean isCode;
@@ -48,7 +62,7 @@ public class CodeService {
                 int digit = random.nextInt(length);
                 code.append(digit);
             }
-            isCode = userRepository.findByCodeToSwitch(code.toString()).isPresent();
+            isCode = userRepository.findByCodeToChangePassword(code.toString()).isPresent();
         }while(isCode);
         return code.toString();
     }
